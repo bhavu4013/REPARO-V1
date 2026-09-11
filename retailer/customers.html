@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Protected Customers | REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+
+  <style>
+    .customers-page {
+      max-width: 1100px;
+      margin: auto;
+      padding: 18px 14px 90px;
+    }
+
+    .customers-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .customers-header h1 {
+      margin: 4px 0;
+      color: #111827;
+    }
+
+    .customers-header p {
+      margin: 0;
+      color: #6B7280;
+      font-size: 13px;
+    }
+
+    .protected-badge {
+      background: #E8F8F0;
+      color: #16734B;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .summary-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 15px;
+      box-shadow: 0 6px 20px rgba(17,24,39,.07);
+    }
+
+    .summary-card span {
+      display: block;
+      color: #6B7280;
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+
+    .summary-card strong {
+      color: #111827;
+      font-size: 22px;
+    }
+
+    .search-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 13px;
+      margin-bottom: 15px;
+      box-shadow: 0 6px 20px rgba(17,24,39,.06);
+    }
+
+    .search-input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: #08AEE0;
+    }
+
+    .customer-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 6px 22px rgba(17,24,39,.07);
+    }
+
+    .customer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .customer-name {
+      font-size: 17px;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    .customer-mobile {
+      color: #08AEE0;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .protected-label {
+      background: #E8F8F0;
+      color: #16734B;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .customer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .info-box {
+      background: #F6F8FB;
+      border-radius: 13px;
+      padding: 10px;
+    }
+
+    .info-box.full {
+      grid-column: 1 / -1;
+    }
+
+    .info-box span {
+      display: block;
+      color: #6B7280;
+      font-size: 10px;
+      margin-bottom: 4px;
+    }
+
+    .info-box strong {
+      color: #111827;
+      font-size: 12px;
+      word-break: break-word;
+    }
+
+    .customer-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .customer-btn {
+      flex: 1;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-blue {
+      background: #08AEE0;
+      color: #fff;
+    }
+
+    .btn-light {
+      background: #F3F4F6;
+      color: #111827;
+    }
+
+    .empty {
+      background: #fff;
+      border-radius: 18px;
+      padding: 35px 15px;
+      text-align: center;
+      color: #6B7280;
+      box-shadow: 0 6px 20px rgba(17,24,39,.06);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: #6B7280;
+    }
+
+    /* DETAIL MODAL */
+
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(17,24,39,.45);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 9999;
+      padding: 10px;
+    }
+
+    .modal-bg.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #fff;
+      border-radius: 22px;
+      padding: 18px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .modal-head h2 {
+      margin: 0;
+    }
+
+    .close-btn {
+      border: 0;
+      background: #F3F4F6;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .history-item {
+      border-left: 3px solid #08AEE0;
+      padding: 9px 12px;
+      margin-bottom: 9px;
+      background: #F6F8FB;
+      border-radius: 0 12px 12px 0;
+    }
+
+    .history-item strong {
+      font-size: 12px;
+      color: #111827;
+    }
+
+    .history-item span {
+      display: block;
+      color: #6B7280;
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    @media (min-width: 700px) {
+      .summary-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .customer-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .info-box.full {
+        grid-column: 1 / -1;
+      }
+
+      .modal-bg {
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="customers-page">
+
+  <header class="customers-header">
+
+    <div>
+      <div class="eyebrow">
+        REPARO V1 • PARTNER
+      </div>
+
+      <h1>Protected Customers</h1>
+
+      <p>
+        Customers connected to your business
+      </p>
+    </div>
+
+    <div class="protected-badge">
+      CUSTOMER PROTECTION
+    </div>
+
+  </header>
+
+
+  <!-- SUMMARY -->
+
+  <section class="summary-grid">
+
+    <div class="summary-card">
+      <span>Total Protected</span>
+      <strong id="totalCustomers">0</strong>
+    </div>
+
+    <div class="summary-card">
+      <span>With Service History</span>
+      <strong id="serviceCustomers">0</strong>
+    </div>
+
+    <div class="summary-card">
+      <span>Active Jobs</span>
+      <strong id="activeCustomerJobs">0</strong>
+    </div>
+
+    <div class="summary-card">
+      <span>Completed Jobs</span>
+      <strong id="completedCustomerJobs">0</strong>
+    </div>
+
+  </section>
+
+
+  <!-- SEARCH -->
+
+  <section class="search-card">
+
+    <input
+      id="searchInput"
+      class="search-input"
+      type="search"
+      placeholder="Search customer, mobile, address, serial..."
+    >
+
+  </section>
+
+
+  <!-- CUSTOMER LIST -->
+
+  <section>
+
+    <div id="customerList">
+
+      <div class="loading">
+        Loading protected customers...
+      </div>
+
+    </div>
+
+  </section>
+
+</main>
+
+
+<!-- DETAIL MODAL -->
+
+<div
+  id="customerModal"
+  class="modal-bg">
+
+  <div class="modal">
+
+    <div class="modal-head">
+
+      <h2 id="modalCustomerName">
+        Customer
+      </h2>
+
+      <button
+        class="close-btn"
+        onclick="closeCustomer()">
+        ×
+      </button>
+
+    </div>
+
+
+    <div id="modalCustomerDetails"></div>
+
+  </div>
+
+</div>
+
+
+<script
+  type="module"
+  src="../js/retailer-customers.js">
+</script>
+
+</body>
+</html>
