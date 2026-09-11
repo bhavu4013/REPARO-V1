@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retailer Dashboard | REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+
+  <style>
+    .retailer-page {
+      max-width: 1100px;
+      margin: auto;
+      padding: 18px 14px 90px;
+    }
+
+    .retailer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .retailer-header h1 {
+      margin: 4px 0;
+      color: #111827;
+    }
+
+    .retailer-header p {
+      margin: 0;
+      color: #6B7280;
+      font-size: 13px;
+    }
+
+    .partner-badge {
+      background: #FFE32B;
+      color: #111827;
+      padding: 8px 11px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .stats-grid-r {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-r {
+      background: #fff;
+      border-radius: 18px;
+      padding: 15px;
+      box-shadow: 0 6px 20px rgba(17,24,39,.07);
+    }
+
+    .stat-r .label {
+      font-size: 11px;
+      color: #6B7280;
+      margin-bottom: 7px;
+    }
+
+    .stat-r .value {
+      font-size: 23px;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    .stat-r .sub {
+      margin-top: 5px;
+      color: #6B7280;
+      font-size: 10px;
+    }
+
+    .section {
+      background: #fff;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 6px 22px rgba(17,24,39,.07);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 13px;
+      gap: 10px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      color: #111827;
+      font-size: 18px;
+    }
+
+    .view-link {
+      color: #08AEE0;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .performance {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .performance-box {
+      padding: 13px;
+      border-radius: 15px;
+      background: #F6F8FB;
+    }
+
+    .performance-box span {
+      display: block;
+      font-size: 11px;
+      color: #6B7280;
+      margin-bottom: 5px;
+    }
+
+    .performance-box strong {
+      font-size: 16px;
+      color: #111827;
+    }
+
+    .customer-card,
+    .job-card {
+      border: 1px solid #EEF0F4;
+      border-radius: 16px;
+      padding: 13px;
+      margin-bottom: 9px;
+    }
+
+    .customer-card:last-child,
+    .job-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .customer-top,
+    .job-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .customer-name,
+    .job-title {
+      font-weight: 800;
+      color: #111827;
+      font-size: 14px;
+    }
+
+    .customer-info,
+    .job-info {
+      color: #6B7280;
+      font-size: 11px;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    .protected {
+      background: #E8F8F0;
+      color: #16734B;
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 9px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .job-status {
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 9px;
+      font-weight: 800;
+      background: #E8F4FF;
+      color: #05658A;
+      white-space: nowrap;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 25px 10px;
+      color: #6B7280;
+      font-size: 13px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 25px;
+      color: #6B7280;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+    }
+
+    .quick-btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 8px;
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .quick-primary {
+      background: #F9547C;
+      color: #fff;
+    }
+
+    .quick-blue {
+      background: #08AEE0;
+      color: #fff;
+    }
+
+    .quick-yellow {
+      background: #FFE32B;
+      color: #111827;
+    }
+
+    .quick-light {
+      background: #F3F4F6;
+      color: #111827;
+    }
+
+    @media (min-width: 700px) {
+      .stats-grid-r {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .quick-actions {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="retailer-page">
+
+  <!-- HEADER -->
+
+  <header class="retailer-header">
+
+    <div>
+      <div class="eyebrow">REPARO V1 • PARTNER</div>
+
+      <h1 id="retailerName">
+        Retailer
+      </h1>
+
+      <p>
+        Your service network dashboard
+      </p>
+    </div>
+
+    <div class="partner-badge">
+      SERVICE PARTNER
+    </div>
+
+  </header>
+
+
+  <!-- STATS -->
+
+  <section class="stats-grid-r">
+
+    <div class="stat-r">
+      <div class="label">SERVICE REQUESTS</div>
+      <div class="value" id="requestCount">0</div>
+      <div class="sub">Total requests</div>
+    </div>
+
+    <div class="stat-r">
+      <div class="label">ACTIVE JOBS</div>
+      <div class="value" id="activeJobs">0</div>
+      <div class="sub">Currently running</div>
+    </div>
+
+    <div class="stat-r">
+      <div class="label">COMPLETED</div>
+      <div class="value" id="completedJobs">0</div>
+      <div class="sub">Completed jobs</div>
+    </div>
+
+    <div class="stat-r">
+      <div class="label">PROTECTED CUSTOMERS</div>
+      <div class="value" id="protectedCustomers">0</div>
+      <div class="sub">Your customers</div>
+    </div>
+
+  </section>
+
+
+  <!-- EARNINGS -->
+
+  <section class="section">
+
+    <div class="section-head">
+
+      <h2>My Earnings</h2>
+
+      <span
+        class="view-link"
+        onclick="openEarnings()">
+        View Details
+      </span>
+
+    </div>
+
+
+    <div class="performance">
+
+      <div class="performance-box">
+        <span>Available</span>
+        <strong id="availableAmount">₹0</strong>
+      </div>
+
+      <div class="performance-box">
+        <span>Warranty Hold</span>
+        <strong id="holdAmount">₹0</strong>
+      </div>
+
+      <div class="performance-box">
+        <span>Released</span>
+        <strong id="releasedAmount">₹0</strong>
+      </div>
+
+      <div class="performance-box">
+        <span>Paid</span>
+        <strong id="paidAmount">₹0</strong>
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- QUICK ACTIONS -->
+
+  <section class="section">
+
+    <div class="section-head">
+      <h2>Quick Actions</h2>
+    </div>
+
+    <div class="quick-actions">
+
+      <button
+        class="quick-btn quick-primary"
+        onclick="newRequest()">
+        + New Service Request
+      </button>
+
+      <button
+        class="quick-btn quick-blue"
+        onclick="openCustomers()">
+        Protected Customers
+      </button>
+
+      <button
+        class="quick-btn quick-yellow"
+        onclick="openJobs()">
+        My Jobs
+      </button>
+
+      <button
+        class="quick-btn quick-light"
+        onclick="openEarnings()">
+        Earnings
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- RECENT JOBS -->
+
+  <section class="section">
+
+    <div class="section-head">
+
+      <h2>Recent Jobs</h2>
+
+      <span
+        class="view-link"
+        onclick="openJobs()">
+        View All
+      </span>
+
+    </div>
+
+    <div id="recentJobs">
+      <div class="loading">
+        Loading jobs...
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- PROTECTED CUSTOMERS -->
+
+  <section class="section">
+
+    <div class="section-head">
+
+      <h2>Protected Customers</h2>
+
+      <span
+        class="view-link"
+        onclick="openCustomers()">
+        View All
+      </span>
+
+    </div>
+
+    <div id="customerList">
+      <div class="loading">
+        Loading customers...
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+
+<script type="module" src="../js/retailer-dashboard.js"></script>
+
+</body>
+</html>
