@@ -4,343 +4,534 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Customers | REPARO V1</title>
-
-  <link rel="stylesheet" href="../css/reparo.css">
+  <title>REPARO - Customers</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      background: #f7f8fa;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f7f8fc;
+      color: #172033;
+      min-height: 100vh;
+      padding-bottom: 90px;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
     }
 
     .page {
+      width: 100%;
       max-width: 760px;
       margin: auto;
-      padding: 16px 14px 90px;
+      padding: 16px;
     }
 
-    .header {
+    .topbar {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 15px;
+      justify-content: space-between;
+      margin-bottom: 16px;
     }
 
-    .header h1 {
-      margin: 0;
-      color: #111827;
-      font-size: 22px;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .header p {
-      margin: 4px 0 0;
-      color: #6b7280;
-      font-size: 11px;
-    }
-
-    .add-btn {
-      border: 0;
-      background: #f9547c;
-      color: #fff;
-      border-radius: 12px;
-      padding: 11px 14px;
-      font-size: 11px;
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: #ff3b6b;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-weight: 800;
-      cursor: pointer;
-      white-space: nowrap;
+      font-size: 17px;
     }
 
-    .summary {
+    .brand-title {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: #7c8495;
+      margin-top: 2px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      border: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 4px 14px rgba(20, 30, 55, 0.08);
+    }
+
+    .summary-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 9px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
       margin-bottom: 14px;
     }
 
     .summary-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 13px 10px;
-      box-shadow: 0 5px 18px rgba(17,24,39,.06);
-    }
-
-    .summary-card span {
-      display: block;
-      color: #6b7280;
-      font-size: 9px;
-      margin-bottom: 5px;
-    }
-
-    .summary-card strong {
-      color: #111827;
-      font-size: 19px;
-    }
-
-    .toolbar {
-      background: #fff;
-      padding: 12px;
+      background: white;
       border-radius: 17px;
-      margin-bottom: 13px;
-      box-shadow: 0 5px 18px rgba(17,24,39,.05);
+      padding: 15px;
+      box-shadow: 0 5px 18px rgba(20, 30, 55, 0.07);
     }
 
-    .search {
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
-      border-radius: 12px;
-      padding: 11px 12px;
-      outline: none;
+    .summary-label {
+      color: #7d8494;
       font-size: 12px;
+      font-weight: 600;
     }
 
-    .filter-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 9px;
+    .summary-value {
+      font-size: 24px;
+      font-weight: 800;
+      margin-top: 5px;
     }
 
-    .filter {
-      flex: 1;
-      border: 1px solid #e5e7eb;
-      background: #fff;
-      border-radius: 11px;
-      padding: 9px;
-      font-size: 11px;
-      color: #374151;
+    .summary-card.protected .summary-value {
+      color: #1683d8;
+    }
+
+    .summary-card.unprotected .summary-value {
+      color: #f59e0b;
+    }
+
+    .search-card {
+      background: white;
+      border-radius: 17px;
+      padding: 13px;
+      margin-bottom: 14px;
+      box-shadow: 0 5px 18px rgba(20, 30, 55, 0.07);
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 9px;
+    }
+
+    .search-input,
+    .filter-select {
+      width: 100%;
+      border: 1px solid #e3e7ef;
+      border-radius: 12px;
+      padding: 12px 13px;
+      outline: none;
+      background: #fbfcfe;
+    }
+
+    .search-input:focus,
+    .filter-select:focus,
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: #ff3b6b;
+      background: white;
+    }
+
+    .customer-list {
+      display: grid;
+      gap: 12px;
     }
 
     .customer-card {
-      background: #fff;
-      border-radius: 19px;
+      background: white;
+      border-radius: 18px;
       padding: 15px;
-      margin-bottom: 11px;
-      box-shadow: 0 5px 20px rgba(17,24,39,.06);
-      cursor: pointer;
+      box-shadow: 0 5px 18px rgba(20, 30, 55, 0.07);
     }
 
-    .customer-top {
+    .customer-head {
       display: flex;
       justify-content: space-between;
       gap: 10px;
+      align-items: flex-start;
     }
 
     .customer-name {
-      color: #111827;
-      font-size: 15px;
+      font-size: 17px;
       font-weight: 800;
     }
 
     .customer-mobile {
-      color: #6b7280;
-      font-size: 11px;
+      color: #687184;
+      font-size: 13px;
       margin-top: 4px;
     }
 
-    .status {
-      align-self: flex-start;
-      border-radius: 999px;
-      padding: 5px 8px;
-      font-size: 8px;
-      font-weight: 800;
+    .protected-badge,
+    .normal-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 9px;
+      border-radius: 20px;
+      white-space: nowrap;
     }
 
-    .active {
-      background: #e8f8f0;
-      color: #16734b;
+    .protected-badge {
+      background: #e8f5ff;
+      color: #1178bf;
     }
 
-    .inactive {
-      background: #f3f4f6;
-      color: #6b7280;
+    .normal-badge {
+      background: #fff5df;
+      color: #b87500;
     }
 
     .customer-info {
+      margin-top: 13px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 8px;
+      font-size: 13px;
+      color: #4e586b;
+    }
+
+    .info-icon {
+      width: 20px;
+    }
+
+    .retailer-box {
+      margin-top: 12px;
+      background: #f4f7fb;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 12px;
+      color: #536074;
+    }
+
+    .retailer-box strong {
+      color: #172033;
+    }
+
+    .customer-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-top: 12px;
+      margin-top: 13px;
     }
 
-    .info {
-      background: #f6f8fb;
+    .action-btn {
+      border: 0;
       border-radius: 11px;
-      padding: 9px;
-    }
-
-    .info span {
-      display: block;
-      color: #6b7280;
-      font-size: 8px;
-      margin-bottom: 4px;
-    }
-
-    .info strong {
-      color: #111827;
-      font-size: 10px;
-      word-break: break-word;
-    }
-
-    .loading,
-    .empty {
-      text-align: center;
-      padding: 35px 15px;
-      color: #6b7280;
+      padding: 10px;
+      font-weight: 700;
       font-size: 12px;
+    }
+
+    .view-btn {
+      background: #edf6ff;
+      color: #1479bf;
+    }
+
+    .edit-btn {
+      background: #fff0f4;
+      color: #df315b;
+    }
+
+    .empty {
+      background: white;
+      border-radius: 18px;
+      padding: 35px 20px;
+      text-align: center;
+      box-shadow: 0 5px 18px rgba(20, 30, 55, 0.07);
+    }
+
+    .empty-icon {
+      font-size: 34px;
+      margin-bottom: 8px;
+    }
+
+    .empty-title {
+      font-weight: 800;
+      font-size: 17px;
+    }
+
+    .empty-text {
+      color: #7c8495;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .loading {
+      background: white;
+      padding: 30px;
+      text-align: center;
+      border-radius: 18px;
+      color: #7b8495;
+    }
+
+    .message {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .error-box {
+      background: #fff0f0;
+      color: #c62828;
+    }
+
+    .success-box {
+      background: #edfff4;
+      color: #168348;
     }
 
     /* MODAL */
 
-    .modal {
+    .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(17,24,39,.45);
+      background: rgba(13, 20, 35, 0.55);
       display: none;
       align-items: flex-end;
       justify-content: center;
-      z-index: 999;
+      z-index: 1000;
     }
 
-    .modal.show {
+    .modal-backdrop.show {
       display: flex;
     }
 
-    .modal-box {
+    .modal {
       width: 100%;
-      max-width: 700px;
+      max-width: 760px;
       max-height: 92vh;
       overflow-y: auto;
-      background: #fff;
+      background: white;
       border-radius: 24px 24px 0 0;
       padding: 18px;
-      box-sizing: border-box;
     }
 
-    .modal-head {
+    .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
+      margin-bottom: 17px;
     }
 
-    .modal-head h2 {
-      margin: 0;
-      font-size: 18px;
-      color: #111827;
+    .modal-title {
+      font-size: 19px;
+      font-weight: 800;
     }
 
     .close-btn {
+      width: 36px;
+      height: 36px;
       border: 0;
-      background: #f3f4f6;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    .field {
-      margin-bottom: 12px;
-    }
-
-    .field label {
-      display: block;
-      color: #374151;
-      font-size: 10px;
-      font-weight: 800;
-      margin-bottom: 5px;
-    }
-
-    .field input,
-    .field select,
-    .field textarea {
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
       border-radius: 11px;
-      padding: 11px;
-      font-size: 12px;
-      outline: none;
-    }
-
-    .field textarea {
-      min-height: 70px;
-      resize: vertical;
+      background: #f1f3f7;
+      font-size: 20px;
     }
 
     .form-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
     }
 
-    .full {
-      grid-column: 1 / -1;
+    .form-field {
+      display: grid;
+      gap: 6px;
     }
 
-    .protected-box {
-      background: #fff4cc;
-      color: #705600;
+    .form-field label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #596276;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      border: 1px solid #e0e5ed;
       border-radius: 12px;
+      padding: 12px;
+      outline: none;
+      background: #fbfcfe;
+    }
+
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .protected-panel {
+      background: #eef8ff;
+      border: 1px solid #d8efff;
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .protected-title {
+      color: #1178bf;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .protected-text {
+      color: #5d7182;
+      font-size: 12px;
+      margin-top: 4px;
+      line-height: 1.45;
+    }
+
+    .warning-panel {
+      display: none;
+      background: #fff7e6;
+      border: 1px solid #ffe0a1;
+      color: #946200;
+      border-radius: 13px;
       padding: 11px;
-      font-size: 10px;
-      line-height: 1.5;
-      margin-bottom: 13px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 18px;
+    }
+
+    .modal-btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px;
+      font-weight: 800;
+    }
+
+    .cancel-btn {
+      background: #f0f2f6;
+      color: #566074;
     }
 
     .save-btn {
+      background: #ff3b6b;
+      color: white;
+    }
+
+    .save-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* MORE PANEL */
+
+    .more-panel {
+      position: fixed;
+      right: 15px;
+      bottom: 78px;
+      width: 190px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 35px rgba(15, 25, 45, 0.18);
+      padding: 7px;
+      display: none;
+      z-index: 900;
+    }
+
+    .more-panel.show {
+      display: block;
+    }
+
+    .more-panel button {
       width: 100%;
       border: 0;
-      border-radius: 13px;
-      padding: 13px;
-      background: #f9547c;
-      color: #fff;
-      font-weight: 800;
-      cursor: pointer;
-      margin-top: 4px;
-    }
-
-    .detail-section {
-      background: #f6f8fb;
-      border-radius: 14px;
+      background: white;
       padding: 12px;
-      margin-bottom: 10px;
+      text-align: left;
+      border-radius: 10px;
     }
 
-    .detail-section h3 {
-      margin: 0 0 9px;
-      font-size: 12px;
-      color: #111827;
+    .more-panel button:hover {
+      background: #f5f7fa;
     }
 
-    .detail-row {
+    /* BOTTOM NAV */
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 68px;
+      background: rgba(255,255,255,0.97);
+      border-top: 1px solid #e9ecf2;
       display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 6px 0;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 800;
+    }
+
+    .nav-item {
+      border: 0;
+      background: transparent;
+      color: #7b8495;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
       font-size: 10px;
+      min-width: 65px;
     }
 
-    .detail-row span {
-      color: #6b7280;
+    .nav-item span:first-child {
+      font-size: 19px;
     }
 
-    .detail-row strong {
-      color: #111827;
-      text-align: right;
+    .nav-item.active {
+      color: #ff3b6b;
+      font-weight: 800;
     }
 
     @media (min-width: 600px) {
-      .modal {
+      .modal-backdrop {
         align-items: center;
-        padding: 20px;
       }
 
-      .modal-box {
-        border-radius: 24px;
+      .modal {
+        border-radius: 22px;
+        max-height: 88vh;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(4, 1fr);
       }
     }
   </style>
@@ -348,286 +539,294 @@
 
 <body>
 
-<main class="page">
+  <main class="page">
 
-  <header class="header">
-    <div>
-      <h1>Customers</h1>
-      <p>Customer relationship & protection management</p>
-    </div>
-
-    <button
-      id="addBtn"
-      class="add-btn">
-      + Add Customer
-    </button>
-  </header>
-
-
-  <section class="summary">
-
-    <div class="summary-card">
-      <span>TOTAL</span>
-      <strong id="totalCount">0</strong>
-    </div>
-
-    <div class="summary-card">
-      <span>ACTIVE</span>
-      <strong id="activeCount">0</strong>
-    </div>
-
-    <div class="summary-card">
-      <span>PROTECTED</span>
-      <strong id="protectedCount">0</strong>
-    </div>
-
-  </section>
-
-
-  <section class="toolbar">
-
-    <input
-      id="searchInput"
-      class="search"
-      type="search"
-      placeholder="Search customer, mobile, email...">
-
-    <div class="filter-row">
-
-      <select
-        id="statusFilter"
-        class="filter">
-
-        <option value="ALL">
-          All Status
-        </option>
-
-        <option value="ACTIVE">
-          Active
-        </option>
-
-        <option value="INACTIVE">
-          Inactive
-        </option>
-
-      </select>
-
-
-      <select
-        id="retailerFilter"
-        class="filter">
-
-        <option value="ALL">
-          All Retailers
-        </option>
-
-      </select>
-
-    </div>
-
-  </section>
-
-
-  <div id="loading" class="loading">
-    Loading customers...
-  </div>
-
-  <div
-    id="customerList"
-    style="display:none;">
-  </div>
-
-</main>
-
-
-<!-- =====================================================
-     CUSTOMER MODAL
-===================================================== -->
-
-<div
-  id="customerModal"
-  class="modal">
-
-  <div class="modal-box">
-
-    <div class="modal-head">
-
-      <h2 id="modalTitle">
-        Add Customer
-      </h2>
-
-      <button
-        id="closeModal"
-        class="close-btn">
-        ×
-      </button>
-
-    </div>
-
-
-    <div class="protected-box">
-      <strong>Customer Protection:</strong>
-      The selected retailer becomes the original
-      service relationship owner. Customer transfer
-      remains Admin-only.
-    </div>
-
-
-    <form id="customerForm">
-
-      <div class="form-grid">
-
-        <div class="field">
-          <label>FULL NAME *</label>
-
-          <input
-            id="name"
-            required
-            placeholder="Customer name">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logo">R</div>
+        <div>
+          <div class="brand-title">Customers</div>
+          <div class="brand-subtitle">Protected Customer Network</div>
         </div>
+      </div>
 
+      <div class="top-actions">
+        <button type="button" class="icon-btn" id="logoutBtn" title="Logout">↪</button>
+      </div>
+    </header>
 
-        <div class="field">
-          <label>MOBILE *</label>
+    <section class="summary-grid">
 
-          <input
-            id="mobile"
-            required
-            type="tel"
-            placeholder="10 digit mobile">
-        </div>
+      <div class="summary-card">
+        <div class="summary-label">Total Customers</div>
+        <div class="summary-value" id="totalCustomers">0</div>
+      </div>
 
+      <div class="summary-card protected">
+        <div class="summary-label">Protected</div>
+        <div class="summary-value" id="protectedCustomers">0</div>
+      </div>
 
-        <div class="field">
-          <label>EMAIL</label>
+      <div class="summary-card unprotected">
+        <div class="summary-label">Unprotected</div>
+        <div class="summary-value" id="unprotectedCustomers">0</div>
+      </div>
 
-          <input
-            id="email"
-            type="email"
-            placeholder="Customer email">
-        </div>
+      <div class="summary-card">
+        <div class="summary-label">With Serial</div>
+        <div class="summary-value" id="serialCustomers">0</div>
+      </div>
 
+    </section>
 
-        <div class="field">
-          <label>STATUS</label>
+    <div class="message error-box" id="errorBox"></div>
+    <div class="message success-box" id="successBox"></div>
 
-          <select id="active">
-            <option value="true">
-              Active
-            </option>
+    <section class="search-card">
 
-            <option value="false">
-              Inactive
-            </option>
-          </select>
-        </div>
+      <div class="search-row">
 
+        <input
+          type="search"
+          id="searchInput"
+          class="search-input"
+          placeholder="Search name, mobile, address, device, serial..."
+          autocomplete="off"
+        >
 
-        <div class="field full">
-          <label>ORIGINAL RETAILER *</label>
-
-          <select
-            id="retailerId"
-            required>
-
-            <option value="">
-              Select retailer
-            </option>
-
-          </select>
-        </div>
-
-
-        <div class="field full">
-          <label>ADDRESS</label>
-
-          <textarea
-            id="address"
-            placeholder="Customer address">
-          </textarea>
-        </div>
-
-
-        <div class="field">
-          <label>CITY</label>
-
-          <input
-            id="city"
-            placeholder="City">
-        </div>
-
-
-        <div class="field">
-          <label>PINCODE</label>
-
-          <input
-            id="pincode"
-            placeholder="Pincode">
-        </div>
-
-
-        <div class="field full">
-          <label>AUTH USER ID</label>
-
-          <input
-            id="authUserId"
-            placeholder="Firebase Auth UID (optional)">
-        </div>
+        <select id="protectionFilter" class="filter-select">
+          <option value="">All Customers</option>
+          <option value="PROTECTED">Protected Customers</option>
+          <option value="UNPROTECTED">Unprotected Customers</option>
+        </select>
 
       </div>
 
+    </section>
 
-      <button
-        id="saveBtn"
-        class="save-btn"
-        type="submit">
+    <section id="customerContainer">
+      <div class="loading">Loading customers...</div>
+    </section>
 
-        Save Customer
+  </main>
 
-      </button>
+  <!-- CUSTOMER MODAL -->
 
-    </form>
+  <div class="modal-backdrop" id="modalBackdrop">
 
-  </div>
+    <div class="modal">
 
-</div>
+      <div class="modal-header">
 
+        <div class="modal-title" id="modalTitle">
+          Customer Details
+        </div>
 
-<!-- =====================================================
-     DETAIL MODAL
-===================================================== -->
+        <button
+          type="button"
+          class="close-btn"
+          id="closeModalBtn"
+        >
+          ×
+        </button>
 
-<div
-  id="detailModal"
-  class="modal">
+      </div>
 
-  <div class="modal-box">
+      <div id="modalContent">
 
-    <div class="modal-head">
+        <form id="customerForm">
 
-      <h2>
-        Customer Details
-      </h2>
+          <input type="hidden" id="editCustomerId">
 
-      <button
-        id="closeDetail"
-        class="close-btn">
-        ×
-      </button>
+          <div class="form-grid">
+
+            <div class="form-field">
+              <label>Customer Name</label>
+              <input
+                type="text"
+                id="customerName"
+                class="form-input"
+                required
+              >
+            </div>
+
+            <div class="form-field">
+              <label>Mobile Number</label>
+              <input
+                type="tel"
+                id="customerMobile"
+                class="form-input"
+                required
+              >
+            </div>
+
+            <div class="form-field">
+              <label>Address</label>
+              <textarea
+                id="customerAddress"
+                class="form-textarea"
+              ></textarea>
+            </div>
+
+            <div class="form-field">
+              <label>Device Brand</label>
+              <input
+                type="text"
+                id="deviceBrand"
+                class="form-input"
+              >
+            </div>
+
+            <div class="form-field">
+              <label>Device Model</label>
+              <input
+                type="text"
+                id="deviceModel"
+                class="form-input"
+              >
+            </div>
+
+            <div class="form-field">
+              <label>Screen Size</label>
+              <input
+                type="text"
+                id="screenSize"
+                class="form-input"
+                placeholder="Example: 43"
+              >
+            </div>
+
+            <div class="form-field">
+              <label>Serial Number</label>
+              <input
+                type="text"
+                id="serialNumber"
+                class="form-input"
+              >
+            </div>
+
+            <div class="protected-panel" id="protectedPanel">
+
+              <div class="protected-title">
+                🛡️ Customer Protection
+              </div>
+
+              <div class="protected-text" id="protectedText">
+                This customer is not currently protected by a retailer.
+              </div>
+
+            </div>
+
+            <div class="form-field" id="retailerField">
+
+              <label>Original Retailer</label>
+
+              <select
+                id="originalRetailerId"
+                class="form-select"
+              >
+                <option value="">-- No Retailer --</option>
+              </select>
+
+            </div>
+
+            <div class="warning-panel" id="duplicateWarning">
+              ⚠️ Possible duplicate customer detected.
+              Please verify mobile number, address, device and serial number
+              before saving.
+            </div>
+
+          </div>
+
+        </form>
+
+      </div>
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="modal-btn cancel-btn"
+          id="cancelModalBtn"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          class="modal-btn save-btn"
+          id="saveCustomerBtn"
+        >
+          Save Customer
+        </button>
+
+      </div>
 
     </div>
 
-    <div id="detailContent"></div>
+  </div>
+
+  <!-- MORE MENU -->
+
+  <div class="more-panel" id="morePanel">
+
+    <button type="button" data-page="../admin/service-requests.html">
+      📝 Service Requests
+    </button>
+
+    <button type="button" data-page="../admin/jobs.html">
+      🔧 Jobs
+    </button>
+
+    <button type="button" data-page="../admin/reports.html">
+      📊 Reports
+    </button>
 
   </div>
 
-</div>
+  <!-- BOTTOM NAV -->
 
+  <nav class="bottom-nav">
 
-<script
-  type="module"
-  src="../js/customers.js">
-</script>
+    <button
+      type="button"
+      class="nav-item"
+      data-page="../admin/dashboard.html"
+    >
+      <span>⌂</span>
+      <span>Dashboard</span>
+    </button>
+
+    <button
+      type="button"
+      class="nav-item"
+      data-page="../admin/service-requests.html"
+    >
+      <span>📝</span>
+      <span>Requests</span>
+    </button>
+
+    <button
+      type="button"
+      class="nav-item active"
+    >
+      <span>👥</span>
+      <span>Customers</span>
+    </button>
+
+    <button
+      type="button"
+      class="nav-item"
+      id="moreNavBtn"
+    >
+      <span>•••</span>
+      <span>More</span>
+    </button>
+
+  </nav>
+
+  <!-- ONLY JS FILE -->
+  <script type="module" src="../js/customers.js"></script>
 
 </body>
 </html>
