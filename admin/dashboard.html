@@ -1,933 +1,810 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta charset="UTF-8">
+  <title>REPARO V1 - Admin Dashboard</title>
 
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1.0"
->
+  <style>
+    :root {
+      --pink: #f9547c;
+      --yellow: #ffe32b;
+      --blue: #08aee0;
+      --navy: #172033;
+      --muted: #737987;
+      --bg: #f6f7fb;
+      --border: #e5e7eb;
+      --green: #18a558;
+      --red: #dc3545;
+    }
 
-<title>REPARO — Admin Dashboard</title>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-<link
-  rel="stylesheet"
-  href="../css/reparo.css"
->
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--navy);
+      font-family: Arial, Helvetica, sans-serif;
+      padding-bottom: 88px;
+    }
 
-<style>
+    button {
+      font: inherit;
+      cursor: pointer;
+    }
 
-.dashboard-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px;
-  margin-bottom:20px;
-}
+    /* HEADER */
 
-.quick-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px;
-}
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      padding: 15px 18px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
 
-.quick-card{
-  border:0;
-  background:#fff;
-  border-radius:20px;
-  padding:18px;
-  text-align:left;
-  box-shadow:var(--reparo-shadow);
-  cursor:pointer;
-}
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-.quick-icon{
-  font-size:24px;
-  margin-bottom:10px;
-}
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 23px;
+      font-weight: 900;
+    }
 
-.quick-title{
-  font-weight:900;
-}
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: var(--yellow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 900;
+    }
 
-.quick-text{
-  margin-top:5px;
-  color:var(--reparo-muted);
-  font-size:12px;
-}
+    .logout {
+      border: 0;
+      background: #f1f3f6;
+      color: var(--navy);
+      border-radius: 22px;
+      padding: 10px 17px;
+      font-size: 13px;
+      font-weight: 800;
+    }
 
-.job-item{
-  background:#fff;
-  border-radius:18px;
-  padding:16px;
-  margin-bottom:10px;
-  box-shadow:var(--reparo-shadow);
-}
+    /* MAIN */
 
-.job-top{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-}
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 22px 16px 30px;
+    }
 
-.job-id{
-  color:var(--reparo-muted);
-  font-size:12px;
-  margin-top:6px;
-}
+    /* HERO */
 
-.job-status{
-  display:inline-block;
-  padding:6px 9px;
-  border-radius:10px;
-  font-size:11px;
-  font-weight:800;
-  background:#E0F7FC;
-  color:#087C99;
-}
+    .hero {
+      background: linear-gradient(
+        135deg,
+        #ffe92f,
+        #ffe878
+      );
+      border-radius: 28px;
+      padding: 32px 34px;
+      margin-bottom: 22px;
+    }
 
-.empty{
-  background:#fff;
-  border-radius:18px;
-  padding:25px;
-  text-align:center;
-  color:var(--reparo-muted);
-}
+    .hero h1 {
+      margin: 0;
+      font-size: 31px;
+      line-height: 1.15;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
 
-</style>
+    .hero p {
+      margin: 12px 0 0;
+      font-size: 17px;
+      line-height: 1.35;
+      color: #3e424c;
+      max-width: 430px;
+    }
 
+    /* STATS */
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 27px;
+      padding: 26px 34px;
+      min-height: 150px;
+      box-shadow:
+        0 7px 22px rgba(15, 23, 42, .045);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 16px;
+      margin-bottom: 22px;
+    }
+
+    .stat-value {
+      font-size: 42px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .stat-card.jobs .stat-value {
+      color: var(--blue);
+    }
+
+    /* QUICK ACTIONS */
+
+    .section-title {
+      margin: 0 0 9px;
+      font-size: 25px;
+      font-weight: 400;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .quick-card {
+      background: #fff;
+      border-radius: 25px;
+      padding: 28px 34px;
+      min-height: 170px;
+      text-decoration: none;
+      color: var(--navy);
+      box-shadow:
+        0 7px 22px rgba(15, 23, 42, .045);
+    }
+
+    .quick-icon {
+      font-size: 32px;
+      margin-bottom: 19px;
+    }
+
+    .quick-title {
+      font-size: 20px;
+      font-weight: 900;
+      margin-bottom: 7px;
+    }
+
+    .quick-text {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .quick-card.requests .quick-icon {
+      color: var(--blue);
+    }
+
+    .quick-card.jobs .quick-icon {
+      color: var(--blue);
+    }
+
+    .quick-card.products .quick-icon {
+      color: var(--pink);
+    }
+
+    .quick-card.retailers .quick-icon {
+      color: var(--green);
+    }
+
+    /* ERROR */
+
+    .message {
+      display: none;
+      border-radius: 15px;
+      padding: 13px 15px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    /* MORE PANEL */
+
+    .more-panel {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 76px;
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      padding: 20px 16px 18px;
+      box-shadow: 0 -12px 35px rgba(15,23,42,.14);
+      z-index: 45;
+    }
+
+    .more-panel.show {
+      display: block;
+    }
+
+    .more-title {
+      font-size: 19px;
+      font-weight: 900;
+      margin: 0 0 14px;
+    }
+
+    .more-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 9px;
+    }
+
+    .more-item {
+      text-decoration: none;
+      color: var(--navy);
+      background: #f7f8fa;
+      border-radius: 15px;
+      padding: 12px 7px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .more-icon {
+      display: block;
+      font-size: 21px;
+      margin-bottom: 5px;
+    }
+
+    .more-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.28);
+      z-index: 40;
+    }
+
+    .more-overlay.show {
+      display: block;
+    }
+
+    /* BOTTOM NAV */
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 76px;
+      background: #fff;
+      border-top: 1px solid #e7e7e7;
+      display: flex;
+      z-index: 60;
+    }
+
+    .nav-item {
+      flex: 1;
+      min-width: 0;
+      text-decoration: none;
+      color: #737987;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .nav-item.active {
+      color: var(--blue);
+    }
+
+    .nav-icon {
+      font-size: 21px;
+      line-height: 1;
+    }
+
+    @media (max-width: 520px) {
+
+      main {
+        padding: 22px 16px 30px;
+      }
+
+      .hero {
+        padding: 28px 34px;
+      }
+
+      .hero h1 {
+        font-size: 30px;
+      }
+
+      .hero p {
+        font-size: 17px;
+      }
+
+      .stat-card {
+        padding: 25px 34px;
+        min-height: 150px;
+      }
+
+      .quick-card {
+        padding: 27px 34px;
+      }
+
+      .more-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 380px) {
+
+      .brand {
+        font-size: 20px;
+      }
+
+      .logo {
+        width: 38px;
+        height: 38px;
+      }
+
+      .logout {
+        padding: 9px 13px;
+      }
+
+      .hero {
+        padding: 25px;
+      }
+
+      .stat-card,
+      .quick-card {
+        padding: 22px;
+      }
+
+      .more-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
 </head>
-
 
 <body>
 
+  <!-- HEADER -->
 
-<!-- HEADER -->
+  <header class="topbar">
 
-<header class="topbar">
+    <div class="brand-row">
 
-  <div class="brand">
+      <div class="brand">
 
-    <div class="brand-icon">
-      R
-    </div>
+        <div class="logo">
+          R
+        </div>
 
-    <div>
-      REPARO
-    </div>
-
-  </div>
-
-
-  <button
-    id="logoutBtn"
-    class="btn"
-    style="
-      padding:9px 13px;
-      background:#F3F4F6;
-    "
-  >
-    Logout
-  </button>
-
-</header>
-
-
-
-<main class="container">
-
-
-<!-- HERO -->
-
-<section class="hero">
-
-  <h2 id="welcome">
-    Admin Dashboard
-  </h2>
-
-  <p>
-    Manage your REPARO service network.
-  </p>
-
-</section>
-
-
-
-<!-- STATS -->
-
-<section class="dashboard-grid">
-
-
-  <div class="card">
-
-    <div class="label">
-      Retailers
-    </div>
-
-    <div
-      id="retailerCount"
-      class="stat-number"
-    >
-      0
-    </div>
-
-  </div>
-
-
-  <div class="card">
-
-    <div class="label">
-      Technicians
-    </div>
-
-    <div
-      id="technicianCount"
-      class="stat-number"
-    >
-      0
-    </div>
-
-  </div>
-
-
-  <div class="card">
-
-    <div class="label">
-      Customers
-    </div>
-
-    <div
-      id="customerCount"
-      class="stat-number"
-    >
-      0
-    </div>
-
-  </div>
-
-
-  <div class="card">
-
-    <div class="label">
-      Active Jobs
-    </div>
-
-    <div
-      id="jobCount"
-      class="stat-number"
-    >
-      0
-    </div>
-
-  </div>
-
-</section>
-
-
-
-<!-- QUICK ACTIONS -->
-
-<div class="section-title">
-  Quick Actions
-</div>
-
-
-<section class="quick-grid">
-
-
-  <button
-    id="retailersBtn"
-    class="quick-card"
-  >
-
-    <div class="quick-icon">
-      🏪
-    </div>
-
-    <div class="quick-title">
-      Retailers
-    </div>
-
-    <div class="quick-text">
-      Manage service partners
-    </div>
-
-  </button>
-
-
-
-  <button
-    id="techniciansBtn"
-    class="quick-card"
-  >
-
-    <div class="quick-icon">
-      🔧
-    </div>
-
-    <div class="quick-title">
-      Technicians
-    </div>
-
-    <div class="quick-text">
-      Manage technicians
-    </div>
-
-  </button>
-
-
-
-  <button
-    id="customersBtn"
-    class="quick-card"
-  >
-
-    <div class="quick-icon">
-      👥
-    </div>
-
-    <div class="quick-title">
-      Customers
-    </div>
-
-    <div class="quick-text">
-      Customer database
-    </div>
-
-  </button>
-
-
-
-  <button
-    id="jobsBtn"
-    class="quick-card"
-  >
-
-    <div class="quick-icon">
-      🛠️
-    </div>
-
-    <div class="quick-title">
-      Service Jobs
-    </div>
-
-    <div class="quick-text">
-      Track repair work
-    </div>
-
-  </button>
-
-
-
-  <button
-    id="productsBtn"
-    class="quick-card"
-  >
-
-    <div class="quick-icon">
-      📦
-    </div>
-
-    <div class="quick-title">
-      Products
-    </div>
-
-    <div class="quick-text">
-      Parts & accessories
-    </div>
-
-  </button>
-
-
-
-  <button
-    id="paymentsBtn"
-    class="quick-card"
-  >
-
-    <div class="quick-icon">
-      ₹
-    </div>
-
-    <div class="quick-title">
-      Payments
-    </div>
-
-    <div class="quick-text">
-      Wallet & settlements
-    </div>
-
-  </button>
-
-</section>
-
-
-
-<!-- RECENT JOBS -->
-
-<div class="section-title">
-  Recent Service Jobs
-</div>
-
-
-<section id="jobsList">
-
-  <div class="empty">
-    Loading jobs...
-  </div>
-
-</section>
-
-
-</main>
-
-
-
-<!-- BOTTOM NAV -->
-
-<nav class="bottom-nav">
-
-  <button
-    id="homeBtn"
-    class="active"
-  >
-    ⌂<br>
-    Home
-  </button>
-
-
-  <button id="leadNav">
-    ＋<br>
-    Leads
-  </button>
-
-
-  <button id="jobNav">
-    🔧<br>
-    Jobs
-  </button>
-
-
-  <button id="earningNav">
-    ₹<br>
-    Earnings
-  </button>
-
-
-  <button id="moreNav">
-    ☰<br>
-    More
-  </button>
-
-</nav>
-
-
-
-<script type="module">
-
-import {
-  db,
-  auth
-} from "../js/firebase.js";
-
-
-import {
-  logout,
-  getUserProfile
-} from "../js/auth.js";
-
-
-import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-
-
-import {
-  collection,
-  getDocs,
-  query,
-  limit
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-
-
-/* =========================
-   AUTH CHECK
-========================= */
-
-onAuthStateChanged(
-  auth,
-  async user => {
-
-    if(!user){
-
-      window.location.href =
-        "../index.html";
-
-      return;
-    }
-
-
-    try{
-
-      const profile =
-        await getUserProfile(
-          user.uid
-        );
-
-
-      if(
-        profile.role !== "admin" ||
-        profile.active !== true
-      ){
-
-        window.location.href =
-          "../index.html";
-
-        return;
-      }
-
-
-      document.getElementById(
-        "welcome"
-      ).textContent =
-        "Hello, " +
-        (profile.name || "Admin");
-
-
-      await loadDashboard();
-
-
-    }catch(error){
-
-      console.error(error);
-
-      window.location.href =
-        "../index.html";
-
-    }
-
-  }
-);
-
-
-
-/* =========================
-   DASHBOARD DATA
-========================= */
-
-async function loadDashboard(){
-
-  try{
-
-    const [
-      retailers,
-      technicians,
-      customers,
-      jobs
-    ] = await Promise.all([
-
-      getDocs(
-        query(
-          collection(db,"retailers"),
-          limit(500)
-        )
-      ),
-
-      getDocs(
-        query(
-          collection(db,"users"),
-          limit(500)
-        )
-      ),
-
-      getDocs(
-        query(
-          collection(db,"customers"),
-          limit(500)
-        )
-      ),
-
-      getDocs(
-        query(
-          collection(db,"jobs"),
-          limit(100)
-        )
-      )
-
-    ]);
-
-
-    document.getElementById(
-      "retailerCount"
-    ).textContent =
-      retailers.size;
-
-
-    const technicianCount =
-      technicians.docs.filter(
-        item =>
-          item.data().role ===
-          "technician"
-      ).length;
-
-
-    document.getElementById(
-      "technicianCount"
-    ).textContent =
-      technicianCount;
-
-
-    document.getElementById(
-      "customerCount"
-    ).textContent =
-      customers.size;
-
-
-    const jobData =
-      jobs.docs.map(
-        item => ({
-          id:item.id,
-          ...item.data()
-        })
-      );
-
-
-    const activeJobs =
-      jobData.filter(
-        job =>
-          ![
-            "completed",
-            "cancelled"
-          ].includes(
-            String(
-              job.status || ""
-            ).toLowerCase()
-          )
-      );
-
-
-    document.getElementById(
-      "jobCount"
-    ).textContent =
-      activeJobs.length;
-
-
-    renderJobs(jobData);
-
-
-  }catch(error){
-
-    console.error(
-      "Dashboard error:",
-      error
-    );
-
-
-    document.getElementById(
-      "jobsList"
-    ).innerHTML = `
-
-      <div class="empty">
-
-        Dashboard data load
-        કરવામાં સમસ્યા આવી.
+        <span>
+          REPARO
+        </span>
 
       </div>
 
-    `;
 
-  }
+      <button
+        id="logoutBtn"
+        class="logout"
+        type="button"
+      >
+        Logout
+      </button>
 
-}
+    </div>
 
-
-
-/* =========================
-   JOB LIST
-========================= */
-
-function renderJobs(jobs){
-
-  const list =
-    document.getElementById(
-      "jobsList"
-    );
+  </header>
 
 
-  if(!jobs.length){
+  <main>
 
-    list.innerHTML = `
+    <div
+      id="errorBox"
+      class="message error"
+    ></div>
 
-      <div class="empty">
 
-        હજુ કોઈ service job નથી.
+    <!-- HERO -->
+
+    <section class="hero">
+
+      <h1 id="welcomeText">
+        Hello, BHAVIN
+      </h1>
+
+      <p>
+        Manage your REPARO service network.
+      </p>
+
+    </section>
+
+
+    <!-- STATS -->
+
+    <section class="stats">
+
+      <div class="stat-card">
+
+        <div class="stat-label">
+          Retailers
+        </div>
+
+        <div
+          id="retailerCount"
+          class="stat-value"
+        >
+          0
+        </div>
 
       </div>
 
-    `;
 
-    return;
-  }
+      <div class="stat-card">
 
-
-  list.innerHTML = "";
-
-
-  jobs
-    .slice(0,10)
-    .forEach(job => {
-
-      const div =
-        document.createElement(
-          "div"
-        );
-
-
-      div.className =
-        "job-item";
-
-
-      div.innerHTML = `
-
-        <div class="job-top">
-
-          <strong>
-
-            ${escapeHtml(
-              job.customerName ||
-              "Customer"
-            )}
-
-          </strong>
-
-
-          <span class="job-status">
-
-            ${escapeHtml(
-              String(
-                job.status ||
-                "Pending"
-              )
-            )}
-
-          </span>
-
+        <div class="stat-label">
+          Technicians
         </div>
 
-
-        <div class="job-id">
-
-          Job ID:
-          ${escapeHtml(job.id)}
-
+        <div
+          id="technicianCount"
+          class="stat-value"
+        >
+          0
         </div>
 
-      `;
+      </div>
 
 
-      list.appendChild(div);
+      <div class="stat-card">
 
-    });
+        <div class="stat-label">
+          Customers
+        </div>
 
-}
+        <div
+          id="customerCount"
+          class="stat-value"
+        >
+          0
+        </div>
 
+      </div>
 
 
-/* =========================
-   NAVIGATION
-========================= */
+      <div class="stat-card jobs">
 
-document
-  .getElementById("retailersBtn")
-  .addEventListener(
-    "click",
-    () => {
+        <div class="stat-label">
+          Active Jobs
+        </div>
 
-      window.location.href =
-        "./retailers.html";
+        <div
+          id="activeJobCount"
+          class="stat-value"
+        >
+          0
+        </div>
 
-    }
-  );
+      </div>
 
+    </section>
 
-document
-  .getElementById("techniciansBtn")
-  .addEventListener(
-    "click",
-    () => {
 
-      window.location.href =
-        "./technicians.html";
+    <!-- QUICK ACTIONS -->
 
-    }
-  );
+    <h2 class="section-title">
+      Quick Actions
+    </h2>
 
 
-document
-  .getElementById("customersBtn")
-  .addEventListener(
-    "click",
-    () => {
+    <section class="quick-grid">
 
-      window.location.href =
-        "./customers.html";
+      <a
+        class="quick-card retailers"
+        href="./retailers.html"
+      >
 
-    }
-  );
+        <div class="quick-icon">
+          🏪
+        </div>
 
+        <div class="quick-title">
+          Retailers
+        </div>
 
-document
-  .getElementById("jobsBtn")
-  .addEventListener(
-    "click",
-    () => {
+        <div class="quick-text">
+          Manage service partners
+        </div>
 
-      window.location.href =
-        "./jobs.html";
+      </a>
 
-    }
-  );
 
+      <a
+        class="quick-card jobs"
+        href="./technicians.html"
+      >
 
-document
-  .getElementById("productsBtn")
-  .addEventListener(
-    "click",
-    () => {
+        <div class="quick-icon">
+          🔧
+        </div>
 
-      window.location.href =
-        "./products.html";
+        <div class="quick-title">
+          Technicians
+        </div>
 
-    }
-  );
+        <div class="quick-text">
+          Manage technicians
+        </div>
 
+      </a>
 
-document
-  .getElementById("paymentsBtn")
-  .addEventListener(
-    "click",
-    () => {
 
-      window.location.href =
-        "./payments.html";
+      <a
+        class="quick-card requests"
+        href="./service-requests.html"
+      >
 
-    }
-  );
+        <div class="quick-icon">
+          📋
+        </div>
 
+        <div class="quick-title">
+          Service Requests
+        </div>
 
-/* Bottom navigation */
+        <div class="quick-text">
+          Manage retailer requests
+        </div>
 
-document
-  .getElementById("homeBtn")
-  .addEventListener(
-    "click",
-    () => {
+      </a>
 
-      window.location.href =
-        "./dashboard.html";
 
-    }
-  );
+      <a
+        class="quick-card jobs"
+        href="./jobs.html"
+      >
 
+        <div class="quick-icon">
+          🛠️
+        </div>
 
-document
-  .getElementById("leadNav")
-  .addEventListener(
-    "click",
-    () => {
+        <div class="quick-title">
+          Jobs
+        </div>
 
-      window.location.href =
-        "./leads.html";
+        <div class="quick-text">
+          Assign and track service jobs
+        </div>
 
-    }
-  );
+      </a>
 
 
-document
-  .getElementById("jobNav")
-  .addEventListener(
-    "click",
-    () => {
+      <a
+        class="quick-card products"
+        href="./products.html"
+      >
 
-      window.location.href =
-        "./jobs.html";
+        <div class="quick-icon">
+          📦
+        </div>
 
-    }
-  );
+        <div class="quick-title">
+          Products
+        </div>
 
+        <div class="quick-text">
+          Products, parts & inventory
+        </div>
 
-document
-  .getElementById("earningNav")
-  .addEventListener(
-    "click",
-    () => {
+      </a>
 
-      window.location.href =
-        "./payments.html";
 
-    }
-  );
+      <a
+        class="quick-card"
+        href="./customers.html"
+      >
 
+        <div class="quick-icon">
+          👤
+        </div>
 
+        <div class="quick-title">
+          Customers
+        </div>
 
-/* =========================
-   LOGOUT
-========================= */
+        <div class="quick-text">
+          Manage protected customers
+        </div>
 
-document
-  .getElementById("logoutBtn")
-  .addEventListener(
-    "click",
-    async () => {
+      </a>
 
-      await logout();
+    </section>
 
-      window.location.href =
-        "../index.html";
+  </main>
 
-    }
-  );
 
+  <!-- MORE OVERLAY -->
 
+  <div
+    id="moreOverlay"
+    class="more-overlay"
+  ></div>
 
-/* =========================
-   SAFE HTML
-========================= */
 
-function escapeHtml(value){
+  <!-- MORE PANEL -->
 
-  return String(value)
+  <section
+    id="morePanel"
+    class="more-panel"
+  >
 
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
+    <h3 class="more-title">
+      More
+    </h3>
 
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
 
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
+    <div class="more-grid">
 
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
+      <a
+        class="more-item"
+        href="./retailers.html"
+      >
+        <span class="more-icon">🏪</span>
+        Retailers
+      </a>
 
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
 
-}
+      <a
+        class="more-item"
+        href="./technicians.html"
+      >
+        <span class="more-icon">🔧</span>
+        Technicians
+      </a>
 
-</script>
+
+      <a
+        class="more-item"
+        href="./customers.html"
+      >
+        <span class="more-icon">👤</span>
+        Customers
+      </a>
+
+
+      <a
+        class="more-item"
+        href="./earnings.html"
+      >
+        <span class="more-icon">₹</span>
+        Earnings
+      </a>
+
+
+      <a
+        class="more-item"
+        href="./warranty.html"
+      >
+        <span class="more-icon">🛡️</span>
+        Warranty
+      </a>
+
+
+      <a
+        class="more-item"
+        href="./schemes.html"
+      >
+        <span class="more-icon">🎁</span>
+        Schemes
+      </a>
+
+
+      <a
+        class="more-item"
+        href="./payments.html"
+      >
+        <span class="more-icon">💳</span>
+        Payments
+      </a>
+
+
+      <a
+        class="more-item"
+        href="./reports.html"
+      >
+        <span class="more-icon">📊</span>
+        Reports
+      </a>
+
+    </div>
+
+  </section>
+
+
+  <!-- FINAL ADMIN BOTTOM NAV -->
+
+  <nav class="bottom-nav">
+
+    <a
+      href="./dashboard.html"
+      class="nav-item active"
+    >
+      <span class="nav-icon">⌂</span>
+      <span>Home</span>
+    </a>
+
+
+    <a
+      href="./service-requests.html"
+      class="nav-item"
+    >
+      <span class="nav-icon">＋</span>
+      <span>Requests</span>
+    </a>
+
+
+    <a
+      href="./jobs.html"
+      class="nav-item"
+    >
+      <span class="nav-icon">🔧</span>
+      <span>Jobs</span>
+    </a>
+
+
+    <a
+      href="./products.html"
+      class="nav-item"
+    >
+      <span class="nav-icon">📦</span>
+      <span>Products</span>
+    </a>
+
+
+    <button
+      id="moreNavBtn"
+      class="nav-item"
+      type="button"
+      style="border:0;background:#fff;"
+    >
+      <span class="nav-icon">☰</span>
+      <span>More</span>
+    </button>
+
+  </nav>
+
+
+  <script
+    type="module"
+    src="../js/admin.js"
+  ></script>
 
 </body>
 </html>
