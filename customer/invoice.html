@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Invoice | REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+
+  <style>
+    .invoice-page {
+      max-width: 650px;
+      margin: auto;
+      padding: 18px 14px 90px;
+    }
+
+    .header {
+      margin-bottom: 18px;
+    }
+
+    .header h1 {
+      margin: 5px 0;
+    }
+
+    .header p {
+      margin: 0;
+      color: #6B7280;
+      font-size: 13px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #FFE32B;
+      color: #111827;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 6px 22px rgba(17,24,39,.07);
+    }
+
+    .card h2 {
+      margin: 0 0 13px;
+      font-size: 17px;
+    }
+
+    .line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #EEF0F4;
+      font-size: 13px;
+    }
+
+    .line:last-child {
+      border-bottom: 0;
+    }
+
+    .line span {
+      color: #6B7280;
+    }
+
+    .line strong {
+      color: #111827;
+      text-align: right;
+    }
+
+    .total {
+      margin-top: 12px;
+      background: #FFF4CC;
+      border-radius: 15px;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .total span {
+      color: #705600;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .total strong {
+      color: #111827;
+      font-size: 23px;
+    }
+
+    .warranty {
+      background: #E8F8F0;
+      color: #16734B;
+      border-radius: 15px;
+      padding: 14px;
+      line-height: 1.6;
+    }
+
+    .warranty strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+
+    .payment {
+      background: #F6F8FB;
+      border-radius: 15px;
+      padding: 13px;
+    }
+
+    .paid {
+      color: #16734B;
+      font-weight: 800;
+    }
+
+    .pending {
+      color: #806500;
+      font-weight: 800;
+    }
+
+    .loading,
+    .empty {
+      text-align: center;
+      padding: 35px 15px;
+      color: #6B7280;
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="invoice-page">
+
+  <header class="header">
+
+    <span class="badge">
+      REPARO SERVICE
+    </span>
+
+    <h1>Service Invoice</h1>
+
+    <p>
+      Customer invoice
+    </p>
+
+  </header>
+
+
+  <div id="loading" class="loading">
+    Loading invoice...
+  </div>
+
+
+  <div
+    id="content"
+    style="display:none;">
+
+    <!-- CUSTOMER -->
+
+    <section class="card">
+
+      <h2>
+        Customer
+      </h2>
+
+      <div class="line">
+        <span>Name</span>
+        <strong id="customerName">-</strong>
+      </div>
+
+      <div class="line">
+        <span>Mobile</span>
+        <strong id="customerMobile">-</strong>
+      </div>
+
+      <div class="line">
+        <span>Invoice</span>
+        <strong id="invoiceNumber">-</strong>
+      </div>
+
+      <div class="line">
+        <span>Date</span>
+        <strong id="invoiceDate">-</strong>
+      </div>
+
+    </section>
+
+
+    <!-- DEVICE -->
+
+    <section class="card">
+
+      <h2>
+        Device
+      </h2>
+
+      <div class="line">
+        <span>Device</span>
+        <strong id="device">-</strong>
+      </div>
+
+      <div class="line">
+        <span>Serial Number</span>
+        <strong id="serial">-</strong>
+      </div>
+
+      <div class="line">
+        <span>Service</span>
+        <strong id="service">-</strong>
+      </div>
+
+    </section>
+
+
+    <!-- BILL -->
+
+    <section class="card">
+
+      <h2>
+        Bill Details
+      </h2>
+
+      <div class="line">
+        <span>Service / Labour</span>
+        <strong id="labour">₹0</strong>
+      </div>
+
+      <div class="line">
+        <span>Parts / Material</span>
+        <strong id="parts">₹0</strong>
+      </div>
+
+      <div class="line">
+        <span>Visit / Installation</span>
+        <strong id="visit">₹0</strong>
+      </div>
+
+      <div class="line">
+        <span>Discount</span>
+        <strong id="discount">₹0</strong>
+      </div>
+
+
+      <div class="total">
+
+        <span>
+          TOTAL
+        </span>
+
+        <strong id="total">
+          ₹0
+        </strong>
+
+      </div>
+
+    </section>
+
+
+    <!-- PAYMENT -->
+
+    <section class="card">
+
+      <h2>
+        Payment
+      </h2>
+
+      <div class="payment">
+
+        <div class="line">
+          <span>Status</span>
+
+          <strong
+            id="paymentStatus">
+            -
+          </strong>
+        </div>
+
+        <div class="line">
+          <span>Method</span>
+
+          <strong
+            id="paymentMethod">
+            -
+          </strong>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- WARRANTY -->
+
+    <section class="card">
+
+      <h2>
+        Service Warranty
+      </h2>
+
+      <div class="warranty">
+
+        <strong id="warrantyTitle">
+          Warranty
+        </strong>
+
+        <div>
+          Start:
+          <span id="warrantyStart">
+            -
+          </span>
+        </div>
+
+        <div>
+          End:
+          <span id="warrantyEnd">
+            -
+          </span>
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+</main>
+
+
+<script
+  type="module"
+  src="../js/customer-invoice.js">
+</script>
+
+</body>
+</html>
