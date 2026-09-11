@@ -4,266 +4,251 @@
   <meta charset="UTF-8">
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0">
+    content="width=device-width, initial-scale=1.0"
+  >
 
-  <title>Customer Login | REPARO V1</title>
-
-  <link
-    rel="stylesheet"
-    href="../css/reparo.css">
+  <title>Customer Login | REPARO</title>
 
   <style>
     body {
       margin: 0;
       min-height: 100vh;
-      background: #F7F8FA;
-    }
-
-    .login-page {
-      min-height: 100vh;
+      background: #f7f8fc;
+      color: #172033;
+      font-family: Arial, sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px 15px;
+      padding: 20px;
       box-sizing: border-box;
     }
 
-    .login-wrap {
+    .page {
       width: 100%;
-      max-width: 420px;
+      max-width: 430px;
     }
 
-    .brand {
+    .logo {
       text-align: center;
-      margin-bottom: 22px;
-    }
-
-    .brand-mark {
-      width: 68px;
-      height: 68px;
-      margin: auto;
-      border-radius: 20px;
-      background: #FFE32B;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #111827;
-      font-size: 25px;
+      font-size: 31px;
       font-weight: 900;
-      box-shadow:
-        0 8px 22px rgba(17,24,39,.10);
+      color: #d82f58;
+      margin-bottom: 5px;
     }
 
-    .brand h1 {
-      margin: 12px 0 4px;
-      color: #111827;
-      font-size: 25px;
-    }
-
-    .brand p {
-      margin: 0;
-      color: #6B7280;
-      font-size: 13px;
+    .tagline {
+      text-align: center;
+      color: #7b8494;
+      font-size: 12px;
+      margin-bottom: 22px;
     }
 
     .card {
       background: #fff;
       border-radius: 22px;
-      padding: 20px;
-      box-shadow:
-        0 8px 28px rgba(17,24,39,.08);
+      padding: 22px;
+      box-shadow: 0 8px 28px rgba(20,30,60,.08);
     }
 
-    .card h2 {
-      margin: 0 0 5px;
-      color: #111827;
-      font-size: 19px;
+    .title {
+      margin: 0;
+      font-size: 21px;
+      font-weight: 900;
     }
 
-    .subtext {
-      margin: 0 0 18px;
-      color: #6B7280;
+    .subtitle {
+      margin: 6px 0 20px;
+      color: #7b8494;
       font-size: 12px;
+      line-height: 1.5;
     }
 
-    .field {
+    .message {
+      display: none;
+      padding: 12px;
+      border-radius: 12px;
       margin-bottom: 13px;
+      font-size: 12px;
+      line-height: 1.5;
+      font-weight: 700;
     }
 
-    .field label {
+    .error {
+      background: #fff0f1;
+      color: #c62845;
+    }
+
+    .success {
+      background: #e8f8ef;
+      color: #187a48;
+    }
+
+    label {
       display: block;
-      color: #374151;
-      font-size: 11px;
-      font-weight: 800;
       margin-bottom: 6px;
+      color: #4e586b;
+      font-size: 12px;
+      font-weight: 700;
     }
 
-    .field input {
+    input {
       width: 100%;
       box-sizing: border-box;
-      border: 1px solid #E5E7EB;
-      background: #F9FAFB;
+      border: 1px solid #e1e5eb;
+      background: #fafbfc;
       border-radius: 13px;
       padding: 13px;
-      font-size: 14px;
+      margin-bottom: 14px;
       outline: none;
+      font-family: inherit;
+      font-size: 13px;
     }
 
-    .field input:focus {
-      border-color: #08AEE0;
+    input:focus {
+      border-color: #d82f58;
       background: #fff;
     }
 
     .login-btn {
       width: 100%;
       border: 0;
-      border-radius: 14px;
-      padding: 14px;
-      background: #F9547C;
+      background: #d82f58;
       color: #fff;
+      border-radius: 13px;
+      padding: 14px;
       font-size: 14px;
-      font-weight: 800;
+      font-weight: 900;
       cursor: pointer;
-      margin-top: 5px;
     }
 
     .login-btn:disabled {
-      opacity: .65;
+      opacity: .6;
       cursor: not-allowed;
     }
 
-    .message {
-      display: none;
-      margin-top: 13px;
-      padding: 11px;
-      border-radius: 12px;
+    .back-btn {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #7b8494;
+      margin-top: 15px;
+      padding: 9px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .info {
+      margin-top: 18px;
+      padding: 12px;
+      background: #e9f1ff;
+      color: #2863c7;
+      border-radius: 13px;
       font-size: 11px;
       line-height: 1.5;
-    }
-
-    .message.error {
-      display: block;
-      background: #FFE8EC;
-      color: #B42345;
-    }
-
-    .message.success {
-      display: block;
-      background: #E8F8F0;
-      color: #16734B;
-    }
-
-    .footer-note {
-      text-align: center;
-      margin-top: 15px;
-      color: #9CA3AF;
-      font-size: 10px;
     }
   </style>
 </head>
 
 <body>
 
-  <main class="login-page">
+  <main class="page">
 
-    <div class="login-wrap">
-
-      <div class="brand">
-
-        <div class="brand-mark">
-          R
-        </div>
-
-        <h1>
-          REPARO
-        </h1>
-
-        <p>
-          Electronics Service
-        </p>
-
-      </div>
-
-
-      <section class="card">
-
-        <h2>
-          Customer Login
-        </h2>
-
-        <p class="subtext">
-          Login to track your service, estimate,
-          invoice and warranty.
-        </p>
-
-
-        <form id="loginForm">
-
-          <div class="field">
-
-            <label>
-              EMAIL
-            </label>
-
-            <input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              autocomplete="email"
-              required>
-
-          </div>
-
-
-          <div class="field">
-
-            <label>
-              PASSWORD
-            </label>
-
-            <input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              autocomplete="current-password"
-              required>
-
-          </div>
-
-
-          <button
-            id="loginBtn"
-            class="login-btn"
-            type="submit">
-
-            Login
-
-          </button>
-
-        </form>
-
-
-        <div
-          id="message"
-          class="message">
-        </div>
-
-      </section>
-
-
-      <div class="footer-note">
-        Your service information is protected by REPARO.
-      </div>
-
+    <div class="logo">
+      REPARO
     </div>
+
+    <div class="tagline">
+      Electronics Service & Repair
+    </div>
+
+
+    <section class="card">
+
+      <h1 class="title">
+        Customer Login
+      </h1>
+
+      <p class="subtitle">
+        Login to track your service, approve estimates,
+        view invoices and check warranty information.
+      </p>
+
+
+      <div
+        id="errorBox"
+        class="message error"
+      ></div>
+
+
+      <div
+        id="successBox"
+        class="message success"
+      ></div>
+
+
+      <form id="loginForm">
+
+        <label for="email">
+          Email
+        </label>
+
+        <input
+          id="email"
+          type="email"
+          autocomplete="email"
+          placeholder="Enter your email"
+          required
+        />
+
+
+        <label for="password">
+          Password
+        </label>
+
+        <input
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Enter your password"
+          required
+        />
+
+
+        <button
+          id="loginBtn"
+          class="login-btn"
+          type="submit"
+        >
+          Login
+        </button>
+
+      </form>
+
+
+      <button
+        id="backBtn"
+        class="back-btn"
+        type="button"
+      >
+        ← Back to Main Login
+      </button>
+
+
+      <div class="info">
+        Use the email and password provided for your
+        REPARO customer account.
+      </div>
+
+    </section>
 
   </main>
 
 
   <script
     type="module"
-    src="../js/customer-login.js">
-  </script>
+    src="../js/customer-login.js"
+  ></script>
 
 </body>
 </html>
