@@ -4,445 +4,956 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Service Requests - REPARO V1</title>
-
-  <link rel="stylesheet" href="../css/reparo.css">
+  <title>REPARO V1 - Service Requests</title>
 
   <style>
-    .page-header {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      margin-bottom:18px;
+    :root {
+      --pink: #f9547c;
+      --yellow: #ffe32b;
+      --blue: #08aee0;
+      --navy: #172033;
+      --muted: #737987;
+      --bg: #f6f7fb;
+      --border: #e4e6eb;
+      --green: #18a558;
+      --red: #dc3545;
+      --orange: #f59e0b;
     }
 
-    .page-header h1 {
-      margin:0;
-      font-size:24px;
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .request-card {
-      background:#fff;
-      border-radius:20px;
-      padding:16px;
-      margin-bottom:12px;
-      box-shadow:0 8px 25px rgba(15,23,42,.06);
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--navy);
+      font-family: Arial, Helvetica, sans-serif;
+      padding-bottom: 82px;
     }
 
-    .request-top {
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:flex-start;
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
     }
 
-    .request-id {
-      font-weight:800;
-      color:#111827;
-      font-size:15px;
+    button {
+      cursor: pointer;
     }
 
-    .customer-name {
-      font-size:17px;
-      font-weight:800;
-      margin-top:5px;
+    .topbar {
+      background: #fff;
+      padding: 15px 18px;
+      border-bottom: 1px solid #eee;
+      position: sticky;
+      top: 0;
+      z-index: 20;
     }
 
-    .muted {
-      color:#6B7280;
-      font-size:13px;
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
-    .request-info {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      margin:14px 0;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 23px;
+      font-weight: 900;
     }
 
-    .info-box {
-      background:#F6F8FB;
-      border-radius:14px;
-      padding:10px;
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: var(--yellow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 22px;
     }
 
-    .info-label {
-      font-size:11px;
-      color:#6B7280;
-      margin-bottom:3px;
+    .logout {
+      border: 0;
+      border-radius: 22px;
+      background: #f1f3f6;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--navy);
     }
 
-    .info-value {
-      font-size:13px;
-      font-weight:700;
-      color:#111827;
-      word-break:break-word;
+    main {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 8px 0 25px;
     }
 
-    .status {
-      display:inline-flex;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:800;
+    .page-head {
+      padding: 0 0 24px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
     }
 
-    .status-new {
-      background:#E0F2FE;
-      color:#0369A1;
+    .page-title {
+      margin: 0;
+      font-size: 32px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -1px;
     }
 
-    .status-contacted {
-      background:#FEF3C7;
-      color:#92400E;
+    .page-subtitle {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 14px;
     }
 
-    .status-accepted {
-      background:#DCFCE7;
-      color:#166534;
+    .new-btn {
+      border: 0;
+      background: var(--blue);
+      color: #fff;
+      border-radius: 18px;
+      padding: 14px 17px;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: 0 8px 18px rgba(8,174,224,.18);
     }
 
-    .status-assigned {
-      background:#EDE9FE;
-      color:#6D28D9;
+    .message {
+      display: none;
+      margin: 0 16px 15px;
+      padding: 13px 15px;
+      border-radius: 15px;
+      font-size: 13px;
+      font-weight: 700;
     }
 
-    .status-converted {
-      background:#D1FAE5;
-      color:#065F46;
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
     }
 
-    .status-cancelled {
-      background:#FEE2E2;
-      color:#991B1B;
+    .success {
+      background: #dcfce7;
+      color: #166534;
     }
 
-    .actions {
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-
-    .btn-small {
-      border:0;
-      border-radius:12px;
-      padding:9px 12px;
-      font-size:12px;
-      font-weight:800;
-      cursor:pointer;
-    }
-
-    .btn-primary {
-      background:#08AEE0;
-      color:white;
-    }
-
-    .btn-yellow {
-      background:#FFE32B;
-      color:#111827;
-    }
-
-    .btn-danger {
-      background:#FEE2E2;
-      color:#991B1B;
-    }
-
-    .filters {
-      display:grid;
-      grid-template-columns:1fr 160px;
-      gap:10px;
-      margin-bottom:18px;
-    }
-
-    .filters input,
-    .filters select,
-    .modal input,
-    .modal select,
-    .modal textarea {
-      width:100%;
-      box-sizing:border-box;
-      border:1px solid #E5E7EB;
-      border-radius:14px;
-      padding:12px;
-      background:#fff;
-      color:#111827;
-      outline:none;
-    }
-
-    .modal textarea {
-      min-height:80px;
-      resize:vertical;
-    }
-
-    .modal-backdrop {
-      position:fixed;
-      inset:0;
-      background:rgba(15,23,42,.55);
-      display:none;
-      align-items:flex-end;
-      justify-content:center;
-      z-index:9999;
-    }
-
-    .modal-backdrop.show {
-      display:flex;
-    }
-
-    .modal {
-      width:100%;
-      max-width:560px;
-      max-height:92vh;
-      overflow:auto;
-      background:#fff;
-      border-radius:24px 24px 0 0;
-      padding:20px;
-      box-sizing:border-box;
-    }
-
-    .modal h2 {
-      margin-top:0;
-    }
-
-    .form-grid {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-
-    .full {
-      grid-column:1 / -1;
-    }
-
-    .form-group {
-      margin-bottom:12px;
-    }
-
-    .form-group label {
-      display:block;
-      font-size:12px;
-      font-weight:700;
-      margin-bottom:6px;
-      color:#374151;
-    }
-
-    .modal-actions {
-      display:flex;
-      gap:10px;
-      margin-top:16px;
-    }
-
-    .modal-actions button {
-      flex:1;
-    }
-
-    .empty {
-      text-align:center;
-      padding:45px 20px;
-      color:#6B7280;
-      background:#fff;
-      border-radius:20px;
-    }
-
-    .summary-grid {
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:10px;
-      margin-bottom:18px;
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
     }
 
     .summary-card {
-      background:#fff;
-      border-radius:18px;
-      padding:14px;
-      box-shadow:0 8px 25px rgba(15,23,42,.05);
+      background: #fff;
+      border-radius: 23px;
+      padding: 20px 27px;
+      box-shadow: 0 5px 20px rgba(15,23,42,.045);
     }
 
-    .summary-number {
-      font-size:22px;
-      font-weight:900;
-      margin-top:4px;
+    .summary-label {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 7px;
     }
 
-    @media(max-width:520px) {
-      .filters {
-        grid-template-columns:1fr;
+    .summary-value {
+      font-size: 30px;
+      font-weight: 900;
+    }
+
+    .search-box {
+      background: #fff;
+      border-radius: 0;
+      padding: 0;
+      margin-bottom: 10px;
+    }
+
+    .search-box input,
+    .status-select {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 18px;
+      padding: 16px 23px;
+      outline: none;
+      color: var(--navy);
+      font-size: 15px;
+    }
+
+    .search-box input {
+      margin-bottom: 10px;
+    }
+
+    .search-box input:focus,
+    .status-select:focus {
+      border-color: var(--blue);
+    }
+
+    .request-list {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      margin-top: 18px;
+    }
+
+    .request-card {
+      background: #fff;
+      border-radius: 23px;
+      padding: 18px;
+      box-shadow: 0 5px 20px rgba(15,23,42,.05);
+    }
+
+    .request-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .request-id {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .customer {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status {
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .status-new {
+      background: #ffe3eb;
+      color: #c72554;
+    }
+
+    .status-contacted {
+      background: #e0f7fd;
+      color: #08779a;
+    }
+
+    .status-accepted {
+      background: #fff1b8;
+      color: #735d00;
+    }
+
+    .status-assigned {
+      background: #e5ddff;
+      color: #6335a5;
+    }
+
+    .status-job {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .status-cancelled {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .request-info {
+      display: grid;
+      gap: 9px;
+      margin-top: 15px;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 9px;
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .info-icon {
+      width: 21px;
+      flex: 0 0 21px;
+      text-align: center;
+    }
+
+    .divider {
+      height: 1px;
+      background: #eee;
+      margin: 15px 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+    }
+
+    .action {
+      flex: 1;
+      border: 0;
+      border-radius: 13px;
+      padding: 11px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .view {
+      background: #dff5fc;
+      color: #08779a;
+    }
+
+    .job {
+      background: #fff2a8;
+      color: #5d5100;
+    }
+
+    .empty {
+      background: #fff;
+      border-radius: 23px;
+      padding: 50px 20px;
+      text-align: center;
+      margin-top: 18px;
+      box-shadow: 0 5px 20px rgba(15,23,42,.04);
+    }
+
+    .empty-icon {
+      font-size: 38px;
+      margin-bottom: 10px;
+    }
+
+    .empty-title {
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .empty-text {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .loading {
+      background: #fff;
+      border-radius: 23px;
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    /* MODAL */
+
+    .modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.55);
+      z-index: 100;
+      padding: 15px;
+      overflow-y: auto;
+    }
+
+    .modal-bg.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 580px;
+      background: #fff;
+      border-radius: 27px;
+      padding: 20px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .modal-head h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .close {
+      width: 39px;
+      height: 39px;
+      border: 0;
+      border-radius: 50%;
+      background: #f1f3f6;
+      font-size: 23px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field label {
+      display: block;
+      margin: 0 0 6px 3px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #4b5563;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fafbfc;
+      padding: 13px;
+      outline: none;
+      color: var(--navy);
+      font-size: 14px;
+    }
+
+    .field textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 9px;
+      margin-top: 18px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      border: 0;
+      border-radius: 14px;
+      padding: 13px;
+      font-weight: 900;
+    }
+
+    .cancel {
+      background: #f1f3f6;
+      color: #374151;
+    }
+
+    .save {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    /* BOTTOM NAV */
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 76px;
+      background: #fff;
+      border-top: 1px solid #e8e8e8;
+      display: flex;
+      z-index: 30;
+    }
+
+    .nav-item {
+      flex: 1;
+      text-decoration: none;
+      color: #6b7280;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .nav-item.active {
+      color: var(--pink);
+    }
+
+    .nav-icon {
+      font-size: 20px;
+    }
+
+    @media (min-width: 700px) {
+      main {
+        padding: 8px 16px 30px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .summary-card {
+        padding: 18px 27px;
       }
 
-      .form-grid {
-        grid-template-columns:1fr;
+      .summary-label {
+        font-size: 13px;
       }
 
-      .full {
-        grid-column:auto;
+      .summary-value {
+        font-size: 29px;
       }
 
-      .summary-grid {
-        grid-template-columns:1fr 1fr 1fr;
+      .page-head {
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      .page-title {
+        font-size: 30px;
+      }
+
+      .new-btn {
+        padding: 14px 15px;
       }
     }
   </style>
 </head>
 
-<body class="bg-slate-100 p-4 min-h-screen pb-24">
+<body>
 
-  <main class="w-full max-w-2xl mx-auto">
+  <header class="topbar">
 
-    <div class="page-header">
-      <div>
-        <h1>Service Requests</h1>
-        <div class="muted">Manage retailer service requests</div>
+    <div class="brand-row">
+
+      <div class="brand">
+        <div class="logo">R</div>
+        <span>REPARO</span>
       </div>
 
-      <button id="addRequestBtn" class="btn-small btn-primary">
+      <button
+        id="logoutBtn"
+        class="logout"
+        type="button"
+      >
+        Logout
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <main>
+
+    <div class="page-head">
+
+      <div>
+
+        <h1 class="page-title">
+          Service Requests
+        </h1>
+
+        <p class="page-subtitle">
+          Manage retailer service requests
+        </p>
+
+      </div>
+
+      <button
+        id="newRequestBtn"
+        class="new-btn"
+        type="button"
+      >
         + New Request
       </button>
+
     </div>
 
-    <div class="summary-grid">
-      <div class="summary-card">
-        <div class="muted">Total</div>
-        <div id="totalCount" class="summary-number">0</div>
-      </div>
+
+    <div
+      id="errorBox"
+      class="message error"
+    ></div>
+
+    <div
+      id="successBox"
+      class="message success"
+    ></div>
+
+
+    <section class="summary">
 
       <div class="summary-card">
-        <div class="muted">New</div>
-        <div id="newCount" class="summary-number">0</div>
+
+        <div class="summary-label">
+          Total
+        </div>
+
+        <div
+          id="totalCount"
+          class="summary-value"
+        >
+          0
+        </div>
+
       </div>
+
 
       <div class="summary-card">
-        <div class="muted">Jobs</div>
-        <div id="jobCount" class="summary-number">0</div>
-      </div>
-    </div>
 
-    <div class="filters">
+        <div class="summary-label">
+          New
+        </div>
+
+        <div
+          id="newCount"
+          class="summary-value"
+        >
+          0
+        </div>
+
+      </div>
+
+
+      <div class="summary-card">
+
+        <div class="summary-label">
+          Jobs
+        </div>
+
+        <div
+          id="jobCount"
+          class="summary-value"
+        >
+          0
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <section class="search-box">
+
       <input
-        type="search"
         id="searchInput"
+        type="search"
         placeholder="Search customer, mobile, request ID..."
       >
 
-      <select id="statusFilter">
-        <option value="">All Status</option>
-        <option value="NEW">New</option>
-        <option value="CONTACTED">Contacted</option>
-        <option value="ACCEPTED">Accepted</option>
-        <option value="ASSIGNED">Assigned</option>
-        <option value="CONVERTED TO JOB">Converted to Job</option>
-        <option value="CANCELLED">Cancelled</option>
+      <select
+        id="statusFilter"
+        class="status-select"
+      >
+
+        <option value="">
+          All Status
+        </option>
+
+        <option value="NEW">
+          New
+        </option>
+
+        <option value="CONTACTED">
+          Contacted
+        </option>
+
+        <option value="ACCEPTED">
+          Accepted
+        </option>
+
+        <option value="ASSIGNED">
+          Assigned
+        </option>
+
+        <option value="CONVERTED TO JOB">
+          Converted to Job
+        </option>
+
+        <option value="CANCELLED">
+          Cancelled
+        </option>
+
       </select>
-    </div>
 
-    <div id="loading" class="empty">
-      Loading service requests...
-    </div>
+    </section>
 
-    <div id="requestList"></div>
+
+    <section id="requestContainer">
+
+      <div class="loading">
+        Loading service requests...
+      </div>
+
+    </section>
 
   </main>
 
-  <!-- ADD / EDIT MODAL -->
 
-  <div id="modalBackdrop" class="modal-backdrop">
+  <nav class="bottom-nav">
+
+    <a
+      class="nav-item"
+      href="./dashboard.html"
+    >
+      <span class="nav-icon">⌂</span>
+      <span>Home</span>
+    </a>
+
+    <a
+      class="nav-item active"
+      href="./service-requests.html"
+    >
+      <span class="nav-icon">▣</span>
+      <span>Requests</span>
+    </a>
+
+    <a
+      class="nav-item"
+      href="./jobs.html"
+    >
+      <span class="nav-icon">🔧</span>
+      <span>Jobs</span>
+    </a>
+
+    <a
+      class="nav-item"
+      href="./products.html"
+    >
+      <span class="nav-icon">📦</span>
+      <span>Products</span>
+    </a>
+
+    <a
+      class="nav-item"
+      href="./customers.html"
+    >
+      <span class="nav-icon">●</span>
+      <span>Customers</span>
+    </a>
+
+  </nav>
+
+
+  <!-- REQUEST MODAL -->
+
+  <div
+    id="modalBg"
+    class="modal-bg"
+  >
 
     <div class="modal">
 
-      <h2 id="modalTitle">New Service Request</h2>
+      <div class="modal-head">
+
+        <h2 id="modalTitle">
+          New Service Request
+        </h2>
+
+        <button
+          id="closeModal"
+          class="close"
+          type="button"
+        >
+          ×
+        </button>
+
+      </div>
+
 
       <form id="requestForm">
 
-        <input type="hidden" id="editRequestId">
+        <input
+          id="editRequestId"
+          type="hidden"
+        >
+
 
         <div class="form-grid">
 
-          <div class="form-group">
-            <label>Customer Name *</label>
-            <input id="customerName" required>
+          <div class="field">
+
+            <label>
+              Customer Name *
+            </label>
+
+            <input
+              id="customerName"
+              type="text"
+              required
+              placeholder="Customer name"
+            >
+
           </div>
 
-          <div class="form-group">
-            <label>Mobile *</label>
-            <input id="customerMobile" required>
+
+          <div class="field">
+
+            <label>
+              Mobile *
+            </label>
+
+            <input
+              id="customerMobile"
+              type="tel"
+              inputmode="numeric"
+              maxlength="10"
+              required
+              placeholder="10 digit mobile"
+            >
+
           </div>
 
-          <div class="form-group full">
-            <label>Address</label>
-            <textarea id="customerAddress"></textarea>
+
+          <div class="field">
+
+            <label>
+              Address
+            </label>
+
+            <input
+              id="customerAddress"
+              type="text"
+              placeholder="Customer address"
+            >
+
           </div>
 
-          <div class="form-group">
-            <label>TV / Device Brand</label>
-            <input id="deviceBrand">
+
+          <div class="field">
+
+            <label>
+              Device
+            </label>
+
+            <input
+              id="device"
+              type="text"
+              placeholder="TV / DTH / other device"
+            >
+
           </div>
 
-          <div class="form-group">
-            <label>Model</label>
-            <input id="deviceModel">
+
+          <div class="field">
+
+            <label>
+              Brand
+            </label>
+
+            <input
+              id="deviceBrand"
+              type="text"
+              placeholder="Brand"
+            >
+
           </div>
 
-          <div class="form-group">
-            <label>Serial Number</label>
-            <input id="serialNumber">
+
+          <div class="field">
+
+            <label>
+              Model
+            </label>
+
+            <input
+              id="deviceModel"
+              type="text"
+              placeholder="Model"
+            >
+
           </div>
 
-          <div class="form-group">
-            <label>Screen Size</label>
-            <input id="screenSize" placeholder="e.g. 43 inch">
-          </div>
 
-          <div class="form-group full">
-            <label>Service Type *</label>
-            <select id="serviceType" required>
-              <option value="TV Repair">TV Repair</option>
-              <option value="TV Installation">TV Installation</option>
-              <option value="TV Demo">TV Demo</option>
-              <option value="DTH Service">DTH Service</option>
-              <option value="Accessory Installation">Accessory Installation</option>
-              <option value="Other">Other</option>
+          <div class="field">
+
+            <label>
+              Service Type
+            </label>
+
+            <select id="serviceType">
+
+              <option value="REPAIR">
+                Repair
+              </option>
+
+              <option value="INSTALLATION">
+                Installation
+              </option>
+
+              <option value="DEMO">
+                Demo
+              </option>
+
+              <option value="DTH">
+                DTH Service
+              </option>
+
+              <option value="OTHER">
+                Other
+              </option>
+
             </select>
+
           </div>
 
-          <div class="form-group">
-            <label>Retailer UID</label>
-            <input id="retailerId" placeholder="Retailer UID">
-          </div>
 
-          <div class="form-group">
-            <label>Status</label>
-            <select id="requestStatus">
-              <option value="NEW">NEW</option>
-              <option value="CONTACTED">CONTACTED</option>
-              <option value="ACCEPTED">ACCEPTED</option>
-              <option value="ASSIGNED">ASSIGNED</option>
-              <option value="CONVERTED TO JOB">CONVERTED TO JOB</option>
-              <option value="CANCELLED">CANCELLED</option>
-            </select>
-          </div>
+          <div class="field">
 
-          <div class="form-group full">
-            <label>Problem / Request Details</label>
-            <textarea id="problem"></textarea>
+            <label>
+              Problem / Requirement
+            </label>
+
+            <textarea
+              id="problem"
+              placeholder="Describe customer problem..."
+            ></textarea>
+
           </div>
 
         </div>
 
+
         <div class="modal-actions">
-          <button type="button" id="cancelModalBtn" class="btn-small">
+
+          <button
+            id="cancelModal"
+            type="button"
+            class="modal-btn cancel"
+          >
             Cancel
           </button>
 
-          <button type="submit" class="btn-small btn-primary">
-            Save Request
+          <button
+            type="submit"
+            id="saveBtn"
+            class="modal-btn save"
+          >
+            Create Request
           </button>
+
         </div>
 
       </form>
 
     </div>
+
   </div>
 
-  <script type="module" src="../js/service-requests.js"></script>
+
+  <script
+    type="module"
+    src="../js/service-requests.js"
+  ></script>
 
 </body>
 </html>
