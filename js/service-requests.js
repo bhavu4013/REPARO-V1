@@ -32,17 +32,20 @@ const searchInput =
 const statusFilter =
   document.getElementById("statusFilter");
 
-const totalCount =
-  document.getElementById("totalCount");
+const totalRequests =
+  document.getElementById("totalRequests");
 
-const newCount =
-  document.getElementById("newCount");
+const newRequests =
+  document.getElementById("newRequests");
 
-const jobCount =
-  document.getElementById("jobCount");
+const activeRequests =
+  document.getElementById("activeRequests");
 
-const newRequestBtn =
-  document.getElementById("newRequestBtn");
+const convertedRequests =
+  document.getElementById("convertedRequests");
+
+const addRequestBtn =
+  document.getElementById("addRequestBtn");
 
 const logoutBtn =
   document.getElementById("logoutBtn");
@@ -53,14 +56,14 @@ const errorBox =
 const successBox =
   document.getElementById("successBox");
 
-const modalBg =
-  document.getElementById("modalBg");
+const modalBackdrop =
+  document.getElementById("modalBackdrop");
 
 const closeModalBtn =
-  document.getElementById("closeModal");
+  document.getElementById("closeModalBtn");
 
-const cancelModalBtn =
-  document.getElementById("cancelModal");
+const cancelBtn =
+  document.getElementById("cancelBtn");
 
 const requestForm =
   document.getElementById("requestForm");
@@ -74,17 +77,14 @@ const saveBtn =
 const editRequestId =
   document.getElementById("editRequestId");
 
+const customerId =
+  document.getElementById("customerId");
+
 const customerName =
   document.getElementById("customerName");
 
 const customerMobile =
   document.getElementById("customerMobile");
-
-const customerAddress =
-  document.getElementById("customerAddress");
-
-const device =
-  document.getElementById("device");
 
 const deviceBrand =
   document.getElementById("deviceBrand");
@@ -92,20 +92,23 @@ const deviceBrand =
 const deviceModel =
   document.getElementById("deviceModel");
 
+const serialNumber =
+  document.getElementById("serialNumber");
+
 const serviceType =
   document.getElementById("serviceType");
 
 const problem =
   document.getElementById("problem");
 
+const retailerId =
+  document.getElementById("retailerId");
+
 const moreNavBtn =
   document.getElementById("moreNavBtn");
 
 const morePanel =
   document.getElementById("morePanel");
-
-const moreOverlay =
-  document.getElementById("moreOverlay");
 
 
 /* =====================================================
@@ -131,7 +134,6 @@ onAuthStateChanged(
         "../index.html";
 
       return;
-
     }
 
 
@@ -155,7 +157,6 @@ onAuthStateChanged(
           "../index.html";
 
         return;
-
       }
 
 
@@ -174,22 +175,22 @@ onAuthStateChanged(
           "../index.html";
 
         return;
-
       }
 
 
-      adminUser =
-        user;
-
+      adminUser = user;
 
       await loadRequests();
 
     }
     catch (error) {
 
-      showLoadError(
+      console.error(
+        "Admin authentication error:",
         error
       );
+
+      showLoadError(error);
 
     }
 
@@ -205,14 +206,7 @@ async function loadRequests() {
 
   showLoading();
 
-
   try {
-
-    /*
-      Firestore request.
-      Admin has permission through the current
-      Firestore rules.
-    */
 
     const snapshot =
       await getDocs(
@@ -231,8 +225,7 @@ async function loadRequests() {
 
         allRequests.push({
 
-          id:
-            item.id,
+          id: item.id,
 
           ...item.data()
 
@@ -244,7 +237,6 @@ async function loadRequests() {
 
     sortRequests();
 
-
     updateSummary();
 
     renderRequests();
@@ -252,9 +244,12 @@ async function loadRequests() {
   }
   catch (error) {
 
-    showLoadError(
+    console.error(
+      "Load service requests error:",
       error
     );
+
+    showLoadError(error);
 
   }
 
@@ -262,7 +257,7 @@ async function loadRequests() {
 
 
 /* =====================================================
-   SORT
+   SORT REQUESTS
 ===================================================== */
 
 function sortRequests() {
@@ -292,9 +287,7 @@ function sortRequests() {
    TIMESTAMP
 ===================================================== */
 
-function getTimestamp(
-  timestamp
-) {
+function getTimestamp(timestamp) {
 
   if (!timestamp) {
 
@@ -318,9 +311,7 @@ function getTimestamp(
     "number"
   ) {
 
-    return (
-      timestamp.seconds * 1000
-    );
+    return timestamp.seconds * 1000;
 
   }
 
@@ -336,11 +327,15 @@ function getTimestamp(
 
 function updateSummary() {
 
-  totalCount.textContent =
-    allRequests.length;
+  if (totalRequests) {
+
+    totalRequests.textContent =
+      allRequests.length;
+
+  }
 
 
-  newCount.textContent =
+  const newTotal =
     allRequests.filter(
       request =>
         normalizeStatus(
@@ -349,13 +344,56 @@ function updateSummary() {
     ).length;
 
 
-  jobCount.textContent =
+  const convertedTotal =
     allRequests.filter(
       request =>
         normalizeStatus(
           request.status
         ) === "CONVERTED TO JOB"
     ).length;
+
+
+  const activeTotal =
+    allRequests.filter(
+      request => {
+
+        const status =
+          normalizeStatus(
+            request.status
+          );
+
+        return (
+          status !== "NEW" &&
+          status !== "CONVERTED TO JOB" &&
+          status !== "CANCELLED"
+        );
+
+      }
+    ).length;
+
+
+  if (newRequests) {
+
+    newRequests.textContent =
+      newTotal;
+
+  }
+
+
+  if (activeRequests) {
+
+    activeRequests.textContent =
+      activeTotal;
+
+  }
+
+
+  if (convertedRequests) {
+
+    convertedRequests.textContent =
+      convertedTotal;
+
+  }
 
 }
 
@@ -364,13 +402,13 @@ function updateSummary() {
    STATUS
 ===================================================== */
 
-function normalizeStatus(
-  status
-) {
+function normalizeStatus(status) {
 
   return String(
     status || "NEW"
-  ).trim().toUpperCase();
+  )
+    .trim()
+    .toUpperCase();
 
 }
 
@@ -379,32 +417,53 @@ function normalizeStatus(
    FILTER EVENTS
 ===================================================== */
 
-searchInput.addEventListener(
-  "input",
-  renderRequests
-);
+if (searchInput) {
+
+  searchInput.addEventListener(
+    "input",
+    renderRequests
+  );
+
+}
 
 
-statusFilter.addEventListener(
-  "change",
-  renderRequests
-);
+if (statusFilter) {
+
+  statusFilter.addEventListener(
+    "change",
+    renderRequests
+  );
+
+}
 
 
 /* =====================================================
-   RENDER
+   RENDER REQUESTS
 ===================================================== */
 
 function renderRequests() {
 
+  if (!requestContainer) {
+
+    return;
+
+  }
+
+
   const search =
-    searchInput.value
-      .trim()
-      .toLowerCase();
+    searchInput
+      ? searchInput.value
+          .trim()
+          .toLowerCase()
+      : "";
 
 
   const selectedStatus =
-    statusFilter.value;
+    statusFilter
+      ? normalizeStatus(
+          statusFilter.value
+        )
+      : "";
 
 
   const filtered =
@@ -416,6 +475,8 @@ function renderRequests() {
           request.id,
 
           request.requestId,
+
+          request.customerId,
 
           request.customerName,
 
@@ -433,29 +494,28 @@ function renderRequests() {
 
           request.deviceModel,
 
+          request.serialNumber,
+
           request.problem,
 
           request.serviceType
 
         ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
 
 
         const matchesSearch =
           !search ||
-          searchable.includes(
-            search
-          );
+          searchable.includes(search);
 
 
         const matchesStatus =
           !selectedStatus ||
           normalizeStatus(
             request.status
-          ) ===
-          selectedStatus;
+          ) === selectedStatus;
 
 
         return (
@@ -467,9 +527,7 @@ function renderRequests() {
     );
 
 
-  if (
-    filtered.length === 0
-  ) {
+  if (filtered.length === 0) {
 
     requestContainer.innerHTML = `
 
@@ -501,9 +559,7 @@ function renderRequests() {
     <div class="request-list">
 
       ${filtered
-        .map(
-          renderRequest
-        )
+        .map(renderRequest)
         .join("")}
 
     </div>
@@ -520,9 +576,7 @@ function renderRequests() {
    REQUEST CARD
 ===================================================== */
 
-function renderRequest(
-  request
-) {
+function renderRequest(request) {
 
   const status =
     normalizeStatus(
@@ -531,9 +585,7 @@ function renderRequest(
 
 
   const statusClass =
-    getStatusClass(
-      status
-    );
+    getStatusClass(status);
 
 
   const requestNumber =
@@ -553,9 +605,7 @@ function renderRequest(
 
 
   const deviceText =
-    getDevice(
-      request
-    );
+    getDevice(request);
 
 
   const retailer =
@@ -588,28 +638,22 @@ function renderRequest(
         <div>
 
           <h3 class="request-id">
-            ${escapeHtml(
-              requestNumber
-            )}
+            ${escapeHtml(requestNumber)}
           </h3>
 
-          <div class="customer">
-            ${escapeHtml(
-              customer
-            )}
+          <div class="customer-name">
+            ${escapeHtml(customer)}
           </div>
 
         </div>
 
 
-        <span
-          class="status ${statusClass}"
-        >
+        <span class="badge ${statusClass}">
+
           ${escapeHtml(
-            formatStatus(
-              status
-            )
+            formatStatus(status)
           )}
+
         </span>
 
       </div>
@@ -624,9 +668,7 @@ function renderRequest(
           </span>
 
           <span>
-            ${escapeHtml(
-              mobile
-            )}
+            ${escapeHtml(mobile)}
           </span>
 
         </div>
@@ -639,9 +681,7 @@ function renderRequest(
           </span>
 
           <span>
-            ${escapeHtml(
-              deviceText
-            )}
+            ${escapeHtml(deviceText)}
           </span>
 
         </div>
@@ -654,9 +694,7 @@ function renderRequest(
           </span>
 
           <span>
-            ${escapeHtml(
-              service
-            )}
+            ${escapeHtml(service)}
           </span>
 
         </div>
@@ -669,9 +707,7 @@ function renderRequest(
           </span>
 
           <span>
-            ${escapeHtml(
-              retailer
-            )}
+            ${escapeHtml(retailer)}
           </span>
 
         </div>
@@ -684,9 +720,7 @@ function renderRequest(
           </span>
 
           <span>
-            ${escapeHtml(
-              problemText
-            )}
+            ${escapeHtml(problemText)}
           </span>
 
         </div>
@@ -700,11 +734,9 @@ function renderRequest(
       <div class="actions">
 
         <button
-          class="action view"
+          class="action view-btn"
           type="button"
-          data-view-request="${escapeAttribute(
-            request.id
-          )}"
+          data-view-request="${escapeAttribute(request.id)}"
         >
           View / Edit
         </button>
@@ -715,11 +747,9 @@ function renderRequest(
             ? `
 
               <button
-                class="action job"
+                class="action job-btn"
                 type="button"
-                data-create-job="${escapeAttribute(
-                  request.id
-                )}"
+                data-create-job="${escapeAttribute(request.id)}"
               >
                 Create Job
               </button>
@@ -790,12 +820,10 @@ function bindRequestButtons() {
 
 
 /* =====================================================
-   DEVICE
+   DEVICE DISPLAY
 ===================================================== */
 
-function getDevice(
-  request
-) {
+function getDevice(request) {
 
   const parts = [
 
@@ -803,24 +831,22 @@ function getDevice(
 
     request.deviceBrand,
 
-    request.deviceModel
+    request.deviceModel,
+
+    request.serialNumber
 
   ]
-  .filter(
-    value =>
-      value !== null &&
-      value !== undefined &&
-      String(value).trim() !== ""
-  );
-
-
-  if (
-    parts.length > 0
-  ) {
-
-    return parts.join(
-      " • "
+    .filter(
+      value =>
+        value !== null &&
+        value !== undefined &&
+        String(value).trim() !== ""
     );
+
+
+  if (parts.length > 0) {
+
+    return parts.join(" • ");
 
   }
 
@@ -834,32 +860,30 @@ function getDevice(
    STATUS CLASS
 ===================================================== */
 
-function getStatusClass(
-  status
-) {
+function getStatusClass(status) {
 
   switch (status) {
 
     case "NEW":
-      return "status-new";
+      return "badge-new";
 
     case "CONTACTED":
-      return "status-contacted";
+      return "badge-contacted";
 
     case "ACCEPTED":
-      return "status-accepted";
+      return "badge-accepted";
 
     case "ASSIGNED":
-      return "status-assigned";
+      return "badge-assigned";
 
     case "CONVERTED TO JOB":
-      return "status-job";
+      return "badge-converted";
 
     case "CANCELLED":
-      return "status-cancelled";
+      return "badge-cancelled";
 
     default:
-      return "status-new";
+      return "badge-new";
 
   }
 
@@ -870,13 +894,18 @@ function getStatusClass(
    STATUS DISPLAY
 ===================================================== */
 
-function formatStatus(
-  status
-) {
+function formatStatus(status) {
 
-  return String(
-    status || ""
-  )
+  if (
+    status === "CONVERTED TO JOB"
+  ) {
+
+    return "Converted to Job";
+
+  }
+
+
+  return String(status || "")
     .toLowerCase()
     .replace(
       /\b\w/g,
@@ -888,14 +917,22 @@ function formatStatus(
 
 
 /* =====================================================
-   NEW REQUEST
+   NEW REQUEST BUTTON
 ===================================================== */
 
-newRequestBtn.addEventListener(
-  "click",
-  openNew
-);
+if (addRequestBtn) {
 
+  addRequestBtn.addEventListener(
+    "click",
+    openNew
+  );
+
+}
+
+
+/* =====================================================
+   OPEN NEW
+===================================================== */
 
 function openNew() {
 
@@ -917,7 +954,7 @@ function openNew() {
     "Create Request";
 
 
-  modalBg.classList.add(
+  modalBackdrop.classList.add(
     "show"
   );
 
@@ -931,9 +968,7 @@ function openNew() {
    EDIT REQUEST
 ===================================================== */
 
-function openEdit(
-  id
-) {
+function openEdit(id) {
 
   hideMessages();
 
@@ -960,6 +995,11 @@ function openEdit(
     request.id;
 
 
+  customerId.value =
+    request.customerId ||
+    "";
+
+
   customerName.value =
     request.customerName ||
     "";
@@ -968,17 +1008,6 @@ function openEdit(
   customerMobile.value =
     request.customerMobile ||
     request.mobile ||
-    "";
-
-
-  customerAddress.value =
-    request.customerAddress ||
-    request.address ||
-    "";
-
-
-  device.value =
-    request.device ||
     "";
 
 
@@ -992,13 +1021,23 @@ function openEdit(
     "";
 
 
+  serialNumber.value =
+    request.serialNumber ||
+    "";
+
+
   serviceType.value =
     request.serviceType ||
-    "REPAIR";
+    "";
 
 
   problem.value =
     request.problem ||
+    "";
+
+
+  retailerId.value =
+    request.retailerId ||
     "";
 
 
@@ -1010,7 +1049,7 @@ function openEdit(
     "Save Changes";
 
 
-  modalBg.classList.add(
+  modalBackdrop.classList.add(
     "show"
   );
 
@@ -1046,768 +1085,5 @@ requestForm.addEventListener(
       editRequestId.value.trim();
 
 
-    const name =
-      customerName.value.trim();
-
-
-    const mobile =
-      customerMobile.value.trim();
-
-
-    if (!name) {
-
-      showError(
-        "Customer name required."
-      );
-
-      return;
-
-    }
-
-
-    if (
-      !/^[0-9]{10}$/.test(
-        mobile
-      )
-    ) {
-
-      showError(
-        "Mobile number must contain 10 digits."
-      );
-
-      return;
-
-    }
-
-
-    saveBtn.disabled =
-      true;
-
-
-    saveBtn.textContent =
-      editId
-        ? "Saving..."
-        : "Creating...";
-
-
-    try {
-
-      const data = {
-
-        customerName:
-          name,
-
-        customerMobile:
-          mobile,
-
-        customerAddress:
-          customerAddress.value.trim(),
-
-        device:
-          device.value.trim(),
-
-        deviceBrand:
-          deviceBrand.value.trim(),
-
-        deviceModel:
-          deviceModel.value.trim(),
-
-        serviceType:
-          serviceType.value,
-
-        problem:
-          problem.value.trim()
-
-      };
-
-
-      if (editId) {
-
-        await updateDoc(
-
-          doc(
-            db,
-            "service_requests",
-            editId
-          ),
-
-          {
-
-            ...data,
-
-            updatedAt:
-              serverTimestamp()
-
-          }
-
-        );
-
-
-        closeRequestModal();
-
-
-        await loadRequests();
-
-
-        showSuccess(
-          "Service request updated successfully."
-        );
-
-      }
-      else {
-
-        await createRequest(
-          data
-        );
-
-      }
-
-    }
-    catch (error) {
-
-      showError(
-        getErrorMessage(
-          error
-        )
-      );
-
-    }
-    finally {
-
-      saveBtn.disabled =
-        false;
-
-      saveBtn.textContent =
-        editId
-          ? "Save Changes"
-          : "Create Request";
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   CREATE REQUEST
-===================================================== */
-
-async function createRequest(
-  data
-) {
-
-  const requestRef =
-    await addDoc(
-
-      collection(
-        db,
-        "service_requests"
-      ),
-
-      {
-
-        ...data,
-
-        requestId:
-          "",
-
-        status:
-          "NEW",
-
-        jobId:
-          null,
-
-        createdAt:
-          serverTimestamp(),
-
-        updatedAt:
-          serverTimestamp(),
-
-        createdBy:
-          adminUser.uid
-
-      }
-
-    );
-
-
-  await updateDoc(
-
-    requestRef,
-
-    {
-
-      requestId:
-        requestRef.id
-
-    }
-
-  );
-
-
-  closeRequestModal();
-
-
-  await loadRequests();
-
-
-  showSuccess(
-    "Service request created successfully."
-  );
-
-}
-
-
-/* =====================================================
-   CREATE JOB
-===================================================== */
-
-async function convertToJob(
-  requestId
-) {
-
-  const request =
-    allRequests.find(
-      item =>
-        item.id === requestId
-    );
-
-
-  if (!request) {
-
-    showError(
-      "Service request not found."
-    );
-
-    return;
-
-  }
-
-
-  if (
-    request.jobId
-  ) {
-
-    showError(
-      "Job already exists for this request."
-    );
-
-    return;
-
-  }
-
-
-  const confirmed =
-    window.confirm(
-      "Create a service job from this request?"
-    );
-
-
-  if (!confirmed) {
-
-    return;
-
-  }
-
-
-  try {
-
-    const jobRef =
-      await addDoc(
-
-        collection(
-          db,
-          "jobs"
-        ),
-
-        {
-
-          requestId:
-            request.id,
-
-          serviceRequestId:
-            request.id,
-
-          customerId:
-            request.customerId ||
-            null,
-
-          customerName:
-            request.customerName ||
-            "",
-
-          customerMobile:
-            request.customerMobile ||
-            request.mobile ||
-            "",
-
-          customerAddress:
-            request.customerAddress ||
-            request.address ||
-            "",
-
-          retailerId:
-            request.retailerId ||
-            "",
-
-          retailerName:
-            request.retailerName ||
-            "",
-
-          device:
-            request.device ||
-            "",
-
-          deviceBrand:
-            request.deviceBrand ||
-            "",
-
-          deviceModel:
-            request.deviceModel ||
-            "",
-
-          serviceType:
-            request.serviceType ||
-            "REPAIR",
-
-          problem:
-            request.problem ||
-            "",
-
-          status:
-            "NEW",
-
-          technicianId:
-            "",
-
-          technicianName:
-            "",
-
-          createdAt:
-            serverTimestamp(),
-
-          updatedAt:
-            serverTimestamp(),
-
-          createdBy:
-            adminUser.uid
-
-        }
-
-      );
-
-
-    await updateDoc(
-
-      doc(
-        db,
-        "service_requests",
-        requestId
-      ),
-
-      {
-
-        jobId:
-          jobRef.id,
-
-        status:
-          "CONVERTED TO JOB",
-
-        updatedAt:
-          serverTimestamp()
-
-      }
-
-    );
-
-
-    await loadRequests();
-
-
-    showSuccess(
-      "Service job created successfully."
-    );
-
-  }
-  catch (error) {
-
-    showError(
-      getErrorMessage(
-        error
-      )
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   MODAL CLOSE
-===================================================== */
-
-function closeRequestModal() {
-
-  modalBg.classList.remove(
-    "show"
-  );
-
-
-  requestForm.reset();
-
-
-  editRequestId.value =
-    "";
-
-}
-
-
-closeModalBtn.addEventListener(
-  "click",
-  closeRequestModal
-);
-
-
-cancelModalBtn.addEventListener(
-  "click",
-  closeRequestModal
-);
-
-
-modalBg.addEventListener(
-  "click",
-  event => {
-
-    if (
-      event.target ===
-      modalBg
-    ) {
-
-      closeRequestModal();
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   MORE MENU
-===================================================== */
-
-moreNavBtn.addEventListener(
-  "click",
-  event => {
-
-    event.stopPropagation();
-
-    toggleMore();
-
-  }
-);
-
-
-moreOverlay.addEventListener(
-  "click",
-  closeMore
-);
-
-
-function toggleMore() {
-
-  const isOpen =
-    morePanel.classList.contains(
-      "show"
-    );
-
-
-  if (isOpen) {
-
-    closeMore();
-
-  }
-  else {
-
-    morePanel.classList.add(
-      "show"
-    );
-
-    moreOverlay.classList.add(
-      "show"
-    );
-
-  }
-
-}
-
-
-function closeMore() {
-
-  morePanel.classList.remove(
-    "show"
-  );
-
-  moreOverlay.classList.remove(
-    "show"
-  );
-
-}
-
-
-/* =====================================================
-   LOGOUT
-===================================================== */
-
-logoutBtn.addEventListener(
-  "click",
-  async () => {
-
-    try {
-
-      await signOut(
-        auth
-      );
-
-
-      window.location.href =
-        "../index.html";
-
-    }
-    catch (error) {
-
-      showError(
-        getErrorMessage(
-          error
-        )
-      );
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   LOADING STATE
-===================================================== */
-
-function showLoading() {
-
-  requestContainer.innerHTML = `
-
-    <div class="loading">
-      Loading service requests...
-    </div>
-
-  `;
-
-}
-
-
-/* =====================================================
-   LOAD ERROR
-===================================================== */
-
-function showLoadError(
-  error
-) {
-
-  console.error(
-    "REPARO Service Requests Load Error:",
-    error
-  );
-
-
-  requestContainer.innerHTML = `
-
-    <div class="empty">
-
-      <div class="empty-icon">
-        ⚠️
-      </div>
-
-      <div class="empty-title">
-        Unable to Load Requests
-      </div>
-
-      <div class="empty-text">
-        ${escapeHtml(
-          getErrorMessage(
-            error
-          )
-        )}
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-/* =====================================================
-   ERROR MESSAGE
-===================================================== */
-
-function getErrorMessage(
-  error
-) {
-
-  if (
-    error?.code ===
-    "permission-denied"
-  ) {
-
-    return "Firestore permission denied. Firebase Rules માં Admin access check કરો.";
-
-  }
-
-
-  if (
-    error?.code ===
-    "unauthenticated"
-  ) {
-
-    return "Your login session has expired. Please login again.";
-
-  }
-
-
-  if (
-    error?.code ===
-    "unavailable"
-  ) {
-
-    return "Firebase temporarily unavailable. Internet connection check કરો.";
-
-  }
-
-
-  if (
-    error?.code ===
-    "failed-precondition"
-  ) {
-
-    return "Firestore operation failed. Database configuration check કરો.";
-
-  }
-
-
-  return (
-    error?.message ||
-    "Unable to complete the operation."
-  );
-
-}
-
-
-/* =====================================================
-   MESSAGES
-===================================================== */
-
-function hideMessages() {
-
-  errorBox.style.display =
-    "none";
-
-  successBox.style.display =
-    "none";
-
-  errorBox.textContent =
-    "";
-
-  successBox.textContent =
-    "";
-
-}
-
-
-function showError(
-  message
-) {
-
-  successBox.style.display =
-    "none";
-
-
-  errorBox.textContent =
-    message;
-
-
-  errorBox.style.display =
-    "block";
-
-}
-
-
-function showSuccess(
-  message
-) {
-
-  errorBox.style.display =
-    "none";
-
-
-  successBox.textContent =
-    message;
-
-
-  successBox.style.display =
-    "block";
-
-}
-
-
-/* =====================================================
-   ESCAPE HTML
-===================================================== */
-
-function escapeHtml(
-  value
-) {
-
-  return String(
-    value ?? ""
-  )
-
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
-
-}
-
-
-/* =====================================================
-   ESCAPE ATTRIBUTE
-===================================================== */
-
-function escapeAttribute(
-  value
-) {
-
-  return escapeHtml(
-    value
-  );
-
-}
+    const customerIdValue =
+      customerId
