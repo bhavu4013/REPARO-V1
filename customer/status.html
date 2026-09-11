@@ -4,48 +4,80 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Service Status | REPARO V1</title>
-
-  <link rel="stylesheet" href="../css/reparo.css">
+  <title>Service Status | REPARO</title>
 
   <style>
-    .customer-page {
-      max-width: 700px;
-      margin: auto;
-      padding: 18px 14px 90px;
+    body {
+      margin: 0;
+      background: #f7f8fc;
+      color: #172033;
+      font-family: Arial, sans-serif;
+      padding-bottom: 30px;
     }
 
-    .customer-header {
+    .page {
+      max-width: 650px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
       margin-bottom: 18px;
     }
 
-    .customer-header h1 {
-      margin: 5px 0;
-      color: #111827;
-    }
-
-    .customer-header p {
+    .title {
       margin: 0;
-      color: #6B7280;
-      font-size: 13px;
+      font-size: 23px;
+      font-weight: 800;
     }
 
-    .brand-badge {
-      display: inline-block;
-      background: #FFE32B;
-      color: #111827;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 800;
+    .subtitle {
+      margin: 5px 0 0;
+      color: #7b8494;
+      font-size: 12px;
+    }
+
+    .logout-btn,
+    .back-btn {
+      border: 0;
+      background: #fff;
+      border-radius: 12px;
+      padding: 9px 12px;
+      color: #d82f58;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(20,30,60,.06);
+    }
+
+    .message {
+      display: none;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 13px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    #errorBox {
+      background: #fff0f1;
+      color: #c62845;
+    }
+
+    #successBox {
+      background: #e8f8ef;
+      color: #187a48;
     }
 
     .card {
       background: #fff;
-      border-radius: 20px;
+      border-radius: 18px;
       padding: 16px;
-      margin-bottom: 14px;
-      box-shadow: 0 6px 22px rgba(17,24,39,.07);
+      margin-bottom: 13px;
+      box-shadow: 0 5px 18px rgba(20,30,60,.06);
     }
 
     .job-head {
@@ -55,371 +87,273 @@
       align-items: flex-start;
     }
 
-    .job-number {
-      font-size: 16px;
+    .job-id {
+      font-size: 14px;
       font-weight: 800;
-      color: #111827;
     }
 
-    .job-type {
-      color: #6B7280;
-      font-size: 12px;
-      margin-top: 4px;
+    .job-date {
+      margin-top: 5px;
+      color: #818a99;
+      font-size: 11px;
     }
 
     .status {
-      border-radius: 999px;
-      padding: 6px 9px;
-      font-size: 9px;
+      padding: 7px 10px;
+      border-radius: 20px;
+      font-size: 10px;
       font-weight: 800;
       white-space: nowrap;
     }
 
-    .status-active {
-      background: #E8F4FF;
-      color: #05658A;
+    .status-new {
+      background: #fff3c4;
+      color: #8b6900;
     }
 
-    .status-done {
-      background: #E8F8F0;
-      color: #16734B;
+    .status-assigned,
+    .status-progress {
+      background: #e9f1ff;
+      color: #2863c7;
     }
 
-    .status-wait {
-      background: #FFF4CC;
-      color: #806500;
+    .status-diagnosis {
+      background: #f0eaff;
+      color: #6842c8;
     }
 
-    .status-cancel {
-      background: #F3F4F6;
-      color: #6B7280;
+    .status-approval {
+      background: #fff0d9;
+      color: #b56a00;
     }
 
-    .device-box {
-      margin-top: 15px;
-      background: #F6F8FB;
-      border-radius: 15px;
-      padding: 13px;
+    .status-repair {
+      background: #ffe9ef;
+      color: #d82f58;
     }
 
-    .device-box span {
-      display: block;
-      color: #6B7280;
-      font-size: 10px;
-      margin-bottom: 4px;
+    .status-completed {
+      background: #e5f8ed;
+      color: #16834a;
     }
 
-    .device-box strong {
-      color: #111827;
-      font-size: 14px;
+    .status-cancelled {
+      background: #f0f1f3;
+      color: #747b87;
     }
 
-    .progress-title {
-      color: #111827;
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 15px;
       font-weight: 800;
-      font-size: 14px;
-      margin-bottom: 13px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f2f5;
+      font-size: 13px;
+    }
+
+    .info-row:last-child {
+      border-bottom: 0;
+    }
+
+    .info-label {
+      color: #7b8494;
+    }
+
+    .info-value {
+      color: #263146;
+      font-weight: 700;
+      text-align: right;
+      max-width: 65%;
     }
 
     .timeline {
       position: relative;
+      margin-top: 8px;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 12px;
+      bottom: 12px;
+      width: 2px;
+      background: #e8ebf0;
     }
 
     .timeline-item {
+      position: relative;
       display: flex;
       gap: 12px;
-      min-height: 58px;
+      margin-bottom: 17px;
+    }
+
+    .timeline-item:last-child {
+      margin-bottom: 0;
     }
 
     .timeline-dot {
-      width: 13px;
-      height: 13px;
-      border-radius: 50%;
-      background: #E5E7EB;
-      margin-top: 3px;
-      flex-shrink: 0;
       position: relative;
+      z-index: 2;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #e8ebf0;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      border: 4px solid #fff;
     }
 
-    .timeline-item:not(:last-child)
-    .timeline-dot::after {
-      content: "";
-      position: absolute;
-      top: 13px;
-      left: 5px;
-      width: 3px;
-      height: 45px;
-      background: #E5E7EB;
-      border-radius: 4px;
-    }
-
-    .timeline-item.active .timeline-dot {
-      background: #08AEE0;
-    }
-
-    .timeline-item.active
-    .timeline-dot::after {
-      background: #08AEE0;
+    .timeline-item.done .timeline-dot {
+      background: #d82f58;
     }
 
     .timeline-item.current .timeline-dot {
-      background: #F9547C;
-      box-shadow: 0 0 0 5px rgba(249,84,124,.12);
+      background: #f4b400;
     }
 
-    .timeline-label {
-      font-size: 12px;
+    .timeline-content {
+      padding-top: 2px;
+    }
+
+    .timeline-title {
+      font-size: 13px;
       font-weight: 800;
-      color: #6B7280;
     }
 
-    .timeline-item.active
-    .timeline-label,
-    .timeline-item.current
-    .timeline-label {
-      color: #111827;
-    }
-
-    .timeline-note {
-      font-size: 10px;
-      color: #6B7280;
+    .timeline-text {
       margin-top: 3px;
+      color: #7b8494;
+      font-size: 11px;
+      line-height: 1.4;
     }
 
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 9px;
+    .approval-card {
+      background: #fff8e8;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 13px;
     }
 
-    .info-box {
-      background: #F6F8FB;
-      border-radius: 13px;
-      padding: 10px;
+    .approval-card h3 {
+      margin: 0 0 6px;
+      color: #8b6200;
+      font-size: 14px;
     }
 
-    .info-box.full {
-      grid-column: 1 / -1;
-    }
-
-    .info-box span {
-      display: block;
-      color: #6B7280;
-      font-size: 10px;
-      margin-bottom: 4px;
-    }
-
-    .info-box strong {
-      color: #111827;
+    .approval-card p {
+      margin: 0;
+      color: #806318;
       font-size: 12px;
-      word-break: break-word;
+      line-height: 1.5;
     }
 
-    .primary-btn {
+    .estimate-btn {
       width: 100%;
       border: 0;
-      border-radius: 13px;
-      padding: 12px;
-      background: #F9547C;
+      background: #d82f58;
       color: #fff;
+      border-radius: 13px;
+      padding: 13px;
+      font-size: 14px;
       font-weight: 800;
       cursor: pointer;
       margin-top: 10px;
     }
 
-    .secondary-btn {
-      width: 100%;
-      border: 0;
-      border-radius: 13px;
-      padding: 12px;
-      background: #08AEE0;
-      color: #fff;
-      font-weight: 800;
-      cursor: pointer;
-      margin-top: 10px;
+    .estimate-btn.secondary {
+      background: #fff0f3;
+      color: #d82f58;
     }
 
-    .loading,
-    .empty {
+    .loading {
+      background: #fff;
+      border-radius: 18px;
+      padding: 40px 20px;
       text-align: center;
-      padding: 35px 15px;
-      color: #6B7280;
+      color: #70798a;
     }
 
-    @media (min-width: 600px) {
-      .customer-page {
-        padding-top: 30px;
-      }
+    .empty {
+      background: #fff;
+      border-radius: 18px;
+      padding: 35px 20px;
+      text-align: center;
+      color: #70798a;
+    }
+
+    .empty-icon {
+      font-size: 34px;
+      margin-bottom: 8px;
+    }
+
+    .empty-title {
+      color: #273248;
+      font-weight: 800;
+      margin-bottom: 5px;
     }
   </style>
 </head>
 
 <body>
 
-<main class="customer-page">
+  <main class="page">
 
-  <header class="customer-header">
+    <header class="topbar">
 
-    <span class="brand-badge">
-      REPARO SERVICE
-    </span>
+      <div>
+        <h1 class="title">
+          Service Status
+        </h1>
 
-    <h1>Service Status</h1>
-
-    <p>
-      Track your repair service
-    </p>
-
-  </header>
-
-
-  <div id="loading" class="loading">
-    Loading your service...
-  </div>
-
-
-  <div id="content" style="display:none;">
-
-    <!-- JOB -->
-
-    <section class="card">
-
-      <div class="job-head">
-
-        <div>
-
-          <div class="job-number" id="jobNumber">
-            -
-          </div>
-
-          <div class="job-type" id="serviceType">
-            -
-          </div>
-
+        <div class="subtitle">
+          Track your REPARO service
         </div>
-
-        <span
-          id="statusBadge"
-          class="status status-active">
-          -
-        </span>
-
       </div>
-
-
-      <div class="device-box">
-
-        <span>
-          YOUR DEVICE
-        </span>
-
-        <strong id="device">
-          -
-        </strong>
-
-      </div>
-
-    </section>
-
-
-    <!-- PROGRESS -->
-
-    <section class="card">
-
-      <div class="progress-title">
-        Service Progress
-      </div>
-
-      <div
-        id="timeline"
-        class="timeline">
-      </div>
-
-    </section>
-
-
-    <!-- TECHNICIAN -->
-
-    <section class="card">
-
-      <div class="progress-title">
-        Technician
-      </div>
-
-      <div class="info-grid">
-
-        <div class="info-box">
-
-          <span>Name</span>
-
-          <strong id="technicianName">
-            -
-          </strong>
-
-        </div>
-
-        <div class="info-box">
-
-          <span>Service</span>
-
-          <strong id="technicianService">
-            -
-          </strong>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- DIAGNOSIS -->
-
-    <section class="card">
-
-      <div class="progress-title">
-        Diagnosis
-      </div>
-
-      <div class="info-box">
-
-        <strong id="diagnosis">
-          Diagnosis pending.
-        </strong>
-
-      </div>
-
-    </section>
-
-
-    <!-- ACTIONS -->
-
-    <section class="card">
 
       <button
-        id="estimateBtn"
-        class="primary-btn">
-        View Estimate
+        id="logoutBtn"
+        class="logout-btn"
+        type="button"
+      >
+        Logout
       </button>
 
-      <button
-        id="invoiceBtn"
-        class="secondary-btn"
-        style="display:none;">
-        View Invoice
-      </button>
+    </header>
+
+
+    <div
+      id="errorBox"
+      class="message"
+    ></div>
+
+    <div
+      id="successBox"
+      class="message"
+    ></div>
+
+
+    <section id="statusContainer">
+
+      <div class="loading">
+        Loading service status...
+      </div>
 
     </section>
 
-  </div>
-
-</main>
+  </main>
 
 
-<script
-  type="module"
-  src="../js/customer-status.js">
-</script>
+  <script
+    type="module"
+    src="../js/customer-status.js"
+  ></script>
 
 </body>
 </html>
