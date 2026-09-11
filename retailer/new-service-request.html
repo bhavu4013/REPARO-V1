@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>New Service Request | REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+
+  <style>
+    body {
+      background: #f7f8fa;
+    }
+
+    .page {
+      max-width: 700px;
+      margin: auto;
+      padding: 18px 14px 90px;
+    }
+
+    .header {
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #ffe32b;
+      color: #111827;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .header h1 {
+      margin: 8px 0 4px;
+      color: #111827;
+      font-size: 22px;
+    }
+
+    .header p {
+      margin: 0;
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 13px;
+      box-shadow: 0 6px 22px rgba(17,24,39,.06);
+    }
+
+    .card-title {
+      margin: 0 0 13px;
+      color: #111827;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .field {
+      margin-bottom: 12px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 5px;
+      color: #374151;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 11px 12px;
+      outline: none;
+      color: #111827;
+      font-size: 12px;
+    }
+
+    .field textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: #08aee0;
+      background: #fff;
+    }
+
+    .customer-search {
+      margin-bottom: 9px;
+    }
+
+    .customer-results {
+      max-height: 230px;
+      overflow-y: auto;
+    }
+
+    .customer-option {
+      border: 1px solid #edf0f3;
+      border-radius: 13px;
+      padding: 11px;
+      margin-bottom: 7px;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .customer-option.selected {
+      border-color: #08aee0;
+      background: #eefaff;
+    }
+
+    .customer-option strong {
+      display: block;
+      color: #111827;
+      font-size: 12px;
+    }
+
+    .customer-option span {
+      display: block;
+      color: #6b7280;
+      font-size: 9px;
+      margin-top: 3px;
+    }
+
+    .selected-customer {
+      display: none;
+      background: #e8f8f0;
+      border-radius: 14px;
+      padding: 12px;
+      margin-top: 9px;
+      color: #16734b;
+    }
+
+    .selected-customer.show {
+      display: block;
+    }
+
+    .selected-customer strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+
+    .selected-customer span {
+      font-size: 10px;
+    }
+
+    .protection-warning {
+      display: none;
+      background: #ffe8ec;
+      color: #b42345;
+      border-radius: 13px;
+      padding: 11px;
+      margin-top: 9px;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .protection-warning.show {
+      display: block;
+    }
+
+    .new-customer-box {
+      display: none;
+      margin-top: 10px;
+      padding-top: 12px;
+      border-top: 1px solid #eef0f4;
+    }
+
+    .new-customer-box.show {
+      display: block;
+    }
+
+    .toggle-btn {
+      border: 0;
+      background: #e8f4ff;
+      color: #05658a;
+      border-radius: 11px;
+      padding: 9px 11px;
+      font-size: 10px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .submit-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 14px;
+      background: #f9547c;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .submit-btn:disabled {
+      opacity: .65;
+      cursor: not-allowed;
+    }
+
+    .note {
+      background: #fff4cc;
+      color: #705600;
+      border-radius: 13px;
+      padding: 11px;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 35px;
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    @media (max-width: 430px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .full {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="page">
+
+  <header class="header">
+
+    <span class="badge">
+      RETAILER SERVICE
+    </span>
+
+    <h1>
+      New Service Request
+    </h1>
+
+    <p>
+      Create a service request for your customer.
+    </p>
+
+  </header>
+
+
+  <div
+    id="loading"
+    class="loading">
+    Loading...
+  </div>
+
+
+  <form
+    id="requestForm"
+    style="display:none;">
+
+
+    <!-- CUSTOMER -->
+
+    <section class="card">
+
+      <h2 class="card-title">
+        Customer
+      </h2>
+
+
+      <div class="field">
+
+        <label>
+          SEARCH PROTECTED CUSTOMER
+        </label>
+
+        <input
+          id="customerSearch"
+          class="customer-search"
+          type="search"
+          placeholder="Name or mobile number...">
+
+      </div>
+
+
+      <div
+        id="customerResults"
+        class="customer-results">
+      </div>
+
+
+      <div
+        id="selectedCustomer"
+        class="selected-customer">
+
+        <strong id="selectedCustomerName">
+          -
+        </strong>
+
+        <span id="selectedCustomerInfo">
+          -
+        </span>
+
+      </div>
+
+
+      <div
+        id="protectionWarning"
+        class="protection-warning">
+      </div>
+
+
+      <button
+        id="newCustomerBtn"
+        type="button"
+        class="toggle-btn">
+
+        + Create New Customer
+
+      </button>
+
+
+      <div
+        id="newCustomerBox"
+        class="new-customer-box">
+
+        <div class="form-grid">
+
+          <div class="field">
+
+            <label>
+              CUSTOMER NAME *
+            </label>
+
+            <input
+              id="newCustomerName"
+              placeholder="Full name">
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              MOBILE *
+            </label>
+
+            <input
+              id="newCustomerMobile"
+              type="tel"
+              placeholder="10 digit mobile">
+
+          </div>
+
+
+          <div class="field full">
+
+            <label>
+              ADDRESS
+            </label>
+
+            <textarea
+              id="newCustomerAddress"
+              placeholder="Customer address">
+            </textarea>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- DEVICE -->
+
+    <section class="card">
+
+      <h2 class="card-title">
+        Device Details
+      </h2>
+
+
+      <div class="form-grid">
+
+        <div class="field">
+
+          <label>
+            DEVICE TYPE *
+          </label>
+
+          <select id="deviceType">
+
+            <option value="">
+              Select device
+            </option>
+
+            <option value="LED TV">
+              LED TV
+            </option>
+
+            <option value="LCD TV">
+              LCD TV
+            </option>
+
+            <option value="SMART TV">
+              Smart TV
+            </option>
+
+            <option value="DTH">
+              DTH
+            </option>
+
+            <option value="HOME APPLIANCE">
+              Home Appliance
+            </option>
+
+            <option value="OTHER">
+              Other
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            BRAND
+          </label>
+
+          <input
+            id="deviceBrand"
+            placeholder="Samsung, LG...">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            MODEL
+          </label>
+
+          <input
+            id="deviceModel"
+            placeholder="Model number">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            SERIAL NUMBER
+          </label>
+
+          <input
+            id="serialNumber"
+            placeholder="Serial number">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            SCREEN SIZE
+          </label>
+
+          <input
+            id="screenSize"
+            placeholder="e.g. 43 inch">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            SERVICE TYPE *
+          </label>
+
+          <select id="serviceType">
+
+            <option value="">
+              Select service
+            </option>
+
+            <option value="REPAIR">
+              Repair
+            </option>
+
+            <option value="INSTALLATION">
+              Installation
+            </option>
+
+            <option value="DEMO">
+              Demo
+            </option>
+
+            <option value="DTH SERVICE">
+              DTH Service
+            </option>
+
+            <option value="OTHER">
+              Other
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- PROBLEM -->
+
+    <section class="card">
+
+      <h2 class="card-title">
+        Service Problem
+      </h2>
+
+
+      <div class="field">
+
+        <label>
+          CUSTOMER COMPLAINT *
+        </label>
+
+        <textarea
+          id="problem"
+          required
+          placeholder="Describe the customer's problem...">
+        </textarea>
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          RETAILER NOTE
+        </label>
+
+        <textarea
+          id="retailerNote"
+          placeholder="Any additional information for REPARO technician...">
+        </textarea>
+
+      </div>
+
+    </section>
+
+
+    <!-- NOTE -->
+
+    <section class="card">
+
+      <div class="note">
+
+        <strong>
+          Customer Protection
+        </strong>
+        <br>
+
+        This request will remain linked to your
+        protected customer relationship. If the
+        customer is already protected by another
+        retailer, the request cannot be created
+        under your account without Admin transfer.
+
+      </div>
+
+    </section>
+
+
+    <button
+      id="submitBtn"
+      class="submit-btn"
+      type="submit">
+
+      Create Service Request
+
+    </button>
+
+  </form>
+
+</main>
+
+
+<script
+  type="module"
+  src="../js/new-service-request.js">
+</script>
+
+</body>
+</html>
