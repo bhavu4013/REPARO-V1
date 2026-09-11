@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Job Detail | REPARO V1</title>
+
+  <link
+    rel="stylesheet"
+    href="../css/reparo.css"
+  >
+</head>
+
+<body>
+
+  <main class="page-container">
+
+    <!-- HEADER -->
+
+    <header class="page-header">
+
+      <div>
+        <div class="eyebrow">
+          REPARO V1
+        </div>
+
+        <h1>
+          Job Detail
+        </h1>
+
+        <p>
+          Technician service workflow
+        </p>
+      </div>
+
+      <span
+        id="jobStatusBadge"
+        class="status-badge">
+        LOADING
+      </span>
+
+    </header>
+
+
+    <!-- LOADING -->
+
+    <div id="loading">
+      Loading job...
+    </div>
+
+
+    <!-- JOB CONTENT -->
+
+    <div id="jobContent" class="hidden">
+
+
+      <!-- JOB ID -->
+
+      <section class="card">
+
+        <div class="section-title">
+
+          <div>
+            <div class="eyebrow">
+              JOB
+            </div>
+
+            <h2 id="jobId">
+              -
+            </h2>
+          </div>
+
+        </div>
+
+        <div class="card-info-grid">
+
+          <div>
+            <span>Request ID</span>
+            <strong id="requestId">-</strong>
+          </div>
+
+          <div>
+            <span>Service Type</span>
+            <strong id="serviceType">-</strong>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- CUSTOMER -->
+
+      <section class="card">
+
+        <div class="section-title">
+
+          <div>
+            <div class="eyebrow">
+              CUSTOMER
+            </div>
+
+            <h2 id="customerName">
+              -
+            </h2>
+
+            <p id="customerMobile">
+              -
+            </p>
+          </div>
+
+        </div>
+
+        <div class="card-info-grid">
+
+          <div>
+            <span>Address</span>
+            <strong id="customerAddress">-</strong>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- DEVICE -->
+
+      <section class="card">
+
+        <div class="section-title">
+
+          <div>
+            <div class="eyebrow">
+              DEVICE
+            </div>
+
+            <h2 id="deviceTitle">
+              -
+            </h2>
+          </div>
+
+        </div>
+
+        <div class="card-info-grid">
+
+          <div>
+            <span>Serial Number</span>
+            <strong id="serialNumber">-</strong>
+          </div>
+
+          <div>
+            <span>Screen Size</span>
+            <strong id="screenSize">-</strong>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- CUSTOMER PROBLEM -->
+
+      <section class="card">
+
+        <div class="section-title">
+
+          <div>
+            <div class="eyebrow">
+              CUSTOMER REQUEST
+            </div>
+
+            <h2>Reported Problem</h2>
+          </div>
+
+        </div>
+
+        <p id="problem">
+          -
+        </p>
+
+      </section>
+
+
+      <!-- JOB ACTION -->
+
+      <section class="card">
+
+        <div class="section-title">
+
+          <div>
+            <div class="eyebrow">
+              SERVICE WORKFLOW
+            </div>
+
+            <h2>Job Action</h2>
+          </div>
+
+        </div>
+
+
+        <button
+          id="startJobBtn"
+          class="primary-btn">
+          Start Job
+        </button>
+
+      </section>
+
+
+      <!-- DIAGNOSIS -->
+
+      <section
+        id="diagnosisSection"
+        class="card hidden">
+
+        <div class="section-title">
+
+          <div>
+            <div class="eyebrow">
+              DIAGNOSIS
+            </div>
+
+            <h2>Technical Diagnosis</h2>
+          </div>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Diagnosis
+          </label>
+
+          <textarea
+            id="diagnosis"
+            class="form-input"
+            rows="4"
+            placeholder="Enter diagnosis...">
+          </textarea>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Estimated Labour / Service Charge
+          </label>
+
+          <input
+            id="labourCharge"
+            class="form-input"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="₹ 0"
+          >
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Estimated Parts Amount
+          </label>
+
+          <input
+            id="partsAmount"
+            class="form-input"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="₹ 0"
+          >
+
+        </div>
+
+
+        <div class="estimate-box">
+
+          <span>
+            Customer Estimate
+          </span>
+
+          <strong id="estimateTotal">
+            ₹0
+          </strong>
+
+        </div>
+
+
+        <button
+          id="submitDiagnosisBtn"
+          class="primary-btn">
+          Submit Diagnosis
+        </button>
+
+      </section>
+
+
+      <!-- CUSTOMER APPROVAL -->
+
+      <section
+        id="approvalSection"
+        class="card hidden">
+
+        <div class="section-title">
+
+          <div>
+            <div class="eyebrow">
+              CUSTOMER APPROVAL
+            </div>
+
+            <h2>Repair Approval</h2>
+          </div>
+
+        </div>
+
+
+        <div
+          id="approvalStatus"
+          class="status-badge">
+          PENDING
+        </div>
+
+
+        <p>
+          Repair work should proceed only after
+          customer approval.
+        </p>
+
+
+        <div class="action-row">
+
+          <button
+            id="approvalReceivedBtn"
+            class="primary-btn">
+            Approval Received
+          </button>
+
+          <button
+            id="approvalRejectedBtn"
+            class="secondary-btn">
+            Customer Rejected
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <!-- REPAIR -->
+
+      <section
+        id="repairSection"
+        class="card hidden">
+
+        <div class="section-title">
+
+          <div>
+            <div class="eyebrow">
+              REPAIR
+            </div>
+
+            <h2>Repair Completion</h2>
+          </div>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Final Repair Notes
+          </label>
+
+          <textarea
+            id="repairNotes"
+            class="form-input"
+            rows="4"
+            placeholder="Enter final repair details...">
+          </textarea>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Final Labour Charge
+          </label>
+
+          <input
+            id="finalLabour"
+            class="form-input"
+            type="number"
+            min="0"
+            step="1"
+          >
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Final Parts Amount
+          </label>
+
+          <input
+            id="finalParts"
+            class="form-input"
+            type="number"
+            min="0"
+            step="1"
+          >
+
+        </div>
+
+
+        <div class="estimate-box">
+
+          <span>
+            Final Customer Amount
+          </span>
+
+          <strong id="finalTotal">
+            ₹0
+          </strong>
+
+        </div>
+
+
+        <button
+          id="completeJobBtn"
+          class="primary-btn">
+          Complete Job
+        </button>
+
+      </section>
+
+
+      <!-- COMPLETION -->
+
+      <section
+        id="completionSection"
+        class="card hidden">
+
+        <div class="section-title">
+
+          <div>
+            <div class="eyebrow">
+              COMPLETED
+            </div>
+
+            <h2>
+              Job Completed
+            </h2>
+          </div>
+
+        </div>
+
+        <p>
+          This job has been completed successfully.
+        </p>
+
+        <div class="estimate-box">
+
+          <span>
+            Final Customer Amount
+          </span>
+
+          <strong id="completedTotal">
+            ₹0
+          </strong>
+
+        </div>
+
+      </section>
+
+
+    </div>
+
+  </main>
+
+
+  <script
+    type="module"
+    src="../js/technician-job-detail.js">
+  </script>
+
+</body>
+</html>
