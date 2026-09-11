@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Reports | REPARO V1</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      background:#f8fafc;
+      color:#172033;
+      font-family:Arial,sans-serif;
+      margin:0;
+      padding-bottom:82px;
+    }
+
+    .page {
+      max-width:700px;
+      margin:auto;
+      padding:16px;
+    }
+
+    .header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:18px;
+    }
+
+    .title {
+      font-size:24px;
+      font-weight:800;
+    }
+
+    .subtitle {
+      color:#64748b;
+      font-size:13px;
+      margin-top:3px;
+    }
+
+    .logout {
+      border:0;
+      background:#172033;
+      color:white;
+      border-radius:12px;
+      padding:9px 12px;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .filter-card,
+    .report-card {
+      background:white;
+      border-radius:20px;
+      padding:16px;
+      margin-bottom:12px;
+      box-shadow:0 5px 18px rgba(15,23,42,.07);
+    }
+
+    .section-title {
+      font-size:16px;
+      font-weight:800;
+      margin-bottom:12px;
+    }
+
+    .date-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .field label {
+      display:block;
+      color:#64748b;
+      font-size:11px;
+      font-weight:700;
+      margin-bottom:5px;
+    }
+
+    .field input,
+    .field select {
+      width:100%;
+      box-sizing:border-box;
+      border:1px solid #e2e8f0;
+      border-radius:12px;
+      padding:11px;
+      background:#f8fafc;
+      outline:none;
+      font-size:13px;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color:#ec4899;
+      background:white;
+    }
+
+    .apply-btn {
+      width:100%;
+      border:0;
+      border-radius:13px;
+      padding:12px;
+      margin-top:12px;
+      background:#ec4899;
+      color:white;
+      font-size:14px;
+      font-weight:800;
+    }
+
+    .summary-grid {
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:10px;
+    }
+
+    .summary-box {
+      background:#f8fafc;
+      border-radius:15px;
+      padding:13px;
+    }
+
+    .summary-label {
+      color:#64748b;
+      font-size:10px;
+      font-weight:700;
+    }
+
+    .summary-value {
+      font-size:21px;
+      font-weight:800;
+      margin-top:5px;
+    }
+
+    .pink { color:#be185d; }
+    .blue { color:#2563eb; }
+    .green { color:#059669; }
+    .orange { color:#d97706; }
+    .red { color:#dc2626; }
+
+    .financial-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:12px 0;
+      border-bottom:1px solid #e2e8f0;
+      font-size:13px;
+    }
+
+    .financial-row:last-child {
+      border-bottom:0;
+    }
+
+    .financial-label {
+      color:#64748b;
+    }
+
+    .financial-value {
+      font-weight:800;
+    }
+
+    .profit-box {
+      background:#ecfdf5;
+      border-radius:16px;
+      padding:15px;
+      margin-top:12px;
+    }
+
+    .profit-label {
+      color:#047857;
+      font-size:11px;
+      font-weight:700;
+    }
+
+    .profit-value {
+      color:#065f46;
+      font-size:25px;
+      font-weight:800;
+      margin-top:4px;
+    }
+
+    .message {
+      display:none;
+      padding:12px;
+      border-radius:12px;
+      margin-bottom:12px;
+      font-size:13px;
+      font-weight:700;
+    }
+
+    .error {
+      background:#fee2e2;
+      color:#991b1b;
+    }
+
+    .success {
+      background:#d1fae5;
+      color:#065f46;
+    }
+
+    .loading {
+      background:white;
+      border-radius:18px;
+      padding:30px;
+      text-align:center;
+      color:#64748b;
+    }
+
+    .bottom-nav {
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      height:68px;
+      background:white;
+      border-top:1px solid #e2e8f0;
+      display:flex;
+      justify-content:space-around;
+      align-items:center;
+      z-index:500;
+    }
+
+    .nav-item {
+      border:0;
+      background:transparent;
+      color:#64748b;
+      font-size:11px;
+      font-weight:700;
+      padding:8px;
+    }
+
+    .nav-item.active {
+      color:#ec4899;
+    }
+
+    .report-note {
+      color:#64748b;
+      font-size:11px;
+      line-height:1.5;
+      margin-top:10px;
+    }
+
+    @media (min-width:640px) {
+      .summary-grid {
+        grid-template-columns:repeat(4,1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="page">
+
+    <header class="header">
+      <div>
+        <div class="title">Reports</div>
+        <div class="subtitle">REPARO business performance</div>
+      </div>
+
+      <button id="logoutBtn" class="logout">
+        Logout
+      </button>
+    </header>
+
+
+    <div id="errorBox" class="message error"></div>
+    <div id="successBox" class="message success"></div>
+
+
+    <!-- DATE FILTER -->
+
+    <section class="filter-card">
+
+      <div class="section-title">
+        Report Period
+      </div>
+
+      <div class="date-grid">
+
+        <div class="field">
+          <label>From Date</label>
+
+          <input
+            id="fromDate"
+            type="date"
+          >
+        </div>
+
+        <div class="field">
+          <label>To Date</label>
+
+          <input
+            id="toDate"
+            type="date"
+          >
+        </div>
+
+      </div>
+
+      <button
+        id="applyReportBtn"
+        class="apply-btn"
+      >
+        Generate Report
+      </button>
+
+    </section>
+
+
+    <div id="reportLoading" class="loading">
+      Loading report...
+    </div>
+
+
+    <div id="reportContent" style="display:none;">
+
+
+      <!-- OPERATION SUMMARY -->
+
+      <section class="report-card">
+
+        <div class="section-title">
+          Operations
+        </div>
+
+        <div class="summary-grid">
+
+          <div class="summary-box">
+            <div class="summary-label">
+              Service Requests
+            </div>
+
+            <div
+              id="totalRequests"
+              class="summary-value blue"
+            >
+              0
+            </div>
+          </div>
+
+
+          <div class="summary-box">
+            <div class="summary-label">
+              Total Jobs
+            </div>
+
+            <div
+              id="totalJobs"
+              class="summary-value blue"
+            >
+              0
+            </div>
+          </div>
+
+
+          <div class="summary-box">
+            <div class="summary-label">
+              Completed
+            </div>
+
+            <div
+              id="completedJobs"
+              class="summary-value green"
+            >
+              0
+            </div>
+          </div>
+
+
+          <div class="summary-box">
+            <div class="summary-label">
+              Cancelled
+            </div>
+
+            <div
+              id="cancelledJobs"
+              class="summary-value red"
+            >
+              0
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- REVENUE -->
+
+      <section class="report-card">
+
+        <div class="section-title">
+          Revenue
+        </div>
+
+        <div class="financial-row">
+
+          <span class="financial-label">
+            Service Revenue
+          </span>
+
+          <span
+            id="serviceRevenue"
+            class="financial-value"
+          >
+            ₹0
+          </span>
+
+        </div>
+
+
+        <div class="financial-row">
+
+          <span class="financial-label">
+            Parts / Product Revenue
+          </span>
+
+          <span
+            id="productRevenue"
+            class="financial-value"
+          >
+            ₹0
+          </span>
+
+        </div>
+
+
+        <div class="financial-row">
+
+          <span class="financial-label">
+            Total Revenue
+          </span>
+
+          <span
+            id="totalRevenue"
+            class="financial-value blue"
+          >
+            ₹0
+          </span>
+
+        </div>
+
+      </section>
+
+
+      <!-- PAYOUT -->
+
+      <section class="report-card">
+
+        <div class="section-title">
+          Partner & Technician Payout
+        </div>
+
+        <div class="financial-row">
+
+          <span class="financial-label">
+            Retailer Commission
+          </span>
+
+          <span
+            id="retailerCommission"
+            class="financial-value"
+          >
+            ₹0
+          </span>
+
+        </div>
+
+
+        <div class="financial-row">
+
+          <span class="financial-label">
+            Technician Earnings
+          </span>
+
+          <span
+            id="technicianEarnings"
+            class="financial-value"
+          >
+            ₹0
+          </span>
+
+        </div>
+
+
+        <div class="financial-row">
+
+          <span class="financial-label">
+            Warranty Hold
+          </span>
+
+          <span
+            id="warrantyHold"
+            class="financial-value orange"
+          >
+            ₹0
+          </span>
+
+        </div>
+
+
+        <div class="financial-row">
+
+          <span class="financial-label">
+            Paid Payments
+          </span>
+
+          <span
+            id="paidPayments"
+            class="financial-value green"
+          >
+            ₹0
+          </span>
+
+        </div>
+
+      </section>
+
+
+      <!-- BUSINESS -->
+
+      <section class="report-card">
+
+        <div class="section-title">
+          Business Summary
+        </div>
+
+        <div class="financial-row">
+
+          <span class="financial-label">
+            Total Revenue
+          </span>
+
+          <span
+            id="businessRevenue"
+            class="financial-value"
+          >
+            ₹0
+          </span>
+
+        </div>
+
+
+        <div class="financial-row">
+
+          <span class="financial-label">
+            Retailer Commission
+          </span>
+
+          <span
+            id="businessRetailerCost"
+            class="financial-value"
+          >
+            ₹0
+          </span>
+
+        </div>
+
+
+        <div class="financial-row">
+
+          <span class="financial-label">
+            Technician Cost
+          </span>
+
+          <span
+            id="businessTechnicianCost"
+            class="financial-value"
+          >
+            ₹0
+          </span>
+
+        </div>
+
+
+        <div class="profit-box">
+
+          <div class="profit-label">
+            Estimated Operating Contribution
+          </div>
+
+          <div
+            id="estimatedProfit"
+            class="profit-value"
+          >
+            ₹0
+          </div>
+
+        </div>
+
+
+        <div class="report-note">
+          This is a management-level calculation based on
+          available Revenue, Retailer Commission and Technician
+          Earnings records. Product purchase cost and other
+          internal expenses are not deducted here unless those
+          records are available.
+        </div>
+
+      </section>
+
+
+      <!-- PAYMENT STATUS -->
+
+      <section class="report-card">
+
+        <div class="section-title">
+          Payment Status
+        </div>
+
+        <div class="summary-grid">
+
+          <div class="summary-box">
+            <div class="summary-label">
+              Pending
+            </div>
+
+            <div
+              id="reportPending"
+              class="summary-value orange"
+            >
+              ₹0
+            </div>
+          </div>
+
+
+          <div class="summary-box">
+            <div class="summary-label">
+              Payable
+            </div>
+
+            <div
+              id="reportPayable"
+              class="summary-value blue"
+            >
+              ₹0
+            </div>
+          </div>
+
+
+          <div class="summary-box">
+            <div class="summary-label">
+              Paid
+            </div>
+
+            <div
+              id="reportPaid"
+              class="summary-value green"
+            >
+              ₹0
+            </div>
+          </div>
+
+
+          <div class="summary-box">
+            <div class="summary-label">
+              Hold
+            </div>
+
+            <div
+              id="reportHold"
+              class="summary-value pink"
+            >
+              ₹0
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+
+  <nav class="bottom-nav">
+
+    <button
+      class="nav-item"
+      onclick="window.location.href='./dashboard.html'"
+    >
+      🏠<br>Dashboard
+    </button>
+
+    <button
+      class="nav-item"
+      onclick="window.location.href='./service-requests.html'"
+    >
+      📋<br>Requests
+    </button>
+
+    <button
+      class="nav-item"
+      onclick="window.location.href='./jobs.html'"
+    >
+      🔧<br>Jobs
+    </button>
+
+    <button
+      class="nav-item"
+      onclick="window.location.href='./payments.html'"
+    >
+      💳<br>Payments
+    </button>
+
+    <button class="nav-item active">
+      📊<br>Reports
+    </button>
+
+  </nav>
+
+
+  <script
+    type="module"
+    src="../js/reports.js"
+  ></script>
+
+</body>
+</html>
