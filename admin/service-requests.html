@@ -17,7 +17,6 @@
       --border: #e4e6eb;
       --green: #18a558;
       --red: #dc3545;
-      --orange: #f59e0b;
     }
 
     * {
@@ -25,13 +24,19 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    html,
     body {
       margin: 0;
-      min-height: 100vh;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+    }
+
+    body {
       background: var(--bg);
       color: var(--navy);
       font-family: Arial, Helvetica, sans-serif;
-      padding-bottom: 82px;
+      padding-bottom: 86px;
     }
 
     button,
@@ -45,13 +50,15 @@
       cursor: pointer;
     }
 
+    /* ================= HEADER ================= */
+
     .topbar {
       background: #fff;
-      padding: 15px 18px;
       border-bottom: 1px solid #eee;
+      padding: 15px 18px;
       position: sticky;
       top: 0;
-      z-index: 20;
+      z-index: 50;
     }
 
     .brand-row {
@@ -76,67 +83,86 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 900;
       font-size: 22px;
+      font-weight: 900;
     }
 
     .logout {
       border: 0;
       border-radius: 22px;
       background: #f1f3f6;
-      padding: 10px 16px;
+      color: var(--navy);
+      padding: 10px 17px;
       font-size: 13px;
       font-weight: 800;
-      color: var(--navy);
     }
+
+    /* ================= MAIN ================= */
 
     main {
       width: 100%;
       max-width: 900px;
       margin: 0 auto;
-      padding: 8px 0 25px;
+      padding: 22px 16px 30px;
     }
 
+    /* ================= PAGE HEADER ================= */
+
     .page-head {
-      padding: 0 0 24px;
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .page-title-wrap {
+      min-width: 0;
+      flex: 1;
     }
 
     .page-title {
       margin: 0;
       font-size: 32px;
-      line-height: 1;
+      line-height: 1.05;
       font-weight: 900;
       letter-spacing: -1px;
     }
 
     .page-subtitle {
-      margin: 7px 0 0;
+      margin: 8px 0 0;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 15px;
+      line-height: 1.3;
     }
 
     .new-btn {
+      flex: 0 0 auto;
       border: 0;
       background: var(--blue);
       color: #fff;
-      border-radius: 18px;
-      padding: 14px 17px;
+      border-radius: 19px;
+      padding: 14px 18px;
+      font-size: 15px;
       font-weight: 900;
       white-space: nowrap;
-      box-shadow: 0 8px 18px rgba(8,174,224,.18);
+      box-shadow: 0 8px 18px rgba(8, 174, 224, .18);
     }
+
+    .new-btn:active {
+      transform: scale(.98);
+    }
+
+    /* ================= MESSAGE ================= */
 
     .message {
       display: none;
-      margin: 0 16px 15px;
-      padding: 13px 15px;
       border-radius: 15px;
+      padding: 13px 15px;
+      margin-bottom: 16px;
       font-size: 13px;
       font-weight: 700;
+      line-height: 1.4;
     }
 
     .error {
@@ -149,6 +175,8 @@
       color: #166534;
     }
 
+    /* ================= SUMMARY ================= */
+
     .summary {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -158,75 +186,83 @@
 
     .summary-card {
       background: #fff;
-      border-radius: 23px;
-      padding: 20px 27px;
-      box-shadow: 0 5px 20px rgba(15,23,42,.045);
+      border-radius: 24px;
+      padding: 22px 27px;
+      min-height: 140px;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, .045);
     }
 
     .summary-label {
       color: var(--muted);
       font-size: 14px;
-      margin-bottom: 7px;
+      margin-bottom: 20px;
     }
 
     .summary-value {
-      font-size: 30px;
+      font-size: 31px;
+      line-height: 1;
       font-weight: 900;
     }
 
-    .search-box {
-      background: #fff;
-      border-radius: 0;
-      padding: 0;
-      margin-bottom: 10px;
+    /* ================= FILTER ================= */
+
+    .filter-section {
+      margin-bottom: 18px;
     }
 
-    .search-box input,
+    .search-input,
     .status-select {
+      display: block;
       width: 100%;
       border: 1px solid var(--border);
       background: #fff;
-      border-radius: 18px;
-      padding: 16px 23px;
+      border-radius: 19px;
+      padding: 16px 24px;
       outline: none;
       color: var(--navy);
       font-size: 15px;
     }
 
-    .search-box input {
+    .search-input {
       margin-bottom: 10px;
     }
 
-    .search-box input:focus,
+    .search-input::placeholder {
+      color: #777;
+    }
+
+    .search-input:focus,
     .status-select:focus {
       border-color: var(--blue);
     }
+
+    /* ================= REQUEST LIST ================= */
 
     .request-list {
       display: flex;
       flex-direction: column;
       gap: 13px;
-      margin-top: 18px;
     }
 
     .request-card {
       background: #fff;
       border-radius: 23px;
       padding: 18px;
-      box-shadow: 0 5px 20px rgba(15,23,42,.05);
+      box-shadow: 0 6px 20px rgba(15, 23, 42, .05);
     }
 
     .request-top {
       display: flex;
-      align-items: flex-start;
       justify-content: space-between;
-      gap: 10px;
+      align-items: flex-start;
+      gap: 12px;
     }
 
     .request-id {
       margin: 0;
       font-size: 18px;
       font-weight: 900;
+      word-break: break-word;
     }
 
     .customer {
@@ -281,9 +317,11 @@
 
     .info-row {
       display: flex;
+      align-items: flex-start;
       gap: 9px;
-      font-size: 13px;
       color: #4b5563;
+      font-size: 13px;
+      line-height: 1.4;
     }
 
     .info-icon {
@@ -322,13 +360,20 @@
       color: #5d5100;
     }
 
-    .empty {
+    /* ================= EMPTY / LOADING ================= */
+
+    .empty,
+    .loading {
       background: #fff;
       border-radius: 23px;
-      padding: 50px 20px;
+      min-height: 190px;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
-      margin-top: 18px;
-      box-shadow: 0 5px 20px rgba(15,23,42,.04);
+      box-shadow: 0 6px 20px rgba(15, 23, 42, .04);
     }
 
     .empty-icon {
@@ -345,23 +390,21 @@
       margin-top: 7px;
       color: var(--muted);
       font-size: 14px;
+      line-height: 1.4;
     }
 
     .loading {
-      background: #fff;
-      border-radius: 23px;
-      padding: 40px;
-      text-align: center;
       color: var(--muted);
+      font-size: 15px;
     }
 
-    /* MODAL */
+    /* ================= MODAL ================= */
 
     .modal-bg {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(15,23,42,.55);
+      background: rgba(15, 23, 42, .55);
       z-index: 100;
       padding: 15px;
       overflow-y: auto;
@@ -379,12 +422,14 @@
       background: #fff;
       border-radius: 27px;
       padding: 20px;
+      box-shadow: 0 25px 70px rgba(0,0,0,.25);
     }
 
     .modal-head {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      gap: 10px;
       margin-bottom: 18px;
     }
 
@@ -397,6 +442,7 @@
     .close {
       width: 39px;
       height: 39px;
+      flex: 0 0 39px;
       border: 0;
       border-radius: 50%;
       background: #f1f3f6;
@@ -411,9 +457,9 @@
     .field label {
       display: block;
       margin: 0 0 6px 3px;
+      color: #4b5563;
       font-size: 12px;
       font-weight: 800;
-      color: #4b5563;
     }
 
     .field input,
@@ -427,6 +473,13 @@
       outline: none;
       color: var(--navy);
       font-size: 14px;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--blue);
+      background: #fff;
     }
 
     .field textarea {
@@ -458,7 +511,67 @@
       color: #fff;
     }
 
-    /* BOTTOM NAV */
+    /* ================= MORE PANEL ================= */
+
+    .more-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .25);
+      z-index: 70;
+    }
+
+    .more-overlay.show {
+      display: block;
+    }
+
+    .more-panel {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 76px;
+      background: #fff;
+      border-radius: 25px 25px 0 0;
+      padding: 20px 16px 18px;
+      box-shadow: 0 -12px 35px rgba(15,23,42,.14);
+      z-index: 80;
+    }
+
+    .more-panel.show {
+      display: block;
+    }
+
+    .more-title {
+      margin: 0 0 14px;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .more-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 9px;
+    }
+
+    .more-item {
+      text-decoration: none;
+      color: var(--navy);
+      background: #f7f8fa;
+      border-radius: 15px;
+      padding: 12px 6px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .more-icon {
+      display: block;
+      font-size: 21px;
+      margin-bottom: 5px;
+    }
+
+    /* ================= BOTTOM NAV ================= */
 
     .bottom-nav {
       position: fixed;
@@ -469,19 +582,22 @@
       background: #fff;
       border-top: 1px solid #e8e8e8;
       display: flex;
-      z-index: 30;
+      z-index: 90;
     }
 
     .nav-item {
       flex: 1;
+      min-width: 0;
+      border: 0;
+      background: #fff;
       text-decoration: none;
-      color: #6b7280;
+      color: #737987;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
-      font-size: 10px;
+      gap: 5px;
+      font-size: 11px;
       font-weight: 800;
     }
 
@@ -490,39 +606,107 @@
     }
 
     .nav-icon {
-      font-size: 20px;
+      font-size: 21px;
+      line-height: 1;
     }
 
-    @media (min-width: 700px) {
-      main {
-        padding: 8px 16px 30px;
-      }
-    }
+    /* ================= MOBILE ================= */
 
     @media (max-width: 620px) {
-      .summary-card {
-        padding: 18px 27px;
+
+      main {
+        padding: 18px 0 28px;
       }
 
-      .summary-label {
+      .page-head {
+        padding: 0 16px;
+        align-items: flex-start;
+      }
+
+      .page-title {
+        font-size: 31px;
+      }
+
+      .page-subtitle {
+        font-size: 14px;
+      }
+
+      .new-btn {
+        padding: 14px 15px;
+        font-size: 14px;
+      }
+
+      .summary {
+        padding: 0;
+        gap: 10px;
+      }
+
+      .summary-card {
+        border-radius: 24px;
+        padding: 21px 27px;
+        min-height: 140px;
+      }
+
+      .filter-section {
+        padding: 0;
+      }
+
+      .search-input,
+      .status-select {
+        border-radius: 19px;
+      }
+
+      .request-list {
+        padding: 0 0;
+      }
+
+      .request-card,
+      .empty,
+      .loading {
+        border-radius: 23px;
+      }
+
+      .more-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 430px) {
+
+      .page-head {
+        gap: 10px;
+      }
+
+      .page-title {
+        font-size: 29px;
+      }
+
+      .new-btn {
         font-size: 13px;
+        padding: 13px 12px;
+      }
+
+      .summary-card {
+        padding: 20px 25px;
       }
 
       .summary-value {
         font-size: 29px;
       }
+    }
 
-      .page-head {
-        padding-left: 0;
-        padding-right: 0;
-      }
+    @media (max-width: 360px) {
 
       .page-title {
-        font-size: 30px;
+        font-size: 27px;
       }
 
       .new-btn {
-        padding: 14px 15px;
+        padding: 12px 10px;
+      }
+
+      .more-grid {
+        grid-template-columns: repeat(3, 1fr);
       }
     }
   </style>
@@ -530,14 +714,22 @@
 
 <body>
 
+  <!-- HEADER -->
+
   <header class="topbar">
 
     <div class="brand-row">
 
       <div class="brand">
-        <div class="logo">R</div>
+
+        <div class="logo">
+          R
+        </div>
+
         <span>REPARO</span>
+
       </div>
+
 
       <button
         id="logoutBtn"
@@ -552,11 +744,13 @@
   </header>
 
 
+  <!-- MAIN -->
+
   <main>
 
     <div class="page-head">
 
-      <div>
+      <div class="page-title-wrap">
 
         <h1 class="page-title">
           Service Requests
@@ -567,6 +761,7 @@
         </p>
 
       </div>
+
 
       <button
         id="newRequestBtn"
@@ -584,11 +779,14 @@
       class="message error"
     ></div>
 
+
     <div
       id="successBox"
       class="message success"
     ></div>
 
+
+    <!-- SUMMARY -->
 
     <section class="summary">
 
@@ -642,13 +840,17 @@
     </section>
 
 
-    <section class="search-box">
+    <!-- FILTER -->
+
+    <section class="filter-section">
 
       <input
         id="searchInput"
+        class="search-input"
         type="search"
         placeholder="Search customer, mobile, request ID..."
       >
+
 
       <select
         id="statusFilter"
@@ -688,6 +890,8 @@
     </section>
 
 
+    <!-- REQUESTS -->
+
     <section id="requestContainer">
 
       <div class="loading">
@@ -699,47 +903,152 @@
   </main>
 
 
+  <!-- MORE OVERLAY -->
+
+  <div
+    id="moreOverlay"
+    class="more-overlay"
+  ></div>
+
+
+  <!-- MORE PANEL -->
+
+  <section
+    id="morePanel"
+    class="more-panel"
+  >
+
+    <h3 class="more-title">
+      More
+    </h3>
+
+
+    <div class="more-grid">
+
+      <a
+        class="more-item"
+        href="./retailers.html"
+      >
+        <span class="more-icon">🏪</span>
+        Retailers
+      </a>
+
+
+      <a
+        class="more-item"
+        href="./technicians.html"
+      >
+        <span class="more-icon">🔧</span>
+        Technicians
+      </a>
+
+
+      <a
+        class="more-item"
+        href="./customers.html"
+      >
+        <span class="more-icon">👤</span>
+        Customers
+      </a>
+
+
+      <a
+        class="more-item"
+        href="./earnings.html"
+      >
+        <span class="more-icon">₹</span>
+        Earnings
+      </a>
+
+
+      <a
+        class="more-item"
+        href="./warranty.html"
+      >
+        <span class="more-icon">🛡️</span>
+        Warranty
+      </a>
+
+
+      <a
+        class="more-item"
+        href="./schemes.html"
+      >
+        <span class="more-icon">🎁</span>
+        Schemes
+      </a>
+
+
+      <a
+        class="more-item"
+        href="./payments.html"
+      >
+        <span class="more-icon">💳</span>
+        Payments
+      </a>
+
+
+      <a
+        class="more-item"
+        href="./reports.html"
+      >
+        <span class="more-icon">📊</span>
+        Reports
+      </a>
+
+    </div>
+
+  </section>
+
+
+  <!-- BOTTOM NAV -->
+
   <nav class="bottom-nav">
 
     <a
-      class="nav-item"
       href="./dashboard.html"
+      class="nav-item"
     >
       <span class="nav-icon">⌂</span>
       <span>Home</span>
     </a>
 
+
     <a
-      class="nav-item active"
       href="./service-requests.html"
+      class="nav-item active"
     >
       <span class="nav-icon">▣</span>
       <span>Requests</span>
     </a>
 
+
     <a
-      class="nav-item"
       href="./jobs.html"
+      class="nav-item"
     >
       <span class="nav-icon">🔧</span>
       <span>Jobs</span>
     </a>
 
+
     <a
-      class="nav-item"
       href="./products.html"
+      class="nav-item"
     >
       <span class="nav-icon">📦</span>
       <span>Products</span>
     </a>
 
-    <a
+
+    <button
+      id="moreNavBtn"
       class="nav-item"
-      href="./customers.html"
+      type="button"
     >
-      <span class="nav-icon">●</span>
-      <span>Customers</span>
-    </a>
+      <span class="nav-icon">☰</span>
+      <span>More</span>
+    </button>
 
   </nav>
 
@@ -933,9 +1242,10 @@
             Cancel
           </button>
 
+
           <button
-            type="submit"
             id="saveBtn"
+            type="submit"
             class="modal-btn save"
           >
             Create Request
