@@ -9,71 +9,137 @@ import {
   getDoc
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-import { auth, db } from "./firebase.js";
+import {
+  auth,
+  db
+} from "./firebase.js";
 
 
-export async function login(email, password) {
+/* =========================================================
+   LOGIN
+========================================================= */
 
+export async function login(
+  email,
+  password
+) {
   return await signInWithEmailAndPassword(
     auth,
-    email,
+    email.trim(),
     password
   );
-
 }
 
 
-export async function getUserProfile(uid) {
+/* =========================================================
+   USER PROFILE
+========================================================= */
 
-  const userRef = doc(
-    db,
-    "users",
-    uid
-  );
+export async function getUserProfile(
+  uid
+) {
 
-  const snapshot = await getDoc(userRef);
+  const userRef =
+    doc(
+      db,
+      "users",
+      uid
+    );
 
-  if (!snapshot.exists()) {
-    throw new Error("USER_PROFILE_NOT_FOUND");
+
+  const snapshot =
+    await getDoc(
+      userRef
+    );
+
+
+  if (
+    !snapshot.exists()
+  ) {
+
+    throw new Error(
+      "USER_PROFILE_NOT_FOUND"
+    );
+
   }
 
-  return snapshot.data();
 
+  return snapshot.data();
 }
 
 
-export function watchAuth(callback) {
+/* =========================================================
+   AUTH WATCHER
+========================================================= */
 
+export function watchAuth(
+  callback
+) {
   return onAuthStateChanged(
     auth,
     callback
   );
-
 }
 
+
+/* =========================================================
+   LOGOUT
+========================================================= */
 
 export async function logout() {
-
   await signOut(auth);
-
 }
 
 
-export function getRolePage(role) {
+/* =========================================================
+   ROLE PAGE
+   IMPORTANT:
+   Using auth.js location makes this work from
+   root login AND customer/login.html.
+========================================================= */
 
-  switch (role) {
+export function getRolePage(
+  role
+) {
 
-    case "admin":
-      return "./admin/dashboard.html";
+  const pages = {
 
-    case "retailer":
-      return "./retailer/dashboard.html";
+    admin:
+      "../admin/dashboard.html",
 
-    case "technician":
-      return "./technician/dashboard.html";
+    retailer:
+      "../retailer/dashboard.html",
 
-    default:
-      return "./index.html";
+    technician:
+      "../technician/dashboard.html",
+
+    customer:
+      "../customer/status.html"
+
+  };
+
+
+  const relativePath =
+    pages[role];
+
+
+  if (!relativePath) {
+
+    return null;
+
   }
+
+
+  /*
+    auth.js is inside /js/
+    Therefore ../technician/... correctly points
+    to /technician/... regardless of which page
+    imported this file.
+  */
+
+  return new URL(
+    relativePath,
+    import.meta.url
+  ).href;
 
 }
