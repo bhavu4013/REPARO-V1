@@ -1,94 +1,57 @@
-import {
-  auth,
-  db
-} from "./firebase.js";
-
+import { auth, db } from "./firebase.js";
 
 import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
-
 import {
   collection,
   getDocs,
+  getDoc,
+  addDoc,
+  updateDoc,
+  doc,
   query,
   where,
-  doc,
-  setDoc,
-  updateDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
-/* ==================================================
-   VARIABLES
-================================================== */
-
+let currentUser = null;
 let customers = [];
-
 let retailers = [];
-
+let jobs = [];
 let editingCustomerId = null;
 
 
-/* ==================================================
-   ELEMENTS
-================================================== */
+// =====================================================
+// ELEMENTS
+// =====================================================
+
+const loading =
+  document.getElementById("loading");
 
 const customerList =
-  document.getElementById(
-    "customerList"
-  );
-
-
-const searchInput =
-  document.getElementById(
-    "searchInput"
-  );
-
+  document.getElementById("customerList");
 
 const modal =
-  document.getElementById(
-    "customerModal"
-  );
+  document.getElementById("customerModal");
+
+const detailModal =
+  document.getElementById("detailModal");
 
 
-const customerForm =
-  document.getElementById(
-    "customerForm"
-  );
-
-
-const retailerSelect =
-  document.getElementById(
-    "retailerSelect"
-  );
-
-
-const duplicateWarning =
-  document.getElementById(
-    "duplicateWarning"
-  );
-
-
-const saveBtn =
-  document.getElementById(
-    "saveBtn"
-  );
-
-
-/* ==================================================
-   ADMIN AUTH CHECK
-================================================== */
+// =====================================================
+// AUTH
+// =====================================================
 
 onAuthStateChanged(
   auth,
-  async (user) => {
+  async user => {
 
     if (!user) {
 
-      window.location.href =
+      location.href =
         "../index.html";
 
       return;
@@ -98,84 +61,43 @@ onAuthStateChanged(
 
     try {
 
-      const userQuery =
-        query(
-          collection(
+      const profileSnap =
+        await getDoc(
+          doc(
             db,
-            "users"
-          ),
-          where(
-            "__name__",
-            "==",
+            "users",
             user.uid
           )
         );
 
 
-      const userSnapshot =
-        await getDocs(
-          userQuery
-        );
-
-
       if (
-        userSnapshot.empty
+        !profileSnap.exists()
+        ||
+        profileSnap.data().role !== "admin"
       ) {
 
-        alert(
-          "Admin profile not found."
-        );
-
-        window.location.href =
-          "../index.html";
-
-        return;
-
-      }
-
-
-      const profile =
-        userSnapshot
-          .docs[0]
-          .data();
-
-
-      if (
-        profile.role !==
-        "admin"
-      ) {
-
-        alert(
+        showError(
           "Admin access required."
         );
 
-        window.location.href =
-          "../index.html";
-
         return;
 
       }
 
 
-      await loadRetailers();
+      currentUser = user;
 
-      await loadCustomers();
 
-    }
+      await loadData();
 
-    catch (error) {
+    } catch (error) {
 
-      console.error(
-        "Admin verification error:",
-        error
+      console.error(error);
+
+      showError(
+        "Unable to load customer data."
       );
-
-
-      customerList.innerHTML = `
-        <div class="message">
-          Unable to verify admin account.
-        </div>
-      `;
 
     }
 
@@ -183,15 +105,26 @@ onAuthStateChanged(
 );
 
 
-/* ==================================================
-   LOAD RETAILERS
-================================================== */
+// =====================================================
+// LOAD DATA
+// =====================================================
 
-async function loadRetailers() {
+async function loadData() {
 
-  try {
+  const [
+    customerSnap,
+    retailerSnap,
+    jobsSnap
+  ] = await Promise.all([
 
-    const retailerQuery =
+    getDocs(
+      collection(
+        db,
+        "customers"
+      )
+    ),
+
+    getDocs(
       query(
         collection(
           db,
@@ -202,306 +135,233 @@ async function loadRetailers() {
           "==",
           "retailer"
         )
-      );
+      )
+    ),
+
+    getDocs(
+      collection(
+        db,
+        "jobs"
+      )
+    )
+
+  ]);
 
 
-    const snapshot =
-      await getDocs(
-        retailerQuery
-      );
+  customers = [];
+
+  customerSnap.forEach(item => {
+
+    customers.push({
+      id: item.id,
+      ...item.data()
+    });
+
+  });
 
 
-    retailers = [];
+  retailers = [];
+
+  retailerSnap.forEach(item => {
+
+    retailers.push({
+      id: item.id,
+      ...item.data()
+    });
+
+  });
 
 
-    snapshot.forEach(
-      (item) => {
+  jobs = [];
 
-        retailers.push({
-          id: item.id,
-          ...item.data()
-        });
+  jobsSnap.forEach(item => {
 
-      }
-    );
+    jobs.push({
+      id: item.id,
+      ...item.data()
+    });
+
+  });
 
 
-    retailers.sort(
-      (a, b) =>
-        String(
-          a.name || ""
-        ).localeCompare(
-          String(
-            b.name || ""
-          )
+  customers.sort(
+    (a, b) =>
+      String(a.name || "")
+        .localeCompare(
+          String(b.name || "")
         )
-    );
-
-
-    renderRetailerOptions();
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "Retailer loading error:",
-      error
-    );
-
-  }
-
-}
-
-
-/* ==================================================
-   RETAILER DROPDOWN
-================================================== */
-
-function renderRetailerOptions(
-  selectedId = ""
-) {
-
-  retailerSelect.innerHTML = `
-    <option value="">
-      Select retailer
-    </option>
-  `;
-
-
-  retailers.forEach(
-    (retailer) => {
-
-      const option =
-        document.createElement(
-          "option"
-        );
-
-
-      option.value =
-        retailer.id;
-
-
-      option.textContent =
-        retailer.name ||
-        retailer.email ||
-        retailer.id;
-
-
-      if (
-        retailer.id ===
-        selectedId
-      ) {
-
-        option.selected =
-          true;
-
-      }
-
-
-      retailerSelect.appendChild(
-        option
-      );
-
-    }
   );
 
+
+  populateRetailerFilters();
+
+  render();
+
 }
 
 
-/* ==================================================
-   LOAD CUSTOMERS
-================================================== */
+// =====================================================
+// RETAILER FILTERS
+// =====================================================
 
-async function loadCustomers() {
+function populateRetailerFilters() {
 
-  customerList.innerHTML = `
-    <div class="message">
-      Loading customers...
-    </div>
-  `;
+  const formSelect =
+    document.getElementById(
+      "retailerId"
+    );
 
-
-  try {
-
-    const snapshot =
-      await getDocs(
-        collection(
-          db,
-          "customers"
-        )
-      );
-
-
-    customers = [];
-
-
-    snapshot.forEach(
-      (item) => {
-
-        customers.push({
-          id: item.id,
-          ...item.data()
-        });
-
-      }
+  const filter =
+    document.getElementById(
+      "retailerFilter"
     );
 
 
-    customers.sort(
-      (a, b) =>
-        String(
-          a.name || ""
-        ).localeCompare(
-          String(
-            b.name || ""
-          )
-        )
-    );
+  const options =
+    retailers
+      .sort(
+        (a,b) =>
+          String(a.name || "")
+            .localeCompare(
+              String(b.name || "")
+            )
+      )
+      .map(
+        retailer => `
+          <option value="${escapeHtml(retailer.id)}">
+            ${escapeHtml(
+              retailer.name ||
+              retailer.businessName ||
+              retailer.email ||
+              retailer.id
+            )}
+          </option>
+        `
+      )
+      .join("");
 
 
-    updateSummary();
-
-    renderCustomers();
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "Customer loading error:",
-      error
-    );
-
-
-    customerList.innerHTML = `
-      <div class="message">
-        Unable to load customers.
-      </div>
+  formSelect.innerHTML =
+    `
+      <option value="">
+        Select retailer
+      </option>
+      ${options}
     `;
 
-  }
+
+  filter.innerHTML =
+    `
+      <option value="ALL">
+        All Retailers
+      </option>
+      ${options}
+    `;
 
 }
 
 
-/* ==================================================
-   SUMMARY
-================================================== */
+// =====================================================
+// RENDER
+// =====================================================
 
-function updateSummary() {
-
-  const total =
-    customers.length;
-
-
-  const protectedCount =
-    customers.filter(
-      customer =>
-        customer.originalRetailerId
-    ).length;
-
-
-  const unassignedCount =
-    total -
-    protectedCount;
-
-
-  document.getElementById(
-    "totalCount"
-  ).textContent =
-    total;
-
-
-  document.getElementById(
-    "protectedCount"
-  ).textContent =
-    protectedCount;
-
-
-  document.getElementById(
-    "unassignedCount"
-  ).textContent =
-    unassignedCount;
-
-}
-
-
-/* ==================================================
-   RENDER CUSTOMERS
-================================================== */
-
-function renderCustomers() {
+function render() {
 
   const search =
-    searchInput.value
+    document.getElementById(
+      "searchInput"
+    )
+      .value
       .trim()
       .toLowerCase();
 
 
+  const status =
+    document.getElementById(
+      "statusFilter"
+    ).value;
+
+
+  const retailerId =
+    document.getElementById(
+      "retailerFilter"
+    ).value;
+
+
   const filtered =
     customers.filter(
-      (customer) => {
+      customer => {
 
-        const name =
-          String(
-            customer.name || ""
-          ).toLowerCase();
-
-
-        const mobile =
-          String(
-            customer.mobile || ""
-          ).toLowerCase();
-
-
-        const brand =
-          String(
-            customer.deviceBrand || ""
-          ).toLowerCase();
+        const searchable = [
+          customer.name,
+          customer.mobile,
+          customer.email,
+          customer.city,
+          customer.id
+        ]
+          .join(" ")
+          .toLowerCase();
 
 
-        const model =
-          String(
-            customer.deviceModel || ""
-          ).toLowerCase();
+        const searchMatch =
+          !search ||
+          searchable.includes(search);
 
 
-        const serial =
-          String(
-            customer.deviceSerial || ""
-          ).toLowerCase();
+        const active =
+          customer.active !== false;
 
 
-        const address =
-          String(
-            customer.address || ""
-          ).toLowerCase();
+        const statusMatch =
+          status === "ALL"
+          ||
+          (
+            status === "ACTIVE"
+            && active
+          )
+          ||
+          (
+            status === "INACTIVE"
+            && !active
+          );
+
+
+        const retailerMatch =
+          retailerId === "ALL"
+          ||
+          customer.originalRetailerId ===
+            retailerId;
 
 
         return (
-          name.includes(search) ||
-          mobile.includes(search) ||
-          brand.includes(search) ||
-          model.includes(search) ||
-          serial.includes(search) ||
-          address.includes(search)
+          searchMatch
+          &&
+          statusMatch
+          &&
+          retailerMatch
         );
 
       }
     );
 
 
-  if (
-    filtered.length ===
-    0
-  ) {
+  updateSummary();
 
-    customerList.innerHTML = `
-      <div class="message">
-        No customers found.
-      </div>
-    `;
+
+  if (!filtered.length) {
+
+    customerList.style.display =
+      "block";
+
+    customerList.innerHTML =
+      `
+        <div class="empty">
+          No customers found.
+        </div>
+      `;
+
+    loading.style.display =
+      "none";
 
     return;
 
@@ -509,161 +369,38 @@ function renderCustomers() {
 
 
   customerList.innerHTML =
-    filtered.map(
-      (customer) => {
-
-        const retailer =
-          retailers.find(
-            item =>
-              item.id ===
-              customer.originalRetailerId
-          );
-
-
-        const retailerName =
-          retailer
-            ? retailer.name ||
-              retailer.email
-            : "Not assigned";
+    filtered
+      .map(
+        customer =>
+          customerCard(
+            customer
+          )
+      )
+      .join("");
 
 
-        const deviceText =
-          [
-            customer.deviceBrand,
-            customer.deviceModel
-          ]
-          .filter(Boolean)
-          .join(" • ");
+  loading.style.display =
+    "none";
 
+  customerList.style.display =
+    "block";
 
-        return `
-
-          <div class="customer-card">
-
-            <div class="customer-top">
-
-              <div class="customer-main">
-
-                <div class="customer-name">
-                  ${escapeHtml(
-                    customer.name ||
-                    "Unnamed Customer"
-                  )}
-                </div>
-
-
-                <div class="customer-detail">
-
-                  📱 ${escapeHtml(
-                    customer.mobile ||
-                    "-"
-                  )}
-
-                  ${
-                    deviceText
-                      ? `
-                        <br>
-                        📺 ${escapeHtml(
-                          deviceText
-                        )}
-                      `
-                      : ""
-                  }
-
-                  ${
-                    customer.screenSize
-                      ? `
-                        <br>
-                        📐 ${escapeHtml(
-                          customer.screenSize
-                        )}"
-                      `
-                      : ""
-                  }
-
-                  ${
-                    customer.deviceSerial
-                      ? `
-                        <br>
-                        🔢 Serial:
-                        ${escapeHtml(
-                          customer.deviceSerial
-                        )}
-                      `
-                      : ""
-                  }
-
-                </div>
-
-              </div>
-
-
-              ${
-                customer.originalRetailerId
-                  ? `
-                    <div class="protection-badge">
-                      🔒 PROTECTED
-                    </div>
-                  `
-                  : ""
-              }
-
-            </div>
-
-
-            <div class="customer-bottom">
-
-              <div class="retailer-info">
-
-                Original Retailer<br>
-
-                <strong>
-                  ${escapeHtml(
-                    retailerName
-                  )}
-                </strong>
-
-              </div>
-
-
-              <button
-                class="edit-btn"
-                data-id="${escapeHtml(
-                  customer.id
-                )}"
-                type="button"
-              >
-                Edit
-              </button>
-
-            </div>
-
-          </div>
-
-        `;
-
-      }
-    ).join("");
-
-
-  /*
-   * Attach edit events safely
-   */
 
   document
     .querySelectorAll(
-      ".edit-btn"
+      "[data-customer-id]"
     )
     .forEach(
-      button => {
+      element => {
 
-        button.addEventListener(
+        element.addEventListener(
           "click",
           () => {
 
-            editCustomer(
-              button.dataset.id
-            );
+            const id =
+              element.dataset.customerId;
+
+            showDetails(id);
 
           }
         );
@@ -674,169 +411,233 @@ function renderCustomers() {
 }
 
 
-/* ==================================================
-   SEARCH
-================================================== */
+// =====================================================
+// CUSTOMER CARD
+// =====================================================
 
-searchInput.addEventListener(
-  "input",
-  renderCustomers
-);
+function customerCard(customer) {
 
-
-/* ==================================================
-   ADD CUSTOMER
-================================================== */
-
-document
-  .getElementById(
-    "addCustomerBtn"
-  )
-  .addEventListener(
-    "click",
-    () => {
-
-      editingCustomerId =
-        null;
+  const active =
+    customer.active !== false;
 
 
-      customerForm.reset();
-
-
-      document.getElementById(
-        "modalTitle"
-      ).textContent =
-        "Add Customer";
-
-
-      saveBtn.textContent =
-        "Create Customer";
-
-
-      duplicateWarning
-        .classList.remove(
-          "show"
-        );
-
-
-      duplicateWarning.textContent =
-        "";
-
-
-      renderRetailerOptions();
-
-
-      modal.classList.add(
-        "show"
-      );
-
-
-      document.getElementById(
-        "customerName"
-      ).focus();
-
-    }
-  );
-
-
-/* ==================================================
-   EDIT CUSTOMER
-================================================== */
-
-function editCustomer(id) {
-
-  const customer =
-    customers.find(
-      item =>
-        item.id === id
+  const retailer =
+    findRetailer(
+      customer.originalRetailerId
     );
 
 
-  if (!customer) {
-    return;
-  }
+  const customerJobs =
+    jobs.filter(
+      job =>
+        job.customerId ===
+        customer.id
+    );
 
+
+  return `
+    <div
+      class="customer-card"
+      data-customer-id="${escapeHtml(customer.id)}">
+
+      <div class="customer-top">
+
+        <div>
+
+          <div class="customer-name">
+            ${escapeHtml(
+              customer.name ||
+              "Unnamed Customer"
+            )}
+          </div>
+
+          <div class="customer-mobile">
+            ${escapeHtml(
+              customer.mobile ||
+              "No mobile"
+            )}
+          </div>
+
+        </div>
+
+
+        <span class="status ${
+          active
+            ? "active"
+            : "inactive"
+        }">
+
+          ${
+            active
+              ? "ACTIVE"
+              : "INACTIVE"
+          }
+
+        </span>
+
+      </div>
+
+
+      <div class="customer-info">
+
+        <div class="info">
+
+          <span>
+            PROTECTED RETAILER
+          </span>
+
+          <strong>
+            ${escapeHtml(
+              retailer?.name ||
+              retailer?.businessName ||
+              "Not linked"
+            )}
+          </strong>
+
+        </div>
+
+
+        <div class="info">
+
+          <span>
+            SERVICE JOBS
+          </span>
+
+          <strong>
+            ${customerJobs.length}
+          </strong>
+
+        </div>
+
+
+        <div class="info">
+
+          <span>
+            EMAIL
+          </span>
+
+          <strong>
+            ${escapeHtml(
+              customer.email ||
+              "Not added"
+            )}
+          </strong>
+
+        </div>
+
+
+        <div class="info">
+
+          <span>
+            CUSTOMER ID
+          </span>
+
+          <strong>
+            ${escapeHtml(
+              customer.id
+            )}
+          </strong>
+
+        </div>
+
+      </div>
+
+    </div>
+  `;
+
+}
+
+
+// =====================================================
+// SUMMARY
+// =====================================================
+
+function updateSummary() {
+
+  const total =
+    customers.length;
+
+
+  const active =
+    customers.filter(
+      item =>
+        item.active !== false
+    ).length;
+
+
+  const protectedCount =
+    customers.filter(
+      item =>
+        !!item.originalRetailerId
+    ).length;
+
+
+  document.getElementById(
+    "totalCount"
+  ).textContent =
+    total;
+
+
+  document.getElementById(
+    "activeCount"
+  ).textContent =
+    active;
+
+
+  document.getElementById(
+    "protectedCount"
+  ).textContent =
+    protectedCount;
+
+}
+
+
+// =====================================================
+// ADD CUSTOMER
+// =====================================================
+
+document.getElementById(
+  "addBtn"
+).addEventListener(
+  "click",
+  () => {
+
+    openAddModal();
+
+  }
+);
+
+
+// =====================================================
+// OPEN ADD
+// =====================================================
+
+function openAddModal() {
 
   editingCustomerId =
-    id;
+    null;
 
 
   document.getElementById(
     "modalTitle"
   ).textContent =
-    "Edit Customer";
-
-
-  saveBtn.textContent =
-    "Update Customer";
+    "Add Customer";
 
 
   document.getElementById(
-    "customerName"
-  ).value =
-    customer.name || "";
+    "customerForm"
+  ).reset();
 
 
   document.getElementById(
-    "customerMobile"
+    "active"
   ).value =
-    customer.mobile || "";
+    "true";
 
 
   document.getElementById(
-    "customerAddress"
+    "authUserId"
   ).value =
-    customer.address || "";
-
-
-  document.getElementById(
-    "deviceBrand"
-  ).value =
-    customer.deviceBrand || "";
-
-
-  document.getElementById(
-    "deviceModel"
-  ).value =
-    customer.deviceModel || "";
-
-
-  document.getElementById(
-    "deviceSerial"
-  ).value =
-    customer.deviceSerial || "";
-
-
-  document.getElementById(
-    "screenSize"
-  ).value =
-    customer.screenSize || "";
-
-
-  document.getElementById(
-    "customerNotes"
-  ).value =
-    customer.notes || "";
-
-
-  /*
-   * Existing original retailer
-   * is loaded.
-   */
-
-  renderRetailerOptions(
-    customer.originalRetailerId ||
-    ""
-  );
-
-
-  duplicateWarning
-    .classList.remove(
-      "show"
-    );
-
-
-  duplicateWarning.textContent =
     "";
 
 
@@ -847,251 +648,120 @@ function editCustomer(id) {
 }
 
 
-/* ==================================================
-   DUPLICATE CUSTOMER CHECK
-================================================== */
+// =====================================================
+// CLOSE
+// =====================================================
 
-function checkDuplicateCustomer() {
-
-  const mobile =
-    document.getElementById(
-      "customerMobile"
-    ).value
-      .trim();
-
-
-  const name =
-    document.getElementById(
-      "customerName"
-    ).value
-      .trim()
-      .toLowerCase();
+document.getElementById(
+  "closeModal"
+).addEventListener(
+  "click",
+  closeModal
+);
 
 
-  if (
-    !mobile &&
-    !name
-  ) {
+modal.addEventListener(
+  "click",
+  event => {
 
-    duplicateWarning
-      .classList.remove(
-        "show"
-      );
+    if (
+      event.target === modal
+    ) {
 
-    return null;
+      closeModal();
+
+    }
 
   }
+);
 
 
-  const currentMobile =
-    mobile.replace(
-      /\D/g,
-      ""
-    );
+function closeModal() {
 
-
-  const duplicate =
-    customers.find(
-      customer => {
-
-        if (
-          editingCustomerId &&
-          customer.id ===
-          editingCustomerId
-        ) {
-
-          return false;
-
-        }
-
-
-        const existingMobile =
-          String(
-            customer.mobile || ""
-          )
-          .replace(
-            /\D/g,
-            ""
-          );
-
-
-        const existingName =
-          String(
-            customer.name || ""
-          )
-          .trim()
-          .toLowerCase();
-
-
-        const mobileMatch =
-          currentMobile &&
-          existingMobile &&
-          currentMobile ===
-          existingMobile;
-
-
-        const nameMatch =
-          name &&
-          existingName ===
-          name;
-
-
-        return (
-          mobileMatch ||
-          nameMatch
-        );
-
-      }
-    );
-
-
-  if (!duplicate) {
-
-    duplicateWarning
-      .classList.remove(
-        "show"
-      );
-
-    duplicateWarning.textContent =
-      "";
-
-    return null;
-
-  }
-
-
-  const retailer =
-    retailers.find(
-      item =>
-        item.id ===
-        duplicate.originalRetailerId
-    );
-
-
-  const retailerName =
-    retailer
-      ? retailer.name ||
-        retailer.email
-      : "another retailer";
-
-
-  duplicateWarning.innerHTML = `
-    ⚠️ Possible duplicate customer found.
-    Existing protected retailer:
-    <strong>
-      ${escapeHtml(
-        retailerName
-      )}
-    </strong>.
-    Please verify before creating another record.
-  `;
-
-
-  duplicateWarning.classList.add(
+  modal.classList.remove(
     "show"
   );
-
-
-  return duplicate;
 
 }
 
 
-/* ==================================================
-   DUPLICATE INPUT EVENTS
-================================================== */
+// =====================================================
+// SAVE CUSTOMER
+// =====================================================
 
-document
-  .getElementById(
-    "customerMobile"
-  )
-  .addEventListener(
-    "blur",
-    checkDuplicateCustomer
-  );
-
-
-document
-  .getElementById(
-    "customerName"
-  )
-  .addEventListener(
-    "blur",
-    checkDuplicateCustomer
-  );
-
-
-/* ==================================================
-   SAVE CUSTOMER
-================================================== */
-
-customerForm.addEventListener(
+document.getElementById(
+  "customerForm"
+).addEventListener(
   "submit",
-  async (event) => {
+  async event => {
 
     event.preventDefault();
 
 
+    const saveBtn =
+      document.getElementById(
+        "saveBtn"
+      );
+
+
     const name =
       document.getElementById(
-        "customerName"
+        "name"
       ).value.trim();
 
 
     const mobile =
       document.getElementById(
-        "customerMobile"
+        "mobile"
       ).value.trim();
+
+
+    const email =
+      document.getElementById(
+        "email"
+      ).value.trim();
+
+
+    const retailerId =
+      document.getElementById(
+        "retailerId"
+      ).value;
+
+
+    const active =
+      document.getElementById(
+        "active"
+      ).value === "true";
 
 
     const address =
       document.getElementById(
-        "customerAddress"
+        "address"
       ).value.trim();
 
 
-    const deviceBrand =
+    const city =
       document.getElementById(
-        "deviceBrand"
+        "city"
       ).value.trim();
 
 
-    const deviceModel =
+    const pincode =
       document.getElementById(
-        "deviceModel"
+        "pincode"
       ).value.trim();
 
 
-    const deviceSerial =
+    const authUserId =
       document.getElementById(
-        "deviceSerial"
+        "authUserId"
       ).value.trim();
 
 
-    const screenSize =
-      document.getElementById(
-        "screenSize"
-      ).value;
-
-
-    const selectedRetailerId =
-      retailerSelect.value;
-
-
-    const notes =
-      document.getElementById(
-        "customerNotes"
-      ).value.trim();
-
-
-    if (
-      !name ||
-      !mobile ||
-      !selectedRetailerId
-    ) {
+    if (!name || !mobile) {
 
       alert(
-        "Customer Name, Mobile and Original Retailer are required."
+        "Name and mobile are required."
       );
 
       return;
@@ -1099,62 +769,85 @@ customerForm.addEventListener(
     }
 
 
-    const duplicate =
-      checkDuplicateCustomer();
+    if (!retailerId) {
 
+      alert(
+        "Please select the original retailer."
+      );
 
-    if (duplicate) {
-
-      const continueSave =
-        confirm(
-          "A possible duplicate customer was found. Do you still want to continue?"
-        );
-
-
-      if (!continueSave) {
-        return;
-      }
+      return;
 
     }
+
+
+    if (
+      !/^\d{10}$/.test(
+        mobile.replace(/\D/g,"")
+      )
+    ) {
+
+      alert(
+        "Please enter a valid 10 digit mobile number."
+      );
+
+      return;
+
+    }
+
+
+    const cleanMobile =
+      mobile.replace(
+        /\D/g,
+        ""
+      );
 
 
     saveBtn.disabled =
       true;
 
+    saveBtn.textContent =
+      "Saving...";
+
 
     try {
 
-      /* ==========================================
-         UPDATE EXISTING CUSTOMER
-      ========================================== */
+      const data = {
+
+        name,
+
+        mobile:
+          cleanMobile,
+
+        email,
+
+        originalRetailerId:
+          retailerId,
+
+        address,
+
+        city,
+
+        pincode,
+
+        active,
+
+        updatedAt:
+          serverTimestamp()
+
+      };
+
+
+      if (authUserId) {
+
+        data.authUserId =
+          authUserId;
+
+      }
+
 
       if (
         editingCustomerId
       ) {
-
-        const existing =
-          customers.find(
-            item =>
-              item.id ===
-              editingCustomerId
-          );
-
-
-        /*
-         * IMPORTANT:
-         *
-         * Once originalRetailerId exists,
-         * normal editing does NOT change it.
-         *
-         * This protects the retailer relationship.
-         */
-
-        const originalRetailerId =
-          existing &&
-          existing.originalRetailerId
-            ? existing.originalRetailerId
-            : selectedRetailerId;
-
 
         await updateDoc(
           doc(
@@ -1162,33 +855,7 @@ customerForm.addEventListener(
             "customers",
             editingCustomerId
           ),
-          {
-
-            name,
-
-            mobile,
-
-            address,
-
-            deviceBrand,
-
-            deviceModel,
-
-            deviceSerial,
-
-            screenSize,
-
-            originalRetailerId,
-
-            protectionStatus:
-              "PROTECTED",
-
-            notes,
-
-            updatedAt:
-              serverTimestamp()
-
-          }
+          data
         );
 
 
@@ -1196,67 +863,18 @@ customerForm.addEventListener(
           "Customer updated successfully."
         );
 
-      }
+      } else {
+
+        data.createdAt =
+          serverTimestamp();
 
 
-      /* ==========================================
-         CREATE NEW CUSTOMER
-      ========================================== */
-
-      else {
-
-        const customerRef =
-          doc(
-            collection(
-              db,
-              "customers"
-            )
-          );
-
-
-        await setDoc(
-          customerRef,
-          {
-
-            customerId:
-              customerRef.id,
-
-            name,
-
-            mobile,
-
-            address,
-
-            deviceBrand,
-
-            deviceModel,
-
-            deviceSerial,
-
-            screenSize,
-
-            /*
-             * FIRST RETAILER BECOMES OWNER
-             */
-
-            originalRetailerId:
-              selectedRetailerId,
-
-            protectionStatus:
-              "PROTECTED",
-
-            status:
-              "active",
-
-            notes,
-
-            createdAt:
-              serverTimestamp(),
-
-            updatedAt:
-              serverTimestamp()
-
-          }
+        await addDoc(
+          collection(
+            db,
+            "customers"
+          ),
+          data
         );
 
 
@@ -1269,43 +887,24 @@ customerForm.addEventListener(
 
       closeModal();
 
-      await loadCustomers();
+      await loadData();
 
-    }
+    } catch (error) {
 
-    catch (error) {
+      console.error(error);
 
-      console.error(
-        "Customer save error:",
-        error
+      alert(
+        "Unable to save customer.\n\n" +
+        error.message
       );
 
-
-      if (
-        error.code ===
-        "permission-denied"
-      ) {
-
-        alert(
-          "Permission denied. Please check Firestore Rules."
-        );
-
-      }
-
-      else {
-
-        alert(
-          "Unable to save customer."
-        );
-
-      }
-
-    }
-
-    finally {
+    } finally {
 
       saveBtn.disabled =
         false;
+
+      saveBtn.textContent =
+        "Save Customer";
 
     }
 
@@ -1313,15 +912,453 @@ customerForm.addEventListener(
 );
 
 
-/* ==================================================
-   CLOSE MODAL
-================================================== */
+// =====================================================
+// CUSTOMER DETAILS
+// =====================================================
 
-function closeModal() {
+function showDetails(id) {
 
-  modal.classList.remove(
+  const customer =
+    customers.find(
+      item =>
+        item.id === id
+    );
+
+
+  if (!customer)
+    return;
+
+
+  const retailer =
+    findRetailer(
+      customer.originalRetailerId
+    );
+
+
+  const customerJobs =
+    jobs.filter(
+      job =>
+        job.customerId === id
+    );
+
+
+  const active =
+    customer.active !== false;
+
+
+  document.getElementById(
+    "detailContent"
+  ).innerHTML =
+    `
+
+      <div class="detail-section">
+
+        <h3>
+          Customer
+        </h3>
+
+        <div class="detail-row">
+          <span>Name</span>
+          <strong>
+            ${escapeHtml(
+              customer.name || "-"
+            )}
+          </strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Mobile</span>
+          <strong>
+            ${escapeHtml(
+              customer.mobile || "-"
+            )}
+          </strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Email</span>
+          <strong>
+            ${escapeHtml(
+              customer.email || "-"
+            )}
+          </strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Status</span>
+          <strong>
+            ${
+              active
+                ? "ACTIVE"
+                : "INACTIVE"
+            }
+          </strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Customer ID</span>
+          <strong>
+            ${escapeHtml(id)}
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div class="detail-section">
+
+        <h3>
+          Protected Relationship
+        </h3>
+
+        <div class="detail-row">
+          <span>Original Retailer</span>
+          <strong>
+            ${escapeHtml(
+              retailer?.name ||
+              retailer?.businessName ||
+              "Not linked"
+            )}
+          </strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Retailer ID</span>
+          <strong>
+            ${escapeHtml(
+              customer.originalRetailerId ||
+              "-"
+            )}
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div class="detail-section">
+
+        <h3>
+          Address
+        </h3>
+
+        <div class="detail-row">
+          <span>Address</span>
+          <strong>
+            ${escapeHtml(
+              customer.address || "-"
+            )}
+          </strong>
+        </div>
+
+        <div class="detail-row">
+          <span>City</span>
+          <strong>
+            ${escapeHtml(
+              customer.city || "-"
+            )}
+          </strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Pincode</span>
+          <strong>
+            ${escapeHtml(
+              customer.pincode || "-"
+            )}
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div class="detail-section">
+
+        <h3>
+          Account Linking
+        </h3>
+
+        <div class="detail-row">
+          <span>Firebase Auth UID</span>
+          <strong>
+            ${escapeHtml(
+              customer.authUserId ||
+              "Not linked"
+            )}
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div class="detail-section">
+
+        <h3>
+          Service History
+        </h3>
+
+        <div class="detail-row">
+          <span>Total Jobs</span>
+          <strong>
+            ${customerJobs.length}
+          </strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Completed</span>
+          <strong>
+            ${
+              customerJobs.filter(
+                job =>
+                  String(
+                    job.status || ""
+                  ).toUpperCase()
+                  === "COMPLETED"
+              ).length
+            }
+          </strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Active</span>
+          <strong>
+            ${
+              customerJobs.filter(
+                job =>
+                  String(
+                    job.status || ""
+                  ).toUpperCase()
+                  !== "COMPLETED"
+                  &&
+                  String(
+                    job.status || ""
+                  ).toUpperCase()
+                  !== "CANCELLED"
+              ).length
+            }
+          </strong>
+        </div>
+
+      </div>
+
+
+      <button
+        id="editCustomerBtn"
+        class="save-btn">
+
+        Edit Customer
+
+      </button>
+
+    `;
+
+
+  detailModal.classList.add(
     "show"
   );
 
 
-  editingCustomerId
+  document.getElementById(
+    "editCustomerBtn"
+  ).onclick =
+    () => {
+
+      closeDetailModal();
+
+      openEditModal(
+        customer
+      );
+
+    };
+
+}
+
+
+// =====================================================
+// EDIT CUSTOMER
+// =====================================================
+
+function openEditModal(customer) {
+
+  editingCustomerId =
+    customer.id;
+
+
+  document.getElementById(
+    "modalTitle"
+  ).textContent =
+    "Edit Customer";
+
+
+  document.getElementById(
+    "name"
+  ).value =
+    customer.name || "";
+
+
+  document.getElementById(
+    "mobile"
+  ).value =
+    customer.mobile || "";
+
+
+  document.getElementById(
+    "email"
+  ).value =
+    customer.email || "";
+
+
+  document.getElementById(
+    "retailerId"
+  ).value =
+    customer.originalRetailerId || "";
+
+
+  document.getElementById(
+    "active"
+  ).value =
+    customer.active === false
+      ? "false"
+      : "true";
+
+
+  document.getElementById(
+    "address"
+  ).value =
+    customer.address || "";
+
+
+  document.getElementById(
+    "city"
+  ).value =
+    customer.city || "";
+
+
+  document.getElementById(
+    "pincode"
+  ).value =
+    customer.pincode || "";
+
+
+  document.getElementById(
+    "authUserId"
+  ).value =
+    customer.authUserId || "";
+
+
+  modal.classList.add(
+    "show"
+  );
+
+}
+
+
+// =====================================================
+// DETAIL CLOSE
+// =====================================================
+
+document.getElementById(
+  "closeDetail"
+).addEventListener(
+  "click",
+  closeDetailModal
+);
+
+
+detailModal.addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target ===
+      detailModal
+    ) {
+
+      closeDetailModal();
+
+    }
+
+  }
+);
+
+
+function closeDetailModal() {
+
+  detailModal.classList.remove(
+    "show"
+  );
+
+}
+
+
+// =====================================================
+// FILTER EVENTS
+// =====================================================
+
+document.getElementById(
+  "searchInput"
+).addEventListener(
+  "input",
+  render
+);
+
+
+document.getElementById(
+  "statusFilter"
+).addEventListener(
+  "change",
+  render
+);
+
+
+document.getElementById(
+  "retailerFilter"
+).addEventListener(
+  "change",
+  render
+);
+
+
+// =====================================================
+// HELPERS
+// =====================================================
+
+function findRetailer(id) {
+
+  if (!id)
+    return null;
+
+
+  return retailers.find(
+    retailer =>
+      retailer.id === id
+  ) || null;
+
+}
+
+
+function escapeHtml(value) {
+
+  return String(
+    value ?? ""
+  )
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+
+}
+
+
+function showError(message) {
+
+  loading.textContent =
+    message;
+
+  loading.style.display =
+    "block";
+
+  customerList.style.display =
+    "none";
+
+}
