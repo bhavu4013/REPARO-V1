@@ -1,872 +1,315 @@
-import { auth, db } from "./firebase.js";
-
 import {
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
   collection,
-  addDoc,
   getDocs,
   getDoc,
   doc,
+  addDoc,
   updateDoc,
-  query,
-  orderBy,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-
-// --------------------------------------------------
-// ELEMENTS
-// --------------------------------------------------
-
-const requestList = document.getElementById("requestList");
-const loading = document.getElementById("loading");
-
-const searchInput = document.getElementById("searchInput");
-const statusFilter = document.getElementById("statusFilter");
-
-const addRequestBtn = document.getElementById("addRequestBtn");
-
-const modalBackdrop = document.getElementById("modalBackdrop");
-const modalTitle = document.getElementById("modalTitle");
-
-const requestForm = document.getElementById("requestForm");
-const cancelModalBtn = document.getElementById("cancelModalBtn");
-
-const editRequestId = document.getElementById("editRequestId");
-
-const customerName = document.getElementById("customerName");
-const customerMobile = document.getElementById("customerMobile");
-const customerAddress = document.getElementById("customerAddress");
-
-const deviceBrand = document.getElementById("deviceBrand");
-const deviceModel = document.getElementById("deviceModel");
-const serialNumber = document.getElementById("serialNumber");
-const screenSize = document.getElementById("screenSize");
-
-const serviceType = document.getElementById("serviceType");
-const retailerId = document.getElementById("retailerId");
-const requestStatus = document.getElementById("requestStatus");
-const problem = document.getElementById("problem");
-
-const totalCount = document.getElementById("totalCount");
-const newCount = document.getElementById("newCount");
-const jobCount = document.getElementById("jobCount");
+import {
+  auth,
+  db
+} from "./firebase.js";
 
 
-// --------------------------------------------------
-// STATE
-// --------------------------------------------------
+const requestContainer =
+  document.getElementById("requestContainer");
 
-let currentUser = null;
-let requests = [];
+const searchInput =
+  document.getElementById("searchInput");
+
+const statusFilter =
+  document.getElementById("statusFilter");
+
+const totalCount =
+  document.getElementById("totalCount");
+
+const newCount =
+  document.getElementById("newCount");
+
+const jobCount =
+  document.getElementById("jobCount");
+
+const newRequestBtn =
+  document.getElementById("newRequestBtn");
+
+const logoutBtn =
+  document.getElementById("logoutBtn");
+
+const errorBox =
+  document.getElementById("errorBox");
+
+const successBox =
+  document.getElementById("successBox");
+
+const modalBg =
+  document.getElementById("modalBg");
+
+const closeModal =
+  document.getElementById("closeModal");
+
+const cancelModal =
+  document.getElementById("cancelModal");
+
+const requestForm =
+  document.getElementById("requestForm");
+
+const modalTitle =
+  document.getElementById("modalTitle");
+
+const saveBtn =
+  document.getElementById("saveBtn");
+
+const editRequestId =
+  document.getElementById("editRequestId");
+
+const customerName =
+  document.getElementById("customerName");
+
+const customerMobile =
+  document.getElementById("customerMobile");
+
+const customerAddress =
+  document.getElementById("customerAddress");
+
+const device =
+  document.getElementById("device");
+
+const deviceBrand =
+  document.getElementById("deviceBrand");
+
+const deviceModel =
+  document.getElementById("deviceModel");
+
+const serviceType =
+  document.getElementById("serviceType");
+
+const problem =
+  document.getElementById("problem");
 
 
-// --------------------------------------------------
-// AUTH
-// --------------------------------------------------
+let allRequests = [];
 
-onAuthStateChanged(auth, async (user) => {
+let adminUser = null;
 
-  if (!user) {
-    window.location.href = "../index.html";
-    return;
-  }
 
-  try {
+onAuthStateChanged(
+  auth,
+  async user => {
 
-    const userSnap = await getDoc(
-      doc(db, "users", user.uid)
-    );
+    if (!user) {
 
-    if (!userSnap.exists()) {
-      alert("User profile not found.");
-      await auth.signOut();
+      window.location.href =
+        "../index.html";
+
       return;
+
     }
 
-    const profile = userSnap.data();
 
-    if (profile.role !== "admin") {
-      alert("Admin access required.");
-      window.location.href = "../index.html";
-      return;
+    try {
+
+      const userSnap =
+        await getDoc(
+          doc(
+            db,
+            "users",
+            user.uid
+          )
+        );
+
+
+      if (!userSnap.exists()) {
+
+        await signOut(auth);
+
+        window.location.href =
+          "../index.html";
+
+        return;
+
+      }
+
+
+      const profile =
+        userSnap.data();
+
+
+      if (
+        profile.role !== "admin" ||
+        profile.active !== true
+      ) {
+
+        await signOut(auth);
+
+        window.location.href =
+          "../index.html";
+
+        return;
+
+      }
+
+
+      adminUser =
+        user;
+
+
+      await loadRequests();
+
+    }
+    catch (error) {
+
+      showError(
+        error.message ||
+        "Authorization failed."
+      );
+
     }
 
-    currentUser = user;
-
-    await loadRequests();
-
-  } catch (error) {
-
-    console.error(error);
-
-    loading.innerHTML =
-      "Unable to load service requests.";
-
   }
+);
 
-});
-
-
-// --------------------------------------------------
-// LOAD REQUESTS
-// --------------------------------------------------
 
 async function loadRequests() {
 
-  loading.style.display = "block";
-  requestList.innerHTML = "";
+  requestContainer.innerHTML = `
+
+    <div class="loading">
+      Loading service requests...
+    </div>
+
+  `;
+
 
   try {
 
-    const q = query(
-      collection(db, "service_requests"),
-      orderBy("createdAt", "desc")
-    );
-
-    const snapshot = await getDocs(q);
-
-    requests = [];
-
-    snapshot.forEach((item) => {
-
-      requests.push({
-        id: item.id,
-        ...item.data()
-      });
-
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    // Fallback without orderBy
-    try {
-
-      const snapshot = await getDocs(
-        collection(db, "service_requests")
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "service_requests"
+        )
       );
 
-      requests = [];
 
-      snapshot.forEach((item) => {
+    allRequests = [];
 
-        requests.push({
-          id: item.id,
+
+    snapshot.forEach(
+      item => {
+
+        allRequests.push({
+
+          id:
+            item.id,
+
           ...item.data()
+
         });
 
-      });
+      }
+    );
 
-      requests.sort((a, b) => {
 
-        const ad = a.createdAt?.seconds || 0;
-        const bd = b.createdAt?.seconds || 0;
+    allRequests.sort(
+      (a, b) => {
 
-        return bd - ad;
+        const aTime =
+          a.createdAt?.seconds || 0;
 
-      });
+        const bTime =
+          b.createdAt?.seconds || 0;
 
-    } catch (secondError) {
+        return bTime - aTime;
 
-      console.error(secondError);
+      }
+    );
 
-      loading.innerHTML =
-        "Error loading service requests.";
 
-      return;
-    }
+    updateSummary();
+
+    renderRequests();
+
+  }
+  catch (error) {
+
+    requestContainer.innerHTML = `
+
+      <div class="empty">
+
+        <div class="empty-icon">
+          ⚠️
+        </div>
+
+        <div class="empty-title">
+          Unable to Load
+        </div>
+
+        <div class="empty-text">
+          ${escapeHtml(
+            error.message ||
+            "Service requests could not be loaded."
+          )}
+        </div>
+
+      </div>
+
+    `;
 
   }
 
-  loading.style.display = "none";
-
-  updateSummary();
-  renderRequests();
-
 }
 
-
-// --------------------------------------------------
-// SUMMARY
-// --------------------------------------------------
 
 function updateSummary() {
 
-  totalCount.textContent = requests.length;
+  totalCount.textContent =
+    allRequests.length;
+
 
   newCount.textContent =
-    requests.filter(
-      item => item.status === "NEW"
+    allRequests.filter(
+      request =>
+        normalizeStatus(
+          request.status
+        ) === "NEW"
     ).length;
+
 
   jobCount.textContent =
-    requests.filter(
-      item =>
-        item.status === "CONVERTED TO JOB" ||
-        item.jobId
+    allRequests.filter(
+      request =>
+        normalizeStatus(
+          request.status
+        ) === "CONVERTED TO JOB"
     ).length;
 
 }
 
 
-// --------------------------------------------------
-// RENDER
-// --------------------------------------------------
+function normalizeStatus(
+  status
+) {
 
-function renderRequests() {
-
-  const search = searchInput.value
-    .trim()
-    .toLowerCase();
-
-  const status = statusFilter.value;
-
-  const filtered = requests.filter((item) => {
-
-    const searchable = [
-
-      item.requestId,
-      item.customerName,
-      item.customerMobile,
-      item.customerAddress,
-      item.deviceBrand,
-      item.deviceModel,
-      item.serialNumber,
-      item.serviceType,
-      item.problem
-
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    const matchesSearch =
-      !search || searchable.includes(search);
-
-    const matchesStatus =
-      !status || item.status === status;
-
-    return matchesSearch && matchesStatus;
-
-  });
-
-
-  if (!filtered.length) {
-
-    requestList.innerHTML = `
-      <div class="empty">
-        No service requests found.
-      </div>
-    `;
-
-    return;
-  }
-
-
-  requestList.innerHTML = filtered
-    .map(renderRequestCard)
-    .join("");
-
-
-  document
-    .querySelectorAll("[data-edit]")
-    .forEach(button => {
-
-      button.addEventListener("click", () => {
-
-        openEditModal(button.dataset.edit);
-
-      });
-
-    });
-
-
-  document
-    .querySelectorAll("[data-job]")
-    .forEach(button => {
-
-      button.addEventListener("click", () => {
-
-        createJob(button.dataset.job);
-
-      });
-
-    });
-
-
-  document
-    .querySelectorAll("[data-view]")
-    .forEach(button => {
-
-      button.addEventListener("click", () => {
-
-        viewRequest(button.dataset.view);
-
-      });
-
-    });
+  return String(
+    status || "NEW"
+  ).toUpperCase();
 
 }
 
-
-// --------------------------------------------------
-// REQUEST CARD
-// --------------------------------------------------
-
-function renderRequestCard(item) {
-
-  const statusClass = getStatusClass(item.status);
-
-  const created =
-    formatDate(item.createdAt);
-
-  const requestNumber =
-    item.requestId || item.id;
-
-  const jobButton =
-    item.jobId
-      ? `<span class="status status-converted">
-           Job Created
-         </span>`
-      : `
-        <button
-          class="btn-small btn-yellow"
-          data-job="${item.id}">
-          Create Job
-        </button>
-      `;
-
-
-  return `
-    <div class="request-card">
-
-      <div class="request-top">
-
-        <div>
-          <div class="request-id">
-            ${escapeHtml(requestNumber)}
-          </div>
-
-          <div class="customer-name">
-            ${escapeHtml(item.customerName || "Unknown Customer")}
-          </div>
-
-          <div class="muted">
-            ${escapeHtml(item.customerMobile || "")}
-          </div>
-        </div>
-
-        <span class="status ${statusClass}">
-          ${escapeHtml(item.status || "NEW")}
-        </span>
-
-      </div>
-
-
-      <div class="request-info">
-
-        <div class="info-box">
-          <div class="info-label">
-            SERVICE
-          </div>
-
-          <div class="info-value">
-            ${escapeHtml(item.serviceType || "-")}
-          </div>
-        </div>
-
-
-        <div class="info-box">
-          <div class="info-label">
-            DEVICE
-          </div>
-
-          <div class="info-value">
-            ${escapeHtml(
-              [item.deviceBrand, item.deviceModel]
-                .filter(Boolean)
-                .join(" ") || "-"
-            )}
-          </div>
-        </div>
-
-
-        <div class="info-box">
-          <div class="info-label">
-            RETAILER
-          </div>
-
-          <div class="info-value">
-            ${escapeHtml(item.retailerId || "-")}
-          </div>
-        </div>
-
-
-        <div class="info-box">
-          <div class="info-label">
-            CREATED
-          </div>
-
-          <div class="info-value">
-            ${created}
-          </div>
-        </div>
-
-      </div>
-
-
-      ${
-        item.problem
-          ? `
-            <div class="muted" style="margin-bottom:12px;">
-              ${escapeHtml(item.problem)}
-            </div>
-          `
-          : ""
-      }
-
-
-      <div class="actions">
-
-        <button
-          class="btn-small btn-primary"
-          data-view="${item.id}">
-          View
-        </button>
-
-        <button
-          class="btn-small"
-          data-edit="${item.id}">
-          Edit
-        </button>
-
-        ${jobButton}
-
-      </div>
-
-    </div>
-  `;
-
-}
-
-
-// --------------------------------------------------
-// NEW REQUEST
-// --------------------------------------------------
-
-addRequestBtn.addEventListener("click", () => {
-
-  resetForm();
-
-  modalTitle.textContent =
-    "New Service Request";
-
-  modalBackdrop.classList.add("show");
-
-});
-
-
-// --------------------------------------------------
-// CLOSE MODAL
-// --------------------------------------------------
-
-cancelModalBtn.addEventListener("click", closeModal);
-
-modalBackdrop.addEventListener("click", (event) => {
-
-  if (event.target === modalBackdrop) {
-    closeModal();
-  }
-
-});
-
-
-function closeModal() {
-
-  modalBackdrop.classList.remove("show");
-
-}
-
-
-// --------------------------------------------------
-// RESET FORM
-// --------------------------------------------------
-
-function resetForm() {
-
-  requestForm.reset();
-
-  editRequestId.value = "";
-
-  requestStatus.value = "NEW";
-
-}
-
-
-// --------------------------------------------------
-// EDIT MODAL
-// --------------------------------------------------
-
-function openEditModal(id) {
-
-  const item =
-    requests.find(request => request.id === id);
-
-  if (!item) return;
-
-  editRequestId.value = id;
-
-  customerName.value =
-    item.customerName || "";
-
-  customerMobile.value =
-    item.customerMobile || "";
-
-  customerAddress.value =
-    item.customerAddress || "";
-
-  deviceBrand.value =
-    item.deviceBrand || "";
-
-  deviceModel.value =
-    item.deviceModel || "";
-
-  serialNumber.value =
-    item.serialNumber || "";
-
-  screenSize.value =
-    item.screenSize || "";
-
-  serviceType.value =
-    item.serviceType || "TV Repair";
-
-  retailerId.value =
-    item.retailerId || "";
-
-  requestStatus.value =
-    item.status || "NEW";
-
-  problem.value =
-    item.problem || "";
-
-  modalTitle.textContent =
-    "Edit Service Request";
-
-  modalBackdrop.classList.add("show");
-
-}
-
-
-// --------------------------------------------------
-// SAVE REQUEST
-// --------------------------------------------------
-
-requestForm.addEventListener("submit", async (event) => {
-
-  event.preventDefault();
-
-  const id = editRequestId.value;
-
-  const data = {
-
-    customerName:
-      customerName.value.trim(),
-
-    customerMobile:
-      customerMobile.value.trim(),
-
-    customerAddress:
-      customerAddress.value.trim(),
-
-    deviceBrand:
-      deviceBrand.value.trim(),
-
-    deviceModel:
-      deviceModel.value.trim(),
-
-    serialNumber:
-      serialNumber.value.trim(),
-
-    screenSize:
-      screenSize.value.trim(),
-
-    serviceType:
-      serviceType.value,
-
-    retailerId:
-      retailerId.value.trim(),
-
-    status:
-      requestStatus.value,
-
-    problem:
-      problem.value.trim(),
-
-    updatedAt:
-      serverTimestamp()
-
-  };
-
-
-  try {
-
-    if (id) {
-
-      await updateDoc(
-        doc(db, "service_requests", id),
-        data
-      );
-
-      alert("Service Request updated.");
-
-    } else {
-
-      const requestNumber =
-        generateRequestId();
-
-      await addDoc(
-        collection(db, "service_requests"),
-        {
-
-          ...data,
-
-          requestId:
-            requestNumber,
-
-          source:
-            "ADMIN",
-
-          createdBy:
-            currentUser.uid,
-
-          createdAt:
-            serverTimestamp(),
-
-          jobId:
-            null
-
-        }
-      );
-
-      alert("Service Request created.");
-
-    }
-
-    closeModal();
-
-    await loadRequests();
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      "Unable to save Service Request.\n\n" +
-      error.message
-    );
-
-  }
-
-});
-
-
-// --------------------------------------------------
-// CREATE JOB
-// --------------------------------------------------
-
-async function createJob(requestDocId) {
-
-  const request =
-    requests.find(item => item.id === requestDocId);
-
-  if (!request) return;
-
-  if (request.jobId) {
-
-    alert(
-      "Job already created for this request."
-    );
-
-    return;
-
-  }
-
-
-  const confirmCreate =
-    confirm(
-      `Create Job for ${request.customerName || "this customer"}?`
-    );
-
-  if (!confirmCreate) return;
-
-
-  try {
-
-    const jobNumber =
-      generateJobId();
-
-
-    const jobRef =
-      await addDoc(
-        collection(db, "jobs"),
-        {
-
-          jobId:
-            jobNumber,
-
-          requestId:
-            requestDocId,
-
-          serviceRequestId:
-            requestDocId,
-
-          retailerId:
-            request.retailerId || null,
-
-          customerName:
-            request.customerName || "",
-
-          customerMobile:
-            request.customerMobile || "",
-
-          customerAddress:
-            request.customerAddress || "",
-
-          deviceBrand:
-            request.deviceBrand || "",
-
-          deviceModel:
-            request.deviceModel || "",
-
-          serialNumber:
-            request.serialNumber || "",
-
-          screenSize:
-            request.screenSize || "",
-
-          serviceType:
-            request.serviceType || "TV Repair",
-
-          problem:
-            request.problem || "",
-
-          technicianId:
-            null,
-
-          status:
-            "NEW",
-
-          source:
-            "SERVICE_REQUEST",
-
-          createdAt:
-            serverTimestamp(),
-
-          updatedAt:
-            serverTimestamp()
-
-        }
-      );
-
-
-    await updateDoc(
-      doc(db, "service_requests", requestDocId),
-      {
-
-        jobId:
-          jobRef.id,
-
-        status:
-          "CONVERTED TO JOB",
-
-        updatedAt:
-          serverTimestamp()
-
-      }
-    );
-
-
-    alert(
-      `Job created successfully.\nJob ID: ${jobNumber}`
-    );
-
-
-    await loadRequests();
-
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      "Unable to create Job.\n\n" +
-      error.message
-    );
-
-  }
-
-}
-
-
-// --------------------------------------------------
-// VIEW
-// --------------------------------------------------
-
-function viewRequest(id) {
-
-  const item =
-    requests.find(request => request.id === id);
-
-  if (!item) return;
-
-
-  const message = [
-
-    `Request ID: ${item.requestId || item.id}`,
-
-    `Customer: ${item.customerName || "-"}`,
-
-    `Mobile: ${item.customerMobile || "-"}`,
-
-    `Service: ${item.serviceType || "-"}`,
-
-    `Brand: ${item.deviceBrand || "-"}`,
-
-    `Model: ${item.deviceModel || "-"}`,
-
-    `Serial: ${item.serialNumber || "-"}`,
-
-    `Screen: ${item.screenSize || "-"}`,
-
-    `Retailer: ${item.retailerId || "-"}`,
-
-    `Status: ${item.status || "-"}`,
-
-    `Job ID: ${item.jobId || "Not created"}`,
-
-    `Problem: ${item.problem || "-"}`
-
-  ].join("\n");
-
-
-  alert(message);
-
-}
-
-
-// --------------------------------------------------
-// FILTER EVENTS
-// --------------------------------------------------
 
 searchInput.addEventListener(
   "input",
   renderRequests
 );
+
 
 statusFilter.addEventListener(
   "change",
@@ -874,49 +317,343 @@ statusFilter.addEventListener(
 );
 
 
-// --------------------------------------------------
-// HELPERS
-// --------------------------------------------------
+function renderRequests() {
 
-function generateRequestId() {
-
-  const now = new Date();
-
-  const date =
-    now.getFullYear().toString() +
-    String(now.getMonth() + 1).padStart(2, "0") +
-    String(now.getDate()).padStart(2, "0");
-
-  const time =
-    String(now.getHours()).padStart(2, "0") +
-    String(now.getMinutes()).padStart(2, "0") +
-    String(now.getSeconds()).padStart(2, "0");
-
-  return `REQ-${date}-${time}`;
-
-}
+  const search =
+    searchInput.value
+      .trim()
+      .toLowerCase();
 
 
-function generateJobId() {
+  const selectedStatus =
+    statusFilter.value;
 
-  const now = new Date();
 
-  const date =
-    now.getFullYear().toString() +
-    String(now.getMonth() + 1).padStart(2, "0") +
-    String(now.getDate()).padStart(2, "0");
+  const filtered =
+    allRequests.filter(
+      request => {
 
-  const random =
-    Math.floor(
-      1000 + Math.random() * 9000
+        const text = [
+
+          request.id,
+
+          request.requestId,
+
+          request.customerName,
+
+          request.customerMobile,
+
+          request.mobile,
+
+          request.retailerName,
+
+          request.device,
+
+          request.deviceBrand,
+
+          request.deviceModel,
+
+          request.problem,
+
+          request.serviceType
+
+        ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+
+        const matchesSearch =
+          !search ||
+          text.includes(search);
+
+
+        const matchesStatus =
+          !selectedStatus ||
+          normalizeStatus(
+            request.status
+          ) === selectedStatus;
+
+
+        return (
+          matchesSearch &&
+          matchesStatus
+        );
+
+      }
     );
 
-  return `JOB-${date}-${random}`;
+
+  if (
+    filtered.length === 0
+  ) {
+
+    requestContainer.innerHTML = `
+
+      <div class="empty">
+
+        <div class="empty-icon">
+          📋
+        </div>
+
+        <div class="empty-title">
+          No Service Requests
+        </div>
+
+        <div class="empty-text">
+          No service requests found.
+        </div>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  requestContainer.innerHTML = `
+
+    <div class="request-list">
+
+      ${filtered
+        .map(renderRequest)
+        .join("")}
+
+    </div>
+
+  `;
+
+
+  document
+    .querySelectorAll("[data-view]")
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            openEdit(
+              button.dataset.view
+            );
+
+          }
+        );
+
+      }
+    );
+
+
+  document
+    .querySelectorAll("[data-job]")
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            convertToJob(
+              button.dataset.job
+            );
+
+          }
+        );
+
+      }
+    );
 
 }
 
 
-function getStatusClass(status) {
+function renderRequest(
+  request
+) {
+
+  const status =
+    normalizeStatus(
+      request.status
+    );
+
+
+  const statusClass =
+    getStatusClass(
+      status
+    );
+
+
+  return `
+
+    <div class="request-card">
+
+      <div class="request-top">
+
+        <div>
+
+          <h3 class="request-id">
+
+            ${escapeHtml(
+              request.requestId ||
+              request.id
+            )}
+
+          </h3>
+
+          <div class="customer">
+
+            ${escapeHtml(
+              request.customerName ||
+              "Customer"
+            )}
+
+          </div>
+
+        </div>
+
+
+        <span
+          class="status ${statusClass}"
+        >
+
+          ${escapeHtml(
+            formatStatus(status)
+          )}
+
+        </span>
+
+      </div>
+
+
+      <div class="request-info">
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            📱
+          </span>
+
+          <span>
+            ${escapeHtml(
+              request.customerMobile ||
+              request.mobile ||
+              "-"
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            📺
+          </span>
+
+          <span>
+            ${escapeHtml(
+              getDevice(request)
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            🔧
+          </span>
+
+          <span>
+            ${escapeHtml(
+              request.serviceType ||
+              "Service"
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            🏪
+          </span>
+
+          <span>
+            ${escapeHtml(
+              request.retailerName ||
+              request.retailerId ||
+              "-"
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            📝
+          </span>
+
+          <span>
+            ${escapeHtml(
+              request.problem ||
+              "No problem description"
+            )}
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="divider"></div>
+
+
+      <div class="actions">
+
+        <button
+          class="action view"
+          type="button"
+          data-view="${request.id}"
+        >
+          View / Edit
+        </button>
+
+
+        ${
+          status !== "CONVERTED TO JOB" &&
+          status !== "CANCELLED"
+            ? `
+
+              <button
+                class="action job"
+                type="button"
+                data-job="${request.id}"
+              >
+                Create Job
+              </button>
+
+            `
+            : ""
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+function getStatusClass(
+  status
+) {
 
   switch (status) {
 
@@ -933,7 +670,7 @@ function getStatusClass(status) {
       return "status-assigned";
 
     case "CONVERTED TO JOB":
-      return "status-converted";
+      return "status-job";
 
     case "CANCELLED":
       return "status-cancelled";
@@ -946,42 +683,735 @@ function getStatusClass(status) {
 }
 
 
-function formatDate(timestamp) {
+function formatStatus(
+  status
+) {
 
-  if (!timestamp) return "-";
+  return String(
+    status || ""
+  )
+    .toLowerCase()
+    .replace(
+      /\b\w/g,
+      letter =>
+        letter.toUpperCase()
+    );
+
+}
+
+
+function getDevice(
+  request
+) {
+
+  const parts = [
+
+    request.device,
+
+    request.deviceBrand,
+
+    request.deviceModel
+
+  ]
+  .filter(Boolean);
+
+
+  return parts.length
+    ? parts.join(" • ")
+    : "Device not added";
+
+}
+
+
+/* =====================================================
+   NEW REQUEST
+===================================================== */
+
+newRequestBtn.addEventListener(
+  "click",
+  openNew
+);
+
+
+function openNew() {
+
+  hideMessages();
+
+  requestForm.reset();
+
+  editRequestId.value = "";
+
+  modalTitle.textContent =
+    "New Service Request";
+
+  saveBtn.textContent =
+    "Create Request";
+
+  modalBg.classList.add(
+    "show"
+  );
+
+  customerName.focus();
+
+}
+
+
+/* =====================================================
+   EDIT REQUEST
+===================================================== */
+
+function openEdit(
+  id
+) {
+
+  const request =
+    allRequests.find(
+      item =>
+        item.id === id
+    );
+
+
+  if (!request) {
+
+    showError(
+      "Service request not found."
+    );
+
+    return;
+
+  }
+
+
+  editRequestId.value =
+    request.id;
+
+
+  customerName.value =
+    request.customerName || "";
+
+
+  customerMobile.value =
+    request.customerMobile ||
+    request.mobile ||
+    "";
+
+
+  customerAddress.value =
+    request.customerAddress ||
+    request.address ||
+    "";
+
+
+  device.value =
+    request.device || "";
+
+
+  deviceBrand.value =
+    request.deviceBrand || "";
+
+
+  deviceModel.value =
+    request.deviceModel || "";
+
+
+  serviceType.value =
+    request.serviceType ||
+    "REPAIR";
+
+
+  problem.value =
+    request.problem || "";
+
+
+  modalTitle.textContent =
+    "Edit Service Request";
+
+  saveBtn.textContent =
+    "Save Changes";
+
+
+  modalBg.classList.add(
+    "show"
+  );
+
+}
+
+
+/* =====================================================
+   SAVE REQUEST
+===================================================== */
+
+requestForm.addEventListener(
+  "submit",
+  async event => {
+
+    event.preventDefault();
+
+
+    hideMessages();
+
+
+    const editId =
+      editRequestId.value.trim();
+
+
+    const name =
+      customerName.value.trim();
+
+
+    const mobile =
+      customerMobile.value.trim();
+
+
+    if (!name) {
+
+      showError(
+        "Customer name required."
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !/^[0-9]{10}$/.test(
+        mobile
+      )
+    ) {
+
+      showError(
+        "Mobile number must contain 10 digits."
+      );
+
+      return;
+
+    }
+
+
+    saveBtn.disabled =
+      true;
+
+
+    saveBtn.textContent =
+      editId
+        ? "Saving..."
+        : "Creating...";
+
+
+    try {
+
+      if (editId) {
+
+        await updateDoc(
+
+          doc(
+            db,
+            "service_requests",
+            editId
+          ),
+
+          {
+
+            customerName:
+              name,
+
+            customerMobile:
+              mobile,
+
+            customerAddress:
+              customerAddress.value.trim(),
+
+            device:
+              device.value.trim(),
+
+            deviceBrand:
+              deviceBrand.value.trim(),
+
+            deviceModel:
+              deviceModel.value.trim(),
+
+            serviceType:
+              serviceType.value,
+
+            problem:
+              problem.value.trim(),
+
+            updatedAt:
+              serverTimestamp()
+
+          }
+
+        );
+
+
+        closeRequestModal();
+
+        await loadRequests();
+
+        showSuccess(
+          "Service request updated successfully."
+        );
+
+      }
+      else {
+
+        await createRequest({
+
+          customerName:
+            name,
+
+          customerMobile:
+            mobile,
+
+          customerAddress:
+            customerAddress.value.trim(),
+
+          device:
+            device.value.trim(),
+
+          deviceBrand:
+            deviceBrand.value.trim(),
+
+          deviceModel:
+            deviceModel.value.trim(),
+
+          serviceType:
+            serviceType.value,
+
+          problem:
+            problem.value.trim()
+
+        });
+
+      }
+
+    }
+    catch (error) {
+
+      showError(
+        error.message ||
+        "Request operation failed."
+      );
+
+    }
+    finally {
+
+      saveBtn.disabled =
+        false;
+
+      saveBtn.textContent =
+        editId
+          ? "Save Changes"
+          : "Create Request";
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   CREATE REQUEST
+===================================================== */
+
+async function createRequest(
+  data
+) {
+
+  const requestRef =
+    await addDoc(
+
+      collection(
+        db,
+        "service_requests"
+      ),
+
+      {
+
+        ...data,
+
+        requestId:
+          "",
+
+        status:
+          "NEW",
+
+        jobId:
+          null,
+
+        createdAt:
+          serverTimestamp(),
+
+        updatedAt:
+          serverTimestamp(),
+
+        createdBy:
+          adminUser.uid
+
+      }
+
+    );
+
+
+  await updateDoc(
+
+    requestRef,
+
+    {
+
+      requestId:
+        requestRef.id
+
+    }
+
+  );
+
+
+  closeRequestModal();
+
+  await loadRequests();
+
+  showSuccess(
+    "Service request created successfully."
+  );
+
+}
+
+
+/* =====================================================
+   CREATE JOB
+===================================================== */
+
+async function convertToJob(
+  requestId
+) {
+
+  const request =
+    allRequests.find(
+      item =>
+        item.id === requestId
+    );
+
+
+  if (!request) {
+
+    showError(
+      "Service request not found."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    request.jobId
+  ) {
+
+    showError(
+      "Job already exists for this request."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    !confirm(
+      "Create a service job from this request?"
+    )
+  ) {
+
+    return;
+
+  }
+
 
   try {
 
-    const date =
-      timestamp.toDate
-        ? timestamp.toDate()
-        : new Date(timestamp);
+    const jobRef =
+      await addDoc(
 
-    return date.toLocaleDateString(
-      "en-IN",
+        collection(
+          db,
+          "jobs"
+        ),
+
+        {
+
+          requestId:
+            request.id,
+
+          serviceRequestId:
+            request.id,
+
+          customerId:
+            request.customerId ||
+            null,
+
+          customerName:
+            request.customerName ||
+            "",
+
+          customerMobile:
+            request.customerMobile ||
+            "",
+
+          customerAddress:
+            request.customerAddress ||
+            "",
+
+          retailerId:
+            request.retailerId ||
+            "",
+
+          retailerName:
+            request.retailerName ||
+            "",
+
+          device:
+            request.device ||
+            "",
+
+          deviceBrand:
+            request.deviceBrand ||
+            "",
+
+          deviceModel:
+            request.deviceModel ||
+            "",
+
+          serviceType:
+            request.serviceType ||
+            "REPAIR",
+
+          problem:
+            request.problem ||
+            "",
+
+          status:
+            "NEW",
+
+          technicianId:
+            "",
+
+          technicianName:
+            "",
+
+          createdAt:
+            serverTimestamp(),
+
+          updatedAt:
+            serverTimestamp(),
+
+          createdBy:
+            adminUser.uid
+
+        }
+
+      );
+
+
+    await updateDoc(
+
+      doc(
+        db,
+        "service_requests",
+        requestId
+      ),
+
       {
-        day: "2-digit",
-        month: "short",
-        year: "numeric"
+
+        jobId:
+          jobRef.id,
+
+        status:
+          "CONVERTED TO JOB",
+
+        updatedAt:
+          serverTimestamp()
+
       }
+
     );
 
-  } catch {
 
-    return "-";
+    await loadRequests();
+
+
+    showSuccess(
+      "Service job created successfully."
+    );
+
+  }
+  catch (error) {
+
+    showError(
+      error.message ||
+      "Unable to create job."
+    );
 
   }
 
 }
 
 
-function escapeHtml(value) {
+/* =====================================================
+   MODAL CLOSE
+===================================================== */
 
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+function closeRequestModal() {
+
+  modalBg.classList.remove(
+    "show"
+  );
+
+  requestForm.reset();
+
+  editRequestId.value =
+    "";
+
+}
+
+
+closeModal.addEventListener(
+  "click",
+  closeRequestModal
+);
+
+
+cancelModal.addEventListener(
+  "click",
+  closeRequestModal
+);
+
+
+modalBg.addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target ===
+      modalBg
+    ) {
+
+      closeRequestModal();
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+logoutBtn.addEventListener(
+  "click",
+  async () => {
+
+    try {
+
+      await signOut(auth);
+
+      window.location.href =
+        "../index.html";
+
+    }
+    catch (error) {
+
+      showError(
+        error.message ||
+        "Logout failed."
+      );
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function escapeHtml(
+  value
+) {
+
+  return String(
+    value ?? ""
+  )
+
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
+
+}
+
+
+function hideMessages() {
+
+  errorBox.style.display =
+    "none";
+
+  successBox.style.display =
+    "none";
+
+}
+
+
+function showError(
+  message
+) {
+
+  successBox.style.display =
+    "none";
+
+  errorBox.textContent =
+    message;
+
+  errorBox.style.display =
+    "block";
+
+}
+
+
+function showSuccess(
+  message
+) {
+
+  errorBox.style.display =
+    "none";
+
+  successBox.textContent =
+    message;
+
+  successBox.style.display =
+    "block";
 
 }
