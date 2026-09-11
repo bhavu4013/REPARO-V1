@@ -1086,4 +1086,948 @@ requestForm.addEventListener(
 
 
     const customerIdValue =
-      customerId
+      customerId.value.trim();
+
+
+    const name =
+      customerName.value.trim();
+
+
+    const mobile =
+      customerMobile.value.trim();
+
+
+    const brand =
+      deviceBrand.value.trim();
+
+
+    const model =
+      deviceModel.value.trim();
+
+
+    const serial =
+      serialNumber.value.trim();
+
+
+    const service =
+      serviceType.value.trim();
+
+
+    const problemValue =
+      problem.value.trim();
+
+
+    const retailerIdValue =
+      retailerId.value.trim();
+
+
+    if (!customerIdValue) {
+
+      showError(
+        "Customer ID required."
+      );
+
+      return;
+
+    }
+
+
+    if (!name) {
+
+      showError(
+        "Customer name required."
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !/^[0-9]{10}$/.test(
+        mobile
+      )
+    ) {
+
+      showError(
+        "Mobile number must contain 10 digits."
+      );
+
+      return;
+
+    }
+
+
+    if (!service) {
+
+      showError(
+        "Please select service type."
+      );
+
+      return;
+
+    }
+
+
+    if (!problemValue) {
+
+      showError(
+        "Problem / Request required."
+      );
+
+      return;
+
+    }
+
+
+    if (!retailerIdValue) {
+
+      showError(
+        "Retailer ID required."
+      );
+
+      return;
+
+    }
+
+
+    saveBtn.disabled =
+      true;
+
+
+    saveBtn.textContent =
+      editId
+        ? "Saving..."
+        : "Creating...";
+
+
+    try {
+
+      const data = {
+
+        customerId:
+          customerIdValue,
+
+        customerName:
+          name,
+
+        customerMobile:
+          mobile,
+
+        deviceBrand:
+          brand,
+
+        deviceModel:
+          model,
+
+        serialNumber:
+          serial,
+
+        serviceType:
+          service,
+
+        problem:
+          problemValue,
+
+        retailerId:
+          retailerIdValue
+
+      };
+
+
+      if (editId) {
+
+        await updateDoc(
+
+          doc(
+            db,
+            "service_requests",
+            editId
+          ),
+
+          {
+
+            ...data,
+
+            updatedAt:
+              serverTimestamp()
+
+          }
+
+        );
+
+
+        closeRequestModal();
+
+
+        await loadRequests();
+
+
+        showSuccess(
+          "Service request updated successfully."
+        );
+
+      }
+      else {
+
+        await createRequest(
+          data
+        );
+
+      }
+
+    }
+    catch (error) {
+
+      console.error(
+        "Save service request error:",
+        error
+      );
+
+
+      showError(
+        getErrorMessage(error)
+      );
+
+    }
+    finally {
+
+      saveBtn.disabled =
+        false;
+
+      saveBtn.textContent =
+        editId
+          ? "Save Changes"
+          : "Create Request";
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   CREATE REQUEST
+===================================================== */
+
+async function createRequest(data) {
+
+  /*
+    Admin creates the request.
+
+    Customer protection is represented by customerId
+    + retailerId. Future duplicate/protection validation
+    can be added through customer_index/backend logic.
+  */
+
+  const requestRef =
+    await addDoc(
+
+      collection(
+        db,
+        "service_requests"
+      ),
+
+      {
+
+        ...data,
+
+        requestId:
+          "",
+
+        status:
+          "NEW",
+
+        jobId:
+          null,
+
+        createdAt:
+          serverTimestamp(),
+
+        updatedAt:
+          serverTimestamp(),
+
+        createdBy:
+          adminUser.uid
+
+      }
+
+    );
+
+
+  await updateDoc(
+
+    requestRef,
+
+    {
+
+      requestId:
+        requestRef.id
+
+    }
+
+  );
+
+
+  closeRequestModal();
+
+
+  await loadRequests();
+
+
+  showSuccess(
+    "Service request created successfully."
+  );
+
+}
+
+
+/* =====================================================
+   CREATE JOB
+===================================================== */
+
+async function convertToJob(requestId) {
+
+  const request =
+    allRequests.find(
+      item =>
+        item.id === requestId
+    );
+
+
+  if (!request) {
+
+    showError(
+      "Service request not found."
+    );
+
+    return;
+
+  }
+
+
+  if (request.jobId) {
+
+    showError(
+      "Job already exists for this request."
+    );
+
+    return;
+
+  }
+
+
+  const status =
+    normalizeStatus(
+      request.status
+    );
+
+
+  if (
+    status === "CANCELLED"
+  ) {
+
+    showError(
+      "Cancelled request cannot be converted to a job."
+    );
+
+    return;
+
+  }
+
+
+  const confirmed =
+    window.confirm(
+      "Create a service job from this request?"
+    );
+
+
+  if (!confirmed) {
+
+    return;
+
+  }
+
+
+  try {
+
+    /*
+      Create Job
+    */
+
+    const jobRef =
+      await addDoc(
+
+        collection(
+          db,
+          "jobs"
+        ),
+
+        {
+
+          requestId:
+            request.id,
+
+          serviceRequestId:
+            request.id,
+
+          customerId:
+            request.customerId ||
+            null,
+
+          customerName:
+            request.customerName ||
+            "",
+
+          customerMobile:
+            request.customerMobile ||
+            request.mobile ||
+            "",
+
+          customerAddress:
+            request.customerAddress ||
+            request.address ||
+            "",
+
+          retailerId:
+            request.retailerId ||
+            "",
+
+          retailerName:
+            request.retailerName ||
+            "",
+
+          device:
+            request.device ||
+            "",
+
+          deviceBrand:
+            request.deviceBrand ||
+            "",
+
+          deviceModel:
+            request.deviceModel ||
+            "",
+
+          serialNumber:
+            request.serialNumber ||
+            "",
+
+          serviceType:
+            request.serviceType ||
+            "TV REPAIR",
+
+          problem:
+            request.problem ||
+            "",
+
+          status:
+            "NEW",
+
+          technicianId:
+            "",
+
+          technicianName:
+            "",
+
+          createdAt:
+            serverTimestamp(),
+
+          updatedAt:
+            serverTimestamp(),
+
+          createdBy:
+            adminUser.uid
+
+        }
+
+      );
+
+
+    /*
+      Update Service Request
+    */
+
+    await updateDoc(
+
+      doc(
+        db,
+        "service_requests",
+        requestId
+      ),
+
+      {
+
+        jobId:
+          jobRef.id,
+
+        status:
+          "CONVERTED TO JOB",
+
+        updatedAt:
+          serverTimestamp()
+
+      }
+
+    );
+
+
+    await loadRequests();
+
+
+    showSuccess(
+      "Service job created successfully."
+    );
+
+  }
+  catch (error) {
+
+    console.error(
+      "Create job error:",
+      error
+    );
+
+
+    showError(
+      getErrorMessage(error)
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   MODAL CLOSE
+===================================================== */
+
+function closeRequestModal() {
+
+  if (modalBackdrop) {
+
+    modalBackdrop.classList.remove(
+      "show"
+    );
+
+  }
+
+
+  if (requestForm) {
+
+    requestForm.reset();
+
+  }
+
+
+  if (editRequestId) {
+
+    editRequestId.value =
+      "";
+
+  }
+
+}
+
+
+if (closeModalBtn) {
+
+  closeModalBtn.addEventListener(
+    "click",
+    closeRequestModal
+  );
+
+}
+
+
+if (cancelBtn) {
+
+  cancelBtn.addEventListener(
+    "click",
+    closeRequestModal
+  );
+
+}
+
+
+if (modalBackdrop) {
+
+  modalBackdrop.addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target ===
+        modalBackdrop
+      ) {
+
+        closeRequestModal();
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   MORE MENU
+===================================================== */
+
+if (moreNavBtn && morePanel) {
+
+  moreNavBtn.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      toggleMore();
+
+    }
+  );
+
+
+  document.addEventListener(
+    "click",
+    event => {
+
+      if (
+        !morePanel.contains(
+          event.target
+        ) &&
+        !moreNavBtn.contains(
+          event.target
+        )
+      ) {
+
+        closeMore();
+
+      }
+
+    }
+  );
+
+}
+
+
+function toggleMore() {
+
+  if (!morePanel) {
+
+    return;
+
+  }
+
+
+  morePanel.classList.toggle(
+    "show"
+  );
+
+}
+
+
+function closeMore() {
+
+  if (!morePanel) {
+
+    return;
+
+  }
+
+
+  morePanel.classList.remove(
+    "show"
+  );
+
+}
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+if (logoutBtn) {
+
+  logoutBtn.addEventListener(
+    "click",
+    async () => {
+
+      try {
+
+        await signOut(
+          auth
+        );
+
+
+        window.location.href =
+          "../index.html";
+
+      }
+      catch (error) {
+
+        showError(
+          getErrorMessage(error)
+        );
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   LOADING
+===================================================== */
+
+function showLoading() {
+
+  if (!requestContainer) {
+
+    return;
+
+  }
+
+
+  requestContainer.innerHTML = `
+
+    <div class="loading">
+      Loading service requests...
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   LOAD ERROR
+===================================================== */
+
+function showLoadError(error) {
+
+  console.error(
+    "REPARO Service Requests Load Error:",
+    error
+  );
+
+
+  if (!requestContainer) {
+
+    return;
+
+  }
+
+
+  requestContainer.innerHTML = `
+
+    <div class="empty">
+
+      <div class="empty-icon">
+        ⚠️
+      </div>
+
+      <div class="empty-title">
+        Unable to Load Requests
+      </div>
+
+      <div class="empty-text">
+        ${escapeHtml(
+          getErrorMessage(error)
+        )}
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   ERROR MESSAGE
+===================================================== */
+
+function getErrorMessage(error) {
+
+  if (
+    error?.code ===
+    "permission-denied"
+  ) {
+
+    return "Firestore permission denied. Firebase Rules માં Admin access check કરો.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "unauthenticated"
+  ) {
+
+    return "Your login session has expired. Please login again.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "unavailable"
+  ) {
+
+    return "Firebase temporarily unavailable. Internet connection check કરો.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "failed-precondition"
+  ) {
+
+    return "Firestore operation failed. Database configuration check કરો.";
+
+  }
+
+
+  return (
+    error?.message ||
+    "Unable to complete the operation."
+  );
+
+}
+
+
+/* =====================================================
+   MESSAGES
+===================================================== */
+
+function hideMessages() {
+
+  if (errorBox) {
+
+    errorBox.style.display =
+      "none";
+
+    errorBox.textContent =
+      "";
+
+  }
+
+
+  if (successBox) {
+
+    successBox.style.display =
+      "none";
+
+    successBox.textContent =
+      "";
+
+  }
+
+}
+
+
+function showError(message) {
+
+  if (!errorBox) {
+
+    return;
+
+  }
+
+
+  if (successBox) {
+
+    successBox.style.display =
+      "none";
+
+  }
+
+
+  errorBox.textContent =
+    message;
+
+
+  errorBox.style.display =
+    "block";
+
+}
+
+
+function showSuccess(message) {
+
+  if (!successBox) {
+
+    return;
+
+  }
+
+
+  if (errorBox) {
+
+    errorBox.style.display =
+      "none";
+
+  }
+
+
+  successBox.textContent =
+    message;
+
+
+  successBox.style.display =
+    "block";
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHtml(value) {
+
+  return String(
+    value ?? ""
+  )
+
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
+
+}
+
+
+/* =====================================================
+   ESCAPE ATTRIBUTE
+===================================================== */
+
+function escapeAttribute(value) {
+
+  return escapeHtml(value);
+
+}
