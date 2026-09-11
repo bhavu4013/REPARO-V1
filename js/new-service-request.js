@@ -102,6 +102,7 @@ onAuthStateChanged(auth, async (user) => {
       "../index.html";
 
     return;
+
   }
 
   try {
@@ -120,6 +121,7 @@ onAuthStateChanged(auth, async (user) => {
         "../index.html";
 
       return;
+
     }
 
     const profile =
@@ -136,11 +138,19 @@ onAuthStateChanged(auth, async (user) => {
         "../index.html";
 
       return;
+
     }
 
     currentUser = user;
 
     await loadRetailerProfile();
+
+    /*
+      After authentication and retailer profile,
+      check whether this page was opened from
+      My Customers.
+    */
+    await loadCustomerFromUrl();
 
   } catch (error) {
 
@@ -209,6 +219,198 @@ async function loadRetailerProfile() {
 
 
 /* =========================================================
+   LOAD CUSTOMER FROM URL
+========================================================= */
+
+async function loadCustomerFromUrl() {
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const urlCustomerId =
+    params.get("customerId");
+
+  const urlMobile =
+    normalizeMobile(
+      params.get("mobile") || ""
+    );
+
+
+  /*
+    Nothing passed in URL.
+    Normal New Service Request flow.
+  */
+
+  if (!urlCustomerId && !urlMobile) {
+    return;
+  }
+
+
+  try {
+
+    /*
+      Preferred method:
+      customerId from My Customers.
+    */
+
+    if (urlCustomerId) {
+
+      customerMobile.value =
+        urlMobile;
+
+      await loadExistingCustomerById(
+        urlCustomerId
+      );
+
+      return;
+    }
+
+
+    /*
+      Fallback:
+      mobile was passed.
+    */
+
+    if (urlMobile.length === 10) {
+
+      customerMobile.value =
+        urlMobile;
+
+      await checkCustomer();
+
+    }
+
+  } catch (error) {
+
+    showError(
+      error.message ||
+      "Unable to load selected customer."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   LOAD EXISTING CUSTOMER BY ID
+========================================================= */
+
+async function loadExistingCustomerById(
+  selectedCustomerId
+) {
+
+  const customerRef =
+    doc(
+      db,
+      "customers",
+      selectedCustomerId
+    );
+
+  const snapshot =
+    await getDoc(customerRef);
+
+
+  if (!snapshot.exists()) {
+
+    showCustomerStatus(
+      "error",
+      "Customer record was not found."
+    );
+
+    return;
+
+  }
+
+
+  const customer =
+    {
+      id: snapshot.id,
+      ...snapshot.data()
+    };
+
+
+  /*
+    Security check:
+    Customer must belong to current retailer.
+  */
+
+  if (
+    customer.originalRetailerId
+    !== currentUser.uid
+  ) {
+
+    showCustomerStatus(
+      "protected",
+      "⚠️ This customer is not protected under your retailer account."
+    );
+
+    customerCheckCompleted =
+      false;
+
+    return;
+
+  }
+
+
+  /*
+    Make sure URL mobile and actual
+    Firestore mobile are consistent.
+  */
+
+  const actualMobile =
+    normalizeMobile(
+      customer.mobile ||
+      customer.customerMobile ||
+      ""
+    );
+
+
+  if (
+    customerMobile.value &&
+    actualMobile &&
+    customerMobile.value !== actualMobile
+  ) {
+
+    showError(
+      "Customer mobile verification failed."
+    );
+
+    customerCheckCompleted =
+      false;
+
+    return;
+
+  }
+
+
+  customerMobile.value =
+    actualMobile;
+
+
+  checkedCustomer =
+    customer;
+
+  customerCheckCompleted =
+    true;
+
+
+  fillExistingCustomer(
+    customer
+  );
+
+
+  showCustomerStatus(
+    "existing",
+    "✓ Protected customer selected. You can create a new service request."
+  );
+
+}
+
+
+/* =========================================================
    CHECK CUSTOMER
 ========================================================= */
 
@@ -272,13 +474,6 @@ async function checkCustomer() {
 
     /*
       First check customer_index.
-
-      This collection contains only:
-      mobile
-      customerId
-      protected
-
-      It does NOT expose originalRetailerId.
     */
 
     const indexRef =
@@ -300,13 +495,6 @@ async function checkCustomer() {
       const existingCustomerId =
         indexData.customerId;
 
-
-      /*
-        If index exists, load customer.
-
-        The Firestore rules will only allow the retailer
-        to read it if it belongs to this retailer.
-      */
 
       if (existingCustomerId) {
 
@@ -334,7 +522,7 @@ async function checkCustomer() {
 
             /*
               Same retailer:
-              customer can be reused.
+              reuse customer.
             */
 
             if (
@@ -354,7 +542,7 @@ async function checkCustomer() {
 
               showCustomerStatus(
                 "existing",
-                "✓ Existing protected customer found. You can create a new service request for this customer."
+                "✓ Existing protected customer found. You can create a new service request."
               );
 
               return;
@@ -366,8 +554,8 @@ async function checkCustomer() {
         } catch (readError) {
 
           /*
-            If customer document cannot be read,
-            it is most likely protected by another retailer.
+            Customer belongs elsewhere or is
+            not readable under current rules.
           */
 
         }
@@ -376,8 +564,8 @@ async function checkCustomer() {
 
 
       /*
-        Existing index but customer is not readable
-        by this retailer = protected elsewhere.
+        Existing protected customer,
+        but not accessible to this retailer.
       */
 
       checkedCustomer =
@@ -391,7 +579,7 @@ async function checkCustomer() {
 
       showCustomerStatus(
         "protected",
-        "⚠️ This customer is already registered in REPARO. The customer relationship is protected. Please contact Admin for verification or transfer."
+        "⚠️ This customer is already registered in REPARO and is protected. Please contact Admin for verification or transfer."
       );
 
       return;
@@ -400,11 +588,7 @@ async function checkCustomer() {
 
 
     /*
-      No index found.
-      Check customers collection for legacy records
-      where mobile may already exist.
-
-      This is useful while migrating older data.
+      Legacy customer check.
     */
 
     const customersQuery =
@@ -414,7 +598,9 @@ async function checkCustomer() {
       );
 
     const customersSnapshot =
-      await getDocs(customersQuery);
+      await getDocs(
+        customersQuery
+      );
 
 
     if (!customersSnapshot.empty) {
@@ -562,6 +748,7 @@ function showCustomerStatus(
   customerStatus.className =
     "customer-status";
 
+
   if (type === "new") {
 
     customerStatus.classList.add(
@@ -569,6 +756,7 @@ function showCustomerStatus(
     );
 
   }
+
 
   if (type === "existing") {
 
@@ -578,6 +766,7 @@ function showCustomerStatus(
 
   }
 
+
   if (type === "protected") {
 
     customerStatus.classList.add(
@@ -586,6 +775,7 @@ function showCustomerStatus(
 
   }
 
+
   if (type === "error") {
 
     customerStatus.classList.add(
@@ -593,6 +783,7 @@ function showCustomerStatus(
     );
 
   }
+
 
   customerStatus.textContent =
     message;
@@ -604,7 +795,7 @@ function showCustomerStatus(
 
 
 /* =========================================================
-   SUBMIT REQUEST
+   SUBMIT SERVICE REQUEST
 ========================================================= */
 
 requestForm.addEventListener(
@@ -758,7 +949,7 @@ requestForm.addEventListener(
 
 
         /*
-          Final security check before creating request.
+          Final ownership validation.
         */
 
         if (
@@ -782,9 +973,8 @@ requestForm.addEventListener(
       else {
 
         /*
-          Re-check index immediately before creation.
-          This prevents creating a duplicate if another
-          record was created after the first check.
+          Re-check duplicate index immediately
+          before creating customer.
         */
 
         const indexRef =
@@ -801,19 +991,22 @@ requestForm.addEventListener(
         if (indexSnapshot.exists()) {
 
           throw new Error(
-            "This mobile number has just been registered. Please check the customer again."
+            "This mobile number has already been registered. Please check the customer again."
           );
 
         }
 
 
         /*
-          Create customer ID first.
+          Create new customer document.
         */
 
         const newCustomerRef =
           doc(
-            collection(db, "customers")
+            collection(
+              db,
+              "customers"
+            )
           );
 
         finalCustomerId =
@@ -831,21 +1024,27 @@ requestForm.addEventListener(
 
           name,
 
-          customerName: name,
+          customerName:
+            name,
 
           mobile,
 
-          customerMobile: mobile,
+          customerMobile:
+            mobile,
 
           address,
 
-          deviceBrand: brand,
+          deviceBrand:
+            brand,
 
-          deviceModel: model,
+          deviceModel:
+            model,
 
-          screenSize: size,
+          screenSize:
+            size,
 
-          serialNumber: serial,
+          serialNumber:
+            serial,
 
           originalRetailerId:
             currentUser.uid,
@@ -853,7 +1052,8 @@ requestForm.addEventListener(
           originalRetailerName:
             retailerName,
 
-          protected: true,
+          protected:
+            true,
 
           createdBy:
             currentUser.uid,
@@ -874,10 +1074,9 @@ requestForm.addEventListener(
 
 
         /*
-          Create duplicate index.
+          Create mobile index.
 
-          IMPORTANT:
-          No originalRetailerId is stored here.
+          Original retailer is NOT stored here.
         */
 
         await setDoc(
@@ -889,7 +1088,8 @@ requestForm.addEventListener(
             customerId:
               finalCustomerId,
 
-            protected: true,
+            protected:
+              true,
 
             createdAt:
               serverTimestamp(),
@@ -968,10 +1168,6 @@ requestForm.addEventListener(
       );
 
 
-      /*
-        Reset form after successful creation.
-      */
-
       requestForm.reset();
 
       customerId.value =
@@ -989,11 +1185,6 @@ requestForm.addEventListener(
       customerStatus.style.display =
         "none";
 
-
-      /*
-        Give user time to see success message,
-        then return to Service Requests.
-      */
 
       setTimeout(() => {
 
