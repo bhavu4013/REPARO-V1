@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Service Requests - REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+
+  <style>
+    .page-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:18px;
+    }
+
+    .page-header h1 {
+      margin:0;
+      font-size:24px;
+    }
+
+    .request-card {
+      background:#fff;
+      border-radius:20px;
+      padding:16px;
+      margin-bottom:12px;
+      box-shadow:0 8px 25px rgba(15,23,42,.06);
+    }
+
+    .request-top {
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+
+    .request-id {
+      font-weight:800;
+      color:#111827;
+      font-size:15px;
+    }
+
+    .customer-name {
+      font-size:17px;
+      font-weight:800;
+      margin-top:5px;
+    }
+
+    .muted {
+      color:#6B7280;
+      font-size:13px;
+    }
+
+    .request-info {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin:14px 0;
+    }
+
+    .info-box {
+      background:#F6F8FB;
+      border-radius:14px;
+      padding:10px;
+    }
+
+    .info-label {
+      font-size:11px;
+      color:#6B7280;
+      margin-bottom:3px;
+    }
+
+    .info-value {
+      font-size:13px;
+      font-weight:700;
+      color:#111827;
+      word-break:break-word;
+    }
+
+    .status {
+      display:inline-flex;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+    }
+
+    .status-new {
+      background:#E0F2FE;
+      color:#0369A1;
+    }
+
+    .status-contacted {
+      background:#FEF3C7;
+      color:#92400E;
+    }
+
+    .status-accepted {
+      background:#DCFCE7;
+      color:#166534;
+    }
+
+    .status-assigned {
+      background:#EDE9FE;
+      color:#6D28D9;
+    }
+
+    .status-converted {
+      background:#D1FAE5;
+      color:#065F46;
+    }
+
+    .status-cancelled {
+      background:#FEE2E2;
+      color:#991B1B;
+    }
+
+    .actions {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .btn-small {
+      border:0;
+      border-radius:12px;
+      padding:9px 12px;
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .btn-primary {
+      background:#08AEE0;
+      color:white;
+    }
+
+    .btn-yellow {
+      background:#FFE32B;
+      color:#111827;
+    }
+
+    .btn-danger {
+      background:#FEE2E2;
+      color:#991B1B;
+    }
+
+    .filters {
+      display:grid;
+      grid-template-columns:1fr 160px;
+      gap:10px;
+      margin-bottom:18px;
+    }
+
+    .filters input,
+    .filters select,
+    .modal input,
+    .modal select,
+    .modal textarea {
+      width:100%;
+      box-sizing:border-box;
+      border:1px solid #E5E7EB;
+      border-radius:14px;
+      padding:12px;
+      background:#fff;
+      color:#111827;
+      outline:none;
+    }
+
+    .modal textarea {
+      min-height:80px;
+      resize:vertical;
+    }
+
+    .modal-backdrop {
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.55);
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      z-index:9999;
+    }
+
+    .modal-backdrop.show {
+      display:flex;
+    }
+
+    .modal {
+      width:100%;
+      max-width:560px;
+      max-height:92vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:24px 24px 0 0;
+      padding:20px;
+      box-sizing:border-box;
+    }
+
+    .modal h2 {
+      margin-top:0;
+    }
+
+    .form-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .full {
+      grid-column:1 / -1;
+    }
+
+    .form-group {
+      margin-bottom:12px;
+    }
+
+    .form-group label {
+      display:block;
+      font-size:12px;
+      font-weight:700;
+      margin-bottom:6px;
+      color:#374151;
+    }
+
+    .modal-actions {
+      display:flex;
+      gap:10px;
+      margin-top:16px;
+    }
+
+    .modal-actions button {
+      flex:1;
+    }
+
+    .empty {
+      text-align:center;
+      padding:45px 20px;
+      color:#6B7280;
+      background:#fff;
+      border-radius:20px;
+    }
+
+    .summary-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin-bottom:18px;
+    }
+
+    .summary-card {
+      background:#fff;
+      border-radius:18px;
+      padding:14px;
+      box-shadow:0 8px 25px rgba(15,23,42,.05);
+    }
+
+    .summary-number {
+      font-size:22px;
+      font-weight:900;
+      margin-top:4px;
+    }
+
+    @media(max-width:520px) {
+      .filters {
+        grid-template-columns:1fr;
+      }
+
+      .form-grid {
+        grid-template-columns:1fr;
+      }
+
+      .full {
+        grid-column:auto;
+      }
+
+      .summary-grid {
+        grid-template-columns:1fr 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 p-4 min-h-screen pb-24">
+
+  <main class="w-full max-w-2xl mx-auto">
+
+    <div class="page-header">
+      <div>
+        <h1>Service Requests</h1>
+        <div class="muted">Manage retailer service requests</div>
+      </div>
+
+      <button id="addRequestBtn" class="btn-small btn-primary">
+        + New Request
+      </button>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="muted">Total</div>
+        <div id="totalCount" class="summary-number">0</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="muted">New</div>
+        <div id="newCount" class="summary-number">0</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="muted">Jobs</div>
+        <div id="jobCount" class="summary-number">0</div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <input
+        type="search"
+        id="searchInput"
+        placeholder="Search customer, mobile, request ID..."
+      >
+
+      <select id="statusFilter">
+        <option value="">All Status</option>
+        <option value="NEW">New</option>
+        <option value="CONTACTED">Contacted</option>
+        <option value="ACCEPTED">Accepted</option>
+        <option value="ASSIGNED">Assigned</option>
+        <option value="CONVERTED TO JOB">Converted to Job</option>
+        <option value="CANCELLED">Cancelled</option>
+      </select>
+    </div>
+
+    <div id="loading" class="empty">
+      Loading service requests...
+    </div>
+
+    <div id="requestList"></div>
+
+  </main>
+
+  <!-- ADD / EDIT MODAL -->
+
+  <div id="modalBackdrop" class="modal-backdrop">
+
+    <div class="modal">
+
+      <h2 id="modalTitle">New Service Request</h2>
+
+      <form id="requestForm">
+
+        <input type="hidden" id="editRequestId">
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label>Customer Name *</label>
+            <input id="customerName" required>
+          </div>
+
+          <div class="form-group">
+            <label>Mobile *</label>
+            <input id="customerMobile" required>
+          </div>
+
+          <div class="form-group full">
+            <label>Address</label>
+            <textarea id="customerAddress"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>TV / Device Brand</label>
+            <input id="deviceBrand">
+          </div>
+
+          <div class="form-group">
+            <label>Model</label>
+            <input id="deviceModel">
+          </div>
+
+          <div class="form-group">
+            <label>Serial Number</label>
+            <input id="serialNumber">
+          </div>
+
+          <div class="form-group">
+            <label>Screen Size</label>
+            <input id="screenSize" placeholder="e.g. 43 inch">
+          </div>
+
+          <div class="form-group full">
+            <label>Service Type *</label>
+            <select id="serviceType" required>
+              <option value="TV Repair">TV Repair</option>
+              <option value="TV Installation">TV Installation</option>
+              <option value="TV Demo">TV Demo</option>
+              <option value="DTH Service">DTH Service</option>
+              <option value="Accessory Installation">Accessory Installation</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Retailer UID</label>
+            <input id="retailerId" placeholder="Retailer UID">
+          </div>
+
+          <div class="form-group">
+            <label>Status</label>
+            <select id="requestStatus">
+              <option value="NEW">NEW</option>
+              <option value="CONTACTED">CONTACTED</option>
+              <option value="ACCEPTED">ACCEPTED</option>
+              <option value="ASSIGNED">ASSIGNED</option>
+              <option value="CONVERTED TO JOB">CONVERTED TO JOB</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
+          </div>
+
+          <div class="form-group full">
+            <label>Problem / Request Details</label>
+            <textarea id="problem"></textarea>
+          </div>
+
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="cancelModalBtn" class="btn-small">
+            Cancel
+          </button>
+
+          <button type="submit" class="btn-small btn-primary">
+            Save Request
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <script type="module" src="../js/service-requests.js"></script>
+
+</body>
+</html>
