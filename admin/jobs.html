@@ -25,18 +25,23 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       margin: 0;
       background: var(--bg);
       color: var(--navy);
       font-family: Arial, Helvetica, sans-serif;
       min-height: 100vh;
-      padding-bottom: 86px;
+      padding-bottom: 88px;
     }
 
     button,
     input,
-    select {
+    select,
+    textarea {
       font: inherit;
     }
 
@@ -44,39 +49,57 @@
       cursor: pointer;
     }
 
-    /* HEADER */
+    /* =========================
+       STICKY HEADER
+    ========================= */
 
     .topbar {
-      background: #fff;
-      border-bottom: 1px solid #eeeeee;
-      padding: 16px 18px;
       position: sticky;
       top: 0;
-      z-index: 20;
+      z-index: 50;
+
+      width: 100%;
+      background: rgba(255, 255, 255, 0.97);
+      border-bottom: 1px solid #eeeeee;
+
+      padding: 14px 16px;
+
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .brand-row {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
     }
 
     .brand {
       display: flex;
       align-items: center;
       gap: 10px;
+
       font-size: 23px;
       font-weight: 900;
+      letter-spacing: -0.4px;
     }
 
     .brand-logo {
       width: 42px;
       height: 42px;
+
       border-radius: 13px;
       background: var(--yellow);
+
       display: flex;
       align-items: center;
       justify-content: center;
+
       font-size: 22px;
       font-weight: 900;
     }
@@ -85,68 +108,97 @@
       border: 0;
       background: #f1f3f6;
       color: var(--navy);
+
       border-radius: 22px;
       padding: 10px 16px;
+
       font-size: 13px;
       font-weight: 800;
     }
 
-    /* MAIN */
+    .logout:active {
+      transform: scale(.97);
+    }
+
+    /* =========================
+       MAIN MASTER FRAME
+    ========================= */
 
     main {
+      width: 100%;
       max-width: 900px;
       margin: 0 auto;
-      padding: 22px 16px;
+
+      padding: 22px 16px 30px;
     }
 
     .heading-row {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
+
       gap: 12px;
       margin-bottom: 20px;
     }
 
+    .page-title {
+      min-width: 0;
+    }
+
     h1 {
       margin: 0;
+
       font-size: 32px;
-      line-height: 1;
+      line-height: 1.05;
       font-weight: 900;
       letter-spacing: -1px;
     }
 
     .subtitle {
       margin: 8px 0 0;
+
       color: var(--muted);
       font-size: 14px;
+      line-height: 1.4;
     }
 
-    /* SUMMARY */
+    /* =========================
+       SUMMARY
+    ========================= */
 
     .summary {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
+
       gap: 10px;
       margin-bottom: 18px;
     }
 
     .summary-card {
+      min-width: 0;
+
       background: #fff;
       border-radius: 20px;
+
       padding: 15px 12px;
-      box-shadow: 0 5px 18px rgba(15, 23, 42, .05);
+
+      box-shadow:
+        0 5px 18px rgba(15, 23, 42, .05);
     }
 
     .summary-label {
       color: var(--muted);
+
       font-size: 10px;
       font-weight: 900;
+
       text-transform: uppercase;
       margin-bottom: 5px;
     }
 
     .summary-value {
       font-size: 26px;
+      line-height: 1;
       font-weight: 900;
     }
 
@@ -162,41 +214,54 @@
       color: var(--green);
     }
 
-    /* MANAGEMENT */
+    /* =========================
+       MANAGEMENT
+    ========================= */
 
     .management {
       background: #fff;
       border-radius: 25px;
+
       padding: 19px;
       margin-bottom: 18px;
-      box-shadow: 0 5px 20px rgba(15, 23, 42, .055);
+
+      box-shadow:
+        0 5px 20px rgba(15, 23, 42, .055);
     }
 
     .management-title {
       margin: 0;
+
       font-size: 21px;
+      line-height: 1.2;
       font-weight: 900;
     }
 
     .management-subtitle {
       margin: 6px 0 15px;
+
       color: var(--muted);
       font-size: 13px;
+      line-height: 1.4;
     }
 
     .filters {
       display: grid;
-      grid-template-columns: 1fr 150px;
+      grid-template-columns: minmax(0, 1fr) 150px;
+
       gap: 9px;
     }
 
     .filters input,
     .filters select {
       width: 100%;
+
       border: 1px solid var(--border);
       background: #fafbfc;
+
       border-radius: 14px;
       padding: 13px 14px;
+
       outline: none;
       color: var(--navy);
       font-size: 14px;
@@ -208,13 +273,17 @@
       background: #fff;
     }
 
-    /* MESSAGE */
+    /* =========================
+       MESSAGE
+    ========================= */
 
     .message {
       display: none;
+
       border-radius: 15px;
       padding: 13px 15px;
       margin-bottom: 15px;
+
       font-size: 13px;
       font-weight: 700;
       line-height: 1.4;
@@ -230,7 +299,9 @@
       color: #166534;
     }
 
-    /* JOB LIST */
+    /* =========================
+       JOB LIST
+    ========================= */
 
     .job-list {
       display: flex;
@@ -241,34 +312,47 @@
     .job-card {
       background: #fff;
       border-radius: 22px;
+
       padding: 17px;
-      box-shadow: 0 5px 19px rgba(15, 23, 42, .055);
+
+      box-shadow:
+        0 5px 19px rgba(15, 23, 42, .055);
     }
 
     .job-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
+
       gap: 12px;
     }
 
     .job-id {
       margin: 0;
+
       font-size: 18px;
+      line-height: 1.2;
       font-weight: 900;
+
+      word-break: break-word;
     }
 
     .customer-name {
       margin-top: 4px;
+
       color: var(--muted);
       font-size: 13px;
     }
 
     .status {
+      flex: 0 0 auto;
+
       border-radius: 999px;
       padding: 7px 10px;
+
       font-size: 10px;
       font-weight: 900;
+
       white-space: nowrap;
     }
 
@@ -315,26 +399,33 @@
     .job-info {
       display: grid;
       gap: 8px;
+
       margin-top: 15px;
     }
 
     .info-row {
       display: flex;
       align-items: flex-start;
+
       gap: 9px;
+
       font-size: 13px;
+      line-height: 1.35;
       color: #4b5563;
     }
 
     .info-icon {
       width: 20px;
       flex: 0 0 20px;
+
       text-align: center;
     }
 
     .job-divider {
       height: 1px;
+
       background: #eeeeee;
+
       margin: 15px 0;
     }
 
@@ -345,11 +436,18 @@
 
     .job-action {
       flex: 1;
+
       border: 0;
       border-radius: 13px;
+
       padding: 11px;
+
       font-size: 13px;
       font-weight: 800;
+    }
+
+    .job-action:active {
+      transform: scale(.98);
     }
 
     .view-btn {
@@ -362,12 +460,20 @@
       color: #5d5100;
     }
 
+    /* =========================
+       EMPTY / LOADING
+    ========================= */
+
     .empty {
       background: #fff;
       border-radius: 23px;
+
       padding: 40px 20px;
+
       text-align: center;
-      box-shadow: 0 5px 18px rgba(15, 23, 42, .04);
+
+      box-shadow:
+        0 5px 18px rgba(15, 23, 42, .04);
     }
 
     .empty-icon {
@@ -384,30 +490,43 @@
     .empty-text {
       color: var(--muted);
       font-size: 14px;
+      line-height: 1.45;
     }
 
     .loading {
       background: #fff;
       border-radius: 22px;
+
       padding: 38px;
+
       text-align: center;
+
       color: var(--muted);
+      font-size: 14px;
     }
 
-    /* MODAL */
+    /* =========================
+       MODAL
+    ========================= */
 
     .modal-backdrop {
       display: none;
+
       position: fixed;
       inset: 0;
+
       background: rgba(15, 23, 42, .55);
+
       z-index: 100;
+
       padding: 15px;
+
       overflow-y: auto;
     }
 
     .modal-backdrop.show {
       display: flex;
+
       align-items: center;
       justify-content: center;
     }
@@ -415,31 +534,44 @@
     .modal {
       width: 100%;
       max-width: 560px;
+
       background: #fff;
       border-radius: 26px;
+
       padding: 20px;
-      box-shadow: 0 25px 70px rgba(0,0,0,.25);
+
+      box-shadow:
+        0 25px 70px rgba(0, 0, 0, .25);
     }
 
     .modal-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
+
+      gap: 12px;
       margin-bottom: 18px;
     }
 
     .modal-head h2 {
       margin: 0;
+
       font-size: 22px;
+      line-height: 1.2;
       font-weight: 900;
     }
 
     .close-btn {
       width: 38px;
       height: 38px;
+
+      flex: 0 0 38px;
+
       border: 0;
       border-radius: 50%;
+
       background: #f1f3f6;
+
       font-size: 23px;
     }
 
@@ -450,8 +582,11 @@
 
     .form-field label {
       display: block;
+
       margin: 0 0 6px 3px;
+
       color: #4b5563;
+
       font-size: 12px;
       font-weight: 800;
     }
@@ -460,11 +595,16 @@
     .form-field select,
     .form-field textarea {
       width: 100%;
+
       border: 1px solid var(--border);
       border-radius: 14px;
+
       background: #fafbfc;
+
       padding: 12px 13px;
+
       outline: none;
+
       color: var(--navy);
       font-size: 14px;
     }
@@ -484,16 +624,25 @@
     .modal-actions {
       display: flex;
       gap: 9px;
+
       margin-top: 18px;
     }
 
     .modal-action {
       flex: 1;
+
       border: 0;
       border-radius: 14px;
+
       padding: 13px;
+
       font-size: 14px;
       font-weight: 900;
+    }
+
+    .modal-action:disabled {
+      opacity: .6;
+      cursor: not-allowed;
     }
 
     .cancel-btn {
@@ -506,29 +655,112 @@
       color: #fff;
     }
 
-    /* BOTTOM NAV */
+    /* =========================
+       MORE PANEL
+    ========================= */
+
+    .more-panel {
+      display: none;
+
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 86px;
+
+      max-width: 420px;
+      margin: 0 auto;
+
+      background: #fff;
+      border-radius: 22px;
+
+      padding: 10px;
+
+      box-shadow:
+        0 15px 45px rgba(15, 23, 42, .18);
+
+      z-index: 45;
+    }
+
+    .more-panel.show {
+      display: block;
+    }
+
+    .more-title {
+      padding: 10px 12px 7px;
+
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+
+    .more-link {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+
+      width: 100%;
+
+      padding: 13px 12px;
+
+      border-radius: 14px;
+
+      text-decoration: none;
+
+      color: var(--navy);
+
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .more-link:hover {
+      background: #f6f7fb;
+    }
+
+    .more-icon {
+      width: 25px;
+      text-align: center;
+      font-size: 18px;
+    }
+
+    /* =========================
+       BOTTOM NAV
+    ========================= */
 
     .bottom-nav {
       position: fixed;
+
       left: 0;
       right: 0;
       bottom: 0;
+
       height: 76px;
+
       background: #fff;
+
       border-top: 1px solid #e8e8e8;
+
       display: flex;
-      z-index: 30;
+
+      z-index: 40;
     }
 
     .nav-item {
       flex: 1;
+
+      min-width: 0;
+
       text-decoration: none;
+
       color: #6b7280;
+
       display: flex;
       flex-direction: column;
+
       align-items: center;
       justify-content: center;
+
       gap: 4px;
+
       font-size: 10px;
       font-weight: 800;
     }
@@ -542,7 +774,29 @@
       line-height: 1;
     }
 
+    /* =========================
+       RESPONSIVE
+    ========================= */
+
     @media (max-width: 620px) {
+
+      .topbar {
+        padding: 12px 14px;
+      }
+
+      .brand {
+        font-size: 21px;
+      }
+
+      .brand-logo {
+        width: 40px;
+        height: 40px;
+      }
+
+      main {
+        padding: 19px 14px 28px;
+      }
+
       .summary {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -551,12 +805,54 @@
         grid-template-columns: 1fr;
       }
 
-      .heading-row {
-        align-items: flex-start;
+      h1 {
+        font-size: 30px;
+      }
+
+      .management {
+        padding: 17px;
+        border-radius: 22px;
+      }
+
+      .job-card {
+        border-radius: 20px;
+      }
+
+      .job-actions {
+        flex-direction: column;
+      }
+
+      .job-action {
+        width: 100%;
+      }
+
+      .modal {
+        border-radius: 23px;
+        padding: 17px;
+      }
+    }
+
+    @media (max-width: 380px) {
+
+      .logout {
+        padding: 9px 12px;
+      }
+
+      .brand {
+        gap: 8px;
+        font-size: 19px;
       }
 
       h1 {
-        font-size: 30px;
+        font-size: 28px;
+      }
+
+      .summary-card {
+        padding: 13px 10px;
+      }
+
+      .summary-value {
+        font-size: 23px;
       }
     }
   </style>
@@ -564,66 +860,144 @@
 
 <body>
 
+  <!-- =========================
+       HEADER
+  ========================== -->
+
   <header class="topbar">
+
     <div class="brand-row">
 
       <div class="brand">
-        <div class="brand-logo">R</div>
-        <span>REPARO</span>
+
+        <div class="brand-logo">
+          R
+        </div>
+
+        <span>
+          REPARO
+        </span>
+
       </div>
 
-      <button id="logoutBtn" class="logout" type="button">
+      <button
+        id="logoutBtn"
+        class="logout"
+        type="button"
+      >
         Logout
       </button>
 
     </div>
+
   </header>
 
+
+  <!-- =========================
+       MAIN
+  ========================== -->
 
   <main>
 
     <div class="heading-row">
 
-      <div>
-        <h1>Jobs</h1>
+      <div class="page-title">
+
+        <h1>
+          Jobs
+        </h1>
 
         <p class="subtitle">
           Service execution & technician assignment
         </p>
+
       </div>
 
     </div>
 
 
-    <div id="errorBox" class="message error"></div>
+    <div
+      id="errorBox"
+      class="message error"
+    ></div>
 
-    <div id="successBox" class="message success"></div>
+    <div
+      id="successBox"
+      class="message success"
+    ></div>
 
+
+    <!-- SUMMARY -->
 
     <section class="summary">
 
       <div class="summary-card">
-        <div class="summary-label">Total Jobs</div>
-        <div id="totalJobs" class="summary-value">0</div>
+
+        <div class="summary-label">
+          Total Jobs
+        </div>
+
+        <div
+          id="totalJobs"
+          class="summary-value"
+        >
+          0
+        </div>
+
       </div>
+
 
       <div class="summary-card new">
-        <div class="summary-label">New</div>
-        <div id="newJobs" class="summary-value">0</div>
+
+        <div class="summary-label">
+          New
+        </div>
+
+        <div
+          id="newJobs"
+          class="summary-value"
+        >
+          0
+        </div>
+
       </div>
+
 
       <div class="summary-card active">
-        <div class="summary-label">Active</div>
-        <div id="activeJobs" class="summary-value">0</div>
+
+        <div class="summary-label">
+          Active
+        </div>
+
+        <div
+          id="activeJobs"
+          class="summary-value"
+        >
+          0
+        </div>
+
       </div>
 
+
       <div class="summary-card completed">
-        <div class="summary-label">Completed</div>
-        <div id="completedJobs" class="summary-value">0</div>
+
+        <div class="summary-label">
+          Completed
+        </div>
+
+        <div
+          id="completedJobs"
+          class="summary-value"
+        >
+          0
+        </div>
+
       </div>
 
     </section>
 
+
+    <!-- MANAGEMENT -->
 
     <section class="management">
 
@@ -641,29 +1015,46 @@
           id="searchInput"
           type="search"
           placeholder="Search Job ID, customer, mobile..."
+          autocomplete="off"
         >
 
         <select id="statusFilter">
 
-          <option value="">All Status</option>
+          <option value="">
+            All Status
+          </option>
 
-          <option value="NEW">New</option>
+          <option value="NEW">
+            New
+          </option>
 
-          <option value="ASSIGNED">Assigned</option>
+          <option value="ASSIGNED">
+            Assigned
+          </option>
 
-          <option value="IN PROGRESS">In Progress</option>
+          <option value="IN PROGRESS">
+            In Progress
+          </option>
 
-          <option value="DIAGNOSIS">Diagnosis</option>
+          <option value="DIAGNOSIS">
+            Diagnosis
+          </option>
 
           <option value="CUSTOMER APPROVAL">
             Customer Approval
           </option>
 
-          <option value="REPAIR">Repair</option>
+          <option value="REPAIR">
+            Repair
+          </option>
 
-          <option value="COMPLETED">Completed</option>
+          <option value="COMPLETED">
+            Completed
+          </option>
 
-          <option value="CANCELLED">Cancelled</option>
+          <option value="CANCELLED">
+            Cancelled
+          </option>
 
         </select>
 
@@ -671,6 +1062,8 @@
 
     </section>
 
+
+    <!-- JOBS -->
 
     <section id="jobContainer">
 
@@ -682,6 +1075,90 @@
 
   </main>
 
+
+  <!-- =========================
+       MORE PANEL
+  ========================== -->
+
+  <div
+    id="morePanel"
+    class="more-panel"
+  >
+
+    <div class="more-title">
+      More Admin
+    </div>
+
+    <a
+      class="more-link"
+      href="./retailers.html"
+    >
+      <span class="more-icon">🏪</span>
+      <span>Retailers</span>
+    </a>
+
+    <a
+      class="more-link"
+      href="./technicians.html"
+    >
+      <span class="more-icon">👨‍🔧</span>
+      <span>Technicians</span>
+    </a>
+
+    <a
+      class="more-link"
+      href="./customers.html"
+    >
+      <span class="more-icon">👤</span>
+      <span>Customers</span>
+    </a>
+
+    <a
+      class="more-link"
+      href="./commissions.html"
+    >
+      <span class="more-icon">₹</span>
+      <span>Commissions</span>
+    </a>
+
+    <a
+      class="more-link"
+      href="./warranty.html"
+    >
+      <span class="more-icon">🛡️</span>
+      <span>Warranty</span>
+    </a>
+
+    <a
+      class="more-link"
+      href="./schemes.html"
+    >
+      <span class="more-icon">🎁</span>
+      <span>Schemes</span>
+    </a>
+
+    <a
+      class="more-link"
+      href="./payments.html"
+    >
+      <span class="more-icon">💳</span>
+      <span>Payments</span>
+    </a>
+
+    <a
+      class="more-link"
+      href="./reports.html"
+    >
+      <span class="more-icon">📊</span>
+      <span>Reports</span>
+    </a>
+
+  </div>
+
+
+  <!-- =========================
+       BOTTOM NAV
+  ========================== -->
 
   <nav class="bottom-nav">
 
@@ -711,26 +1188,33 @@
 
     <a
       class="nav-item"
-      href="./technicians.html"
+      href="./products.html"
     >
-      <span class="nav-icon">⚙</span>
-      <span>Technicians</span>
+      <span class="nav-icon">📦</span>
+      <span>Products</span>
     </a>
 
-    <a
+    <button
+      id="moreNavBtn"
       class="nav-item"
-      href="./customers.html"
+      type="button"
+      style="border:0;background:#fff;"
     >
-      <span class="nav-icon">●</span>
-      <span>Customers</span>
-    </a>
+      <span class="nav-icon">☰</span>
+      <span>More</span>
+    </button>
 
   </nav>
 
 
-  <!-- VIEW / EDIT JOB MODAL -->
+  <!-- =========================
+       VIEW / EDIT JOB MODAL
+  ========================== -->
 
-  <div id="modalBackdrop" class="modal-backdrop">
+  <div
+    id="modalBackdrop"
+    class="modal-backdrop"
+  >
 
     <div class="modal">
 
@@ -751,7 +1235,10 @@
       </div>
 
 
-      <div id="modalContent" class="modal-content"></div>
+      <div
+        id="modalContent"
+        class="modal-content"
+      ></div>
 
 
       <div class="modal-actions">
@@ -779,6 +1266,7 @@
   </div>
 
 
+  <!-- ONLY JAVASCRIPT FILE -->
   <script
     type="module"
     src="../js/jobs.js"
