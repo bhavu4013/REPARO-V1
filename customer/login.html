@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+  <title>Customer Login | REPARO V1</title>
+
+  <link
+    rel="stylesheet"
+    href="../css/reparo.css">
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #F7F8FA;
+    }
+
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 15px;
+      box-sizing: border-box;
+    }
+
+    .login-wrap {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .brand-mark {
+      width: 68px;
+      height: 68px;
+      margin: auto;
+      border-radius: 20px;
+      background: #FFE32B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #111827;
+      font-size: 25px;
+      font-weight: 900;
+      box-shadow:
+        0 8px 22px rgba(17,24,39,.10);
+    }
+
+    .brand h1 {
+      margin: 12px 0 4px;
+      color: #111827;
+      font-size: 25px;
+    }
+
+    .brand p {
+      margin: 0;
+      color: #6B7280;
+      font-size: 13px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 22px;
+      padding: 20px;
+      box-shadow:
+        0 8px 28px rgba(17,24,39,.08);
+    }
+
+    .card h2 {
+      margin: 0 0 5px;
+      color: #111827;
+      font-size: 19px;
+    }
+
+    .subtext {
+      margin: 0 0 18px;
+      color: #6B7280;
+      font-size: 12px;
+    }
+
+    .field {
+      margin-bottom: 13px;
+    }
+
+    .field label {
+      display: block;
+      color: #374151;
+      font-size: 11px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .field input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #E5E7EB;
+      background: #F9FAFB;
+      border-radius: 13px;
+      padding: 13px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: #08AEE0;
+      background: #fff;
+    }
+
+    .login-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 14px;
+      background: #F9547C;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+
+    .login-btn:disabled {
+      opacity: .65;
+      cursor: not-allowed;
+    }
+
+    .message {
+      display: none;
+      margin-top: 13px;
+      padding: 11px;
+      border-radius: 12px;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .message.error {
+      display: block;
+      background: #FFE8EC;
+      color: #B42345;
+    }
+
+    .message.success {
+      display: block;
+      background: #E8F8F0;
+      color: #16734B;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 15px;
+      color: #9CA3AF;
+      font-size: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="login-page">
+
+    <div class="login-wrap">
+
+      <div class="brand">
+
+        <div class="brand-mark">
+          R
+        </div>
+
+        <h1>
+          REPARO
+        </h1>
+
+        <p>
+          Electronics Service
+        </p>
+
+      </div>
+
+
+      <section class="card">
+
+        <h2>
+          Customer Login
+        </h2>
+
+        <p class="subtext">
+          Login to track your service, estimate,
+          invoice and warranty.
+        </p>
+
+
+        <form id="loginForm">
+
+          <div class="field">
+
+            <label>
+              EMAIL
+            </label>
+
+            <input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              autocomplete="email"
+              required>
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              PASSWORD
+            </label>
+
+            <input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required>
+
+          </div>
+
+
+          <button
+            id="loginBtn"
+            class="login-btn"
+            type="submit">
+
+            Login
+
+          </button>
+
+        </form>
+
+
+        <div
+          id="message"
+          class="message">
+        </div>
+
+      </section>
+
+
+      <div class="footer-note">
+        Your service information is protected by REPARO.
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <script
+    type="module"
+    src="../js/customer-login.js">
+  </script>
+
+</body>
+</html>
