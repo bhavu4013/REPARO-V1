@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1.0"
+>
+
+<title>REPARO V1</title>
+
+<link
+  rel="stylesheet"
+  href="./css/reparo.css"
+>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     LOGIN
+========================= -->
+
+<section
+  id="loginPage"
+  class="login-page"
+  style="
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  "
+>
+
+  <div
+    class="card"
+    style="
+      width:100%;
+      max-width:420px;
+      padding:30px 24px;
+    "
+  >
+
+    <div
+      class="brand-icon"
+      style="
+        width:64px;
+        height:64px;
+        border-radius:20px;
+        font-size:25px;
+        margin-bottom:18px;
+        background:
+          linear-gradient(
+            135deg,
+            var(--reparo-yellow),
+            var(--reparo-pink)
+          );
+      "
+    >
+      R
+    </div>
+
+
+    <h1 style="margin:0 0 8px">
+      REPARO V1
+    </h1>
+
+    <p
+      style="
+        color:var(--reparo-muted);
+        margin-bottom:25px;
+      "
+    >
+      Repair. Service. Grow.
+    </p>
+
+
+    <div
+      id="loginError"
+      class="hidden"
+      style="
+        background:#FEF2F2;
+        color:#DC2626;
+        padding:11px;
+        border-radius:12px;
+        margin-bottom:14px;
+        font-size:14px;
+      "
+    ></div>
+
+
+    <input
+      id="email"
+      class="input"
+      type="email"
+      placeholder="Email"
+      style="margin-bottom:13px"
+    >
+
+
+    <input
+      id="password"
+      class="input"
+      type="password"
+      placeholder="Password"
+      style="margin-bottom:13px"
+    >
+
+
+    <button
+      id="loginBtn"
+      class="btn btn-primary"
+      style="width:100%"
+    >
+      Login
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     LOADING
+========================= -->
+
+<div
+  id="loading"
+  class="hidden"
+  style="
+    position:fixed;
+    inset:0;
+    background:rgba(255,255,255,.9);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:100;
+    font-weight:800;
+  "
+>
+  REPARO V1 Loading...
+</div>
+
+
+<script type="module">
+
+import {
+  login,
+  getUserProfile,
+  getRolePage
+} from "./js/auth.js";
+
+
+const loginPage =
+  document.getElementById("loginPage");
+
+const loginBtn =
+  document.getElementById("loginBtn");
+
+const emailInput =
+  document.getElementById("email");
+
+const passwordInput =
+  document.getElementById("password");
+
+const loginError =
+  document.getElementById("loginError");
+
+const loading =
+  document.getElementById("loading");
+
+
+loginBtn.addEventListener(
+  "click",
+  handleLogin
+);
+
+
+[emailInput,passwordInput].forEach(
+  input => {
+
+    input.addEventListener(
+      "keydown",
+      event => {
+
+        if(event.key === "Enter") {
+          handleLogin();
+        }
+
+      }
+    );
+
+  }
+);
+
+
+async function handleLogin() {
+
+  const email =
+    emailInput.value.trim();
+
+  const password =
+    passwordInput.value;
+
+
+  loginError.classList.add(
+    "hidden"
+  );
+
+
+  if(!email || !password) {
+
+    showError(
+      "Email અને Password બંને નાખો."
+    );
+
+    return;
+  }
+
+
+  try {
+
+    loading.classList.remove(
+      "hidden"
+    );
+
+    loginBtn.disabled = true;
+
+    loginBtn.textContent =
+      "Logging in...";
+
+
+    const result =
+      await login(
+        email,
+        password
+      );
+
+
+    const profile =
+      await getUserProfile(
+        result.user.uid
+      );
+
+
+    if(profile.active !== true) {
+
+      throw new Error(
+        "ACCOUNT_INACTIVE"
+      );
+
+    }
+
+
+    const page =
+      getRolePage(
+        profile.role
+      );
+
+
+    window.location.href =
+      page;
+
+
+  } catch(error) {
+
+    console.error(error);
+
+
+    let message =
+      "Login failed.";
+
+
+    if(
+      error.message ===
+      "ACCOUNT_INACTIVE"
+    ) {
+
+      message =
+        "તમારું REPARO account inactive છે.";
+
+    }
+    else if(
+      error.message ===
+      "USER_PROFILE_NOT_FOUND"
+    ) {
+
+      message =
+        "Firestoreમાં user profile મળ્યું નથી.";
+
+    }
+    else if(
+      error.code ===
+      "auth/invalid-credential"
+    ) {
+
+      message =
+        "Email અથવા Password ખોટો છે.";
+
+    }
+    else {
+
+      message =
+        "Login error: " +
+        (error.code ||
+         error.message);
+
+    }
+
+
+    showError(message);
+
+  } finally {
+
+    loading.classList.add(
+      "hidden"
+    );
+
+    loginBtn.disabled = false;
+
+    loginBtn.textContent =
+      "Login";
+
+  }
+
+}
+
+
+function showError(message) {
+
+  loginError.textContent =
+    message;
+
+  loginError.classList.remove(
+    "hidden"
+  );
+
+}
+
+</script>
+
+</body>
+</html>
