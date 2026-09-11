@@ -1,34 +1,85 @@
-import { auth, db } from "./firebase.js";
-
 import {
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
   collection,
   getDocs,
-  getDoc,
   doc,
+  getDoc,
   query,
   where
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+  auth,
+  db
+} from "./firebase.js";
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const customerContainer =
+  document.getElementById("customerContainer");
+
+const searchInput =
+  document.getElementById("searchInput");
+
+const totalCustomers =
+  document.getElementById("totalCustomers");
+
+const serialCustomers =
+  document.getElementById("serialCustomers");
+
+const tvCustomers =
+  document.getElementById("tvCustomers");
+
+const logoutBtn =
+  document.getElementById("logoutBtn");
+
+const errorBox =
+  document.getElementById("errorBox");
+
+const successBox =
+  document.getElementById("successBox");
+
+const modalBackdrop =
+  document.getElementById("modalBackdrop");
+
+const closeModalBtn =
+  document.getElementById("closeModalBtn");
+
+const modalTitle =
+  document.getElementById("modalTitle");
+
+const detailList =
+  document.getElementById("detailList");
+
+const modalRequestBtn =
+  document.getElementById("modalRequestBtn");
+
+
+/* =========================================================
+   STATE
+========================================================= */
 
 let currentUser = null;
+let allCustomers = [];
+let selectedCustomer = null;
 
-let customers = [];
-let jobs = [];
 
+/* =========================================================
+   AUTH
+========================================================= */
 
-// =====================================================
-// AUTH
-// =====================================================
-
-onAuthStateChanged(auth, async user => {
+onAuthStateChanged(auth, async (user) => {
 
   if (!user) {
 
-    location.href =
+    window.location.href =
       "../index.html";
 
     return;
@@ -38,22 +89,18 @@ onAuthStateChanged(auth, async user => {
 
   try {
 
-    const profile =
-      await getDoc(
-        doc(
-          db,
-          "users",
-          user.uid
-        )
-      );
+    const userRef =
+      doc(db, "users", user.uid);
+
+    const snapshot =
+      await getDoc(userRef);
 
 
-    if (
-      !profile.exists() ||
-      profile.data().role !== "retailer"
-    ) {
+    if (!snapshot.exists()) {
 
-      location.href =
+      await signOut(auth);
+
+      window.location.href =
         "../index.html";
 
       return;
@@ -61,111 +108,145 @@ onAuthStateChanged(auth, async user => {
     }
 
 
-    currentUser = user;
+    const profile =
+      snapshot.data();
+
+
+    if (
+      profile.role !== "retailer" ||
+      profile.active !== true
+    ) {
+
+      await signOut(auth);
+
+      window.location.href =
+        "../index.html";
+
+      return;
+
+    }
+
+
+    currentUser =
+      user;
 
 
     await loadCustomers();
 
-    await loadJobs();
-
-    render();
 
   } catch (error) {
 
-    console.error(error);
-
-    document.getElementById(
-      "customerList"
-    ).innerHTML =
-      `
-      <div class="empty">
-        Unable to load protected customers.
-      </div>
-      `;
+    showError(
+      error.message ||
+      "Authorization error."
+    );
 
   }
 
 });
 
 
-// =====================================================
-// LOAD CUSTOMERS
-// =====================================================
+/* =========================================================
+   LOAD MY CUSTOMERS
+========================================================= */
 
 async function loadCustomers() {
 
-  customers = [];
+  customerContainer.innerHTML = `
+    <div class="loading">
+      Loading your customers...
+    </div>
+  `;
 
 
-  const snap =
-    await getDocs(
+  try {
+
+    /*
+      IMPORTANT:
+
+      Query only customers protected by
+      current retailer.
+
+      This matches Firestore security rules:
+      originalRetailerId == currentUser.uid
+    */
+
+    const customersQuery =
       query(
-        collection(
-          db,
-          "customers"
-        ),
+        collection(db, "customers"),
         where(
           "originalRetailerId",
           "==",
           currentUser.uid
         )
-      )
-    );
-
-
-  snap.forEach(item => {
-
-    customers.push({
-      id: item.id,
-      ...item.data()
-    });
-
-  });
-
-}
-
-
-// =====================================================
-// LOAD JOBS
-// =====================================================
-
-async function loadJobs() {
-
-  jobs = [];
-
-
-  try {
-
-    const snap =
-      await getDocs(
-        query(
-          collection(
-            db,
-            "jobs"
-          ),
-          where(
-            "retailerId",
-            "==",
-            currentUser.uid
-          )
-        )
       );
 
 
-    snap.forEach(item => {
+    const snapshot =
+      await getDocs(
+        customersQuery
+      );
 
-      jobs.push({
+
+    allCustomers = [];
+
+
+    snapshot.forEach(item => {
+
+      allCustomers.push({
         id: item.id,
         ...item.data()
       });
 
     });
 
+
+    allCustomers.sort((a, b) => {
+
+      const aTime =
+        a.updatedAt?.seconds ||
+        a.createdAt?.seconds ||
+        0;
+
+      const bTime =
+        b.updatedAt?.seconds ||
+        b.createdAt?.seconds ||
+        0;
+
+      return bTime - aTime;
+
+    });
+
+
+    updateSummary();
+
+    renderCustomers();
+
+
   } catch (error) {
 
-    console.error(
-      "Job history error:",
-      error
+    customerContainer.innerHTML = `
+      <div class="empty">
+
+        <div class="empty-icon">⚠️</div>
+
+        <div class="empty-title">
+          Customers Load Error
+        </div>
+
+        <div class="empty-text">
+          ${escapeHtml(
+            error.message ||
+            "Unable to load customers."
+          )}
+        </div>
+
+      </div>
+    `;
+
+    showError(
+      error.message ||
+      "Unable to load customers."
     );
 
   }
@@ -173,168 +254,208 @@ async function loadJobs() {
 }
 
 
-// =====================================================
-// RENDER
-// =====================================================
+/* =========================================================
+   SUMMARY
+========================================================= */
 
-function render() {
+function updateSummary() {
 
-  renderSummary();
-
-  renderCustomers();
-
-}
+  const total =
+    allCustomers.length;
 
 
-// =====================================================
-// SUMMARY
-// =====================================================
+  const serial =
+    allCustomers.filter(customer =>
+      String(
+        customer.serialNumber || ""
+      ).trim()
+    ).length;
 
-function renderSummary() {
 
-  const customerIds =
-    new Set(
-      jobs
-        .map(
-          job =>
-            job.customerId
-        )
+  const tv =
+    allCustomers.filter(customer => {
+
+      const text = [
+
+        customer.deviceBrand,
+
+        customer.deviceModel,
+
+        customer.device,
+
+        customer.product
+
+      ]
         .filter(Boolean)
-    );
+        .join(" ")
+        .toLowerCase();
 
 
-  const active =
-    jobs.filter(job => {
-
-      const status =
-        normalize(
-          job.status
-        );
-
-      return ![
-        "COMPLETED",
-        "CANCELLED"
-      ].includes(status);
+      return (
+        text.includes("tv") ||
+        text.includes("television") ||
+        text.includes("led") ||
+        text.includes("lcd") ||
+        text.includes("smart")
+      );
 
     }).length;
 
 
-  const completed =
-    jobs.filter(job =>
-      normalize(
-        job.status
-      ) === "COMPLETED"
-    ).length;
+  totalCustomers.textContent =
+    total;
 
+  serialCustomers.textContent =
+    serial;
 
-  document.getElementById(
-    "totalCustomers"
-  ).textContent =
-    customers.length;
-
-
-  document.getElementById(
-    "serviceCustomers"
-  ).textContent =
-    customerIds.size;
-
-
-  document.getElementById(
-    "activeCustomerJobs"
-  ).textContent =
-    active;
-
-
-  document.getElementById(
-    "completedCustomerJobs"
-  ).textContent =
-    completed;
+  tvCustomers.textContent =
+    tv;
 
 }
 
 
-// =====================================================
-// CUSTOMER LIST
-// =====================================================
+/* =========================================================
+   SEARCH
+========================================================= */
+
+searchInput.addEventListener(
+  "input",
+  renderCustomers
+);
+
+
+/* =========================================================
+   RENDER CUSTOMERS
+========================================================= */
 
 function renderCustomers() {
 
-  const container =
-    document.getElementById(
-      "customerList"
-    );
-
-
   const search =
-    document.getElementById(
-      "searchInput"
-    ).value
+    searchInput.value
       .trim()
       .toLowerCase();
 
 
   const filtered =
-    customers.filter(customer => {
+    allCustomers.filter(customer => {
 
-      const text =
-        [
-          customer.name,
-          customer.customerName,
-          customer.mobile,
-          customer.phone,
-          customer.address,
-          customer.serialNumber,
-          customer.deviceBrand,
-          customer.deviceModel
-        ]
-          .join(" ")
-          .toLowerCase();
+      const searchable = [
+
+        customer.id,
+
+        customer.name,
+
+        customer.customerName,
+
+        customer.mobile,
+
+        customer.customerMobile,
+
+        customer.address,
+
+        customer.deviceBrand,
+
+        customer.deviceModel,
+
+        customer.screenSize,
+
+        customer.serialNumber
+
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
 
       return (
         !search ||
-        text.includes(search)
+        searchable.includes(search)
       );
 
     });
 
 
-  if (!filtered.length) {
+  if (filtered.length === 0) {
 
-    container.innerHTML =
-      `
+    customerContainer.innerHTML = `
       <div class="empty">
-        ${
-          search
-            ? "No matching customer found."
-            : "No protected customers yet."
-        }
+
+        <div class="empty-icon">👥</div>
+
+        <div class="empty-title">
+          No Customers Found
+        </div>
+
+        <div class="empty-text">
+          No protected customer matches your search.
+        </div>
+
       </div>
-      `;
+    `;
 
     return;
 
   }
 
 
-  container.innerHTML =
-    filtered
-      .map(
-        customer =>
-          customerCard(
-            customer
-          )
-      )
-      .join("");
+  customerContainer.innerHTML = `
+    <div class="customer-list">
+      ${
+        filtered
+          .map(renderCustomerCard)
+          .join("")
+      }
+    </div>
+  `;
+
+
+  document
+    .querySelectorAll(
+      "[data-view-customer]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          openCustomer(
+            button.dataset.viewCustomer
+          );
+
+        }
+      );
+
+    });
+
+
+  document
+    .querySelectorAll(
+      "[data-request-customer]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          createRequestForCustomer(
+            button.dataset.requestCustomer
+          );
+
+        }
+      );
+
+    });
 
 }
 
 
-// =====================================================
-// CUSTOMER CARD
-// =====================================================
+/* =========================================================
+   CUSTOMER CARD
+========================================================= */
 
-function customerCard(customer) {
+function renderCustomerCard(customer) {
 
   const name =
     customer.name ||
@@ -344,44 +465,18 @@ function customerCard(customer) {
 
   const mobile =
     customer.mobile ||
-    customer.phone ||
+    customer.customerMobile ||
     "-";
 
 
-  const address =
-    customer.address ||
-    "-";
-
-
-  const brand =
-    customer.deviceBrand ||
-    customer.brand ||
-    "-";
-
-
-  const model =
-    customer.deviceModel ||
-    customer.model ||
-    "-";
-
-
-  const serial =
-    customer.serialNumber ||
-    customer.serial ||
-    "-";
-
-
-  const customerJobs =
-    jobs.filter(job =>
-      job.customerId ===
-      customer.id
-    );
+  const device =
+    getDeviceText(customer);
 
 
   return `
     <div class="customer-card">
 
-      <div class="customer-top">
+      <div class="customer-head">
 
         <div>
 
@@ -390,53 +485,47 @@ function customerCard(customer) {
           </div>
 
           <div class="customer-mobile">
-            ${escapeHtml(mobile)}
+            📱 ${escapeHtml(mobile)}
           </div>
 
         </div>
 
-        <span class="protected-label">
-          PROTECTED
+        <span class="protected-badge">
+          🛡️ PROTECTED
         </span>
 
       </div>
 
 
-      <div class="customer-grid">
+      <div class="customer-info">
 
-        <div class="info-box">
-          <span>Device Brand</span>
-          <strong>
-            ${escapeHtml(brand)}
-          </strong>
+        <div class="info-row">
+          <span class="info-icon">📍</span>
+          <span>
+            ${escapeHtml(
+              customer.address ||
+              "-"
+            )}
+          </span>
         </div>
 
-        <div class="info-box">
-          <span>Model</span>
-          <strong>
-            ${escapeHtml(model)}
-          </strong>
+
+        <div class="info-row">
+          <span class="info-icon">📺</span>
+          <span>
+            ${escapeHtml(device)}
+          </span>
         </div>
 
-        <div class="info-box">
-          <span>Serial Number</span>
-          <strong>
-            ${escapeHtml(serial)}
-          </strong>
-        </div>
 
-        <div class="info-box">
-          <span>Service Jobs</span>
-          <strong>
-            ${customerJobs.length}
-          </strong>
-        </div>
-
-        <div class="info-box full">
-          <span>Address</span>
-          <strong>
-            ${escapeHtml(address)}
-          </strong>
+        <div class="info-row">
+          <span class="info-icon">🔢</span>
+          <span>
+            ${escapeHtml(
+              customer.serialNumber ||
+              "Serial not registered"
+            )}
+          </span>
         </div>
 
       </div>
@@ -445,15 +534,20 @@ function customerCard(customer) {
       <div class="customer-actions">
 
         <button
-          class="customer-btn btn-blue"
-          onclick="viewCustomer('${customer.id}')">
-          View Details
+          type="button"
+          class="action-btn view-btn"
+          data-view-customer="${escapeAttribute(customer.id)}"
+        >
+          View Customer
         </button>
 
+
         <button
-          class="customer-btn btn-light"
-          onclick="newCustomerService('${customer.id}')">
-          New Service
+          type="button"
+          class="action-btn request-btn"
+          data-request-customer="${escapeAttribute(customer.id)}"
+        >
+          New Service Request
         </button>
 
       </div>
@@ -464,343 +558,402 @@ function customerCard(customer) {
 }
 
 
-// =====================================================
-// VIEW CUSTOMER
-// =====================================================
+/* =========================================================
+   OPEN CUSTOMER
+========================================================= */
 
-window.viewCustomer =
-  function(customerId) {
+function openCustomer(customerId) {
 
-    const customer =
-      customers.find(
-        item =>
-          item.id ===
-          customerId
-      );
-
-
-    if (!customer)
-      return;
-
-
-    const name =
-      customer.name ||
-      customer.customerName ||
-      "Customer";
-
-
-    document.getElementById(
-      "modalCustomerName"
-    ).textContent =
-      name;
-
-
-    const customerJobs =
-      jobs.filter(
-        job =>
-          job.customerId ===
-          customerId
-      );
-
-
-    const details =
-      document.getElementById(
-        "modalCustomerDetails"
-      );
-
-
-    details.innerHTML = `
-
-      <div class="customer-grid">
-
-        <div class="info-box">
-          <span>Mobile</span>
-          <strong>
-            ${escapeHtml(
-              customer.mobile ||
-              customer.phone ||
-              "-"
-            )}
-          </strong>
-        </div>
-
-        <div class="info-box">
-          <span>Customer ID</span>
-          <strong>
-            ${escapeHtml(
-              customer.id
-            )}
-          </strong>
-        </div>
-
-        <div class="info-box">
-          <span>Brand</span>
-          <strong>
-            ${escapeHtml(
-              customer.deviceBrand ||
-              customer.brand ||
-              "-"
-            )}
-          </strong>
-        </div>
-
-        <div class="info-box">
-          <span>Model</span>
-          <strong>
-            ${escapeHtml(
-              customer.deviceModel ||
-              customer.model ||
-              "-"
-            )}
-          </strong>
-        </div>
-
-        <div class="info-box">
-          <span>Screen Size</span>
-          <strong>
-            ${escapeHtml(
-              customer.screenSize ||
-              "-"
-            )}
-          </strong>
-        </div>
-
-        <div class="info-box">
-          <span>Serial Number</span>
-          <strong>
-            ${escapeHtml(
-              customer.serialNumber ||
-              customer.serial ||
-              "-"
-            )}
-          </strong>
-        </div>
-
-        <div class="info-box full">
-          <span>Address</span>
-          <strong>
-            ${escapeHtml(
-              customer.address ||
-              "-"
-            )}
-          </strong>
-        </div>
-
-      </div>
-
-
-      <h3 style="margin:20px 0 10px;">
-        Service History
-      </h3>
-
-      ${
-        customerJobs.length
-          ? customerJobs
-              .sort(
-                (a,b) =>
-                  dateValue(b.createdAt) -
-                  dateValue(a.createdAt)
-              )
-              .map(job => `
-
-                <div class="history-item">
-
-                  <strong>
-                    ${escapeHtml(
-                      job.jobNumber ||
-                      job.jobId ||
-                      job.id
-                    )}
-                  </strong>
-
-                  <span>
-                    ${escapeHtml(
-                      job.serviceType ||
-                      "Service"
-                    )}
-                    •
-                    ${escapeHtml(
-                      job.status ||
-                      "-"
-                    )}
-                  </span>
-
-                  <span>
-                    ${escapeHtml(
-                      job.deviceBrand ||
-                      ""
-                    )}
-                    ${escapeHtml(
-                      job.deviceModel ||
-                      ""
-                    )}
-                  </span>
-
-                </div>
-
-              `)
-              .join("")
-          : `
-            <div class="empty">
-              No service history found.
-            </div>
-          `
-      }
-
-
-      <div
-        style="
-          margin-top:15px;
-          padding:12px;
-          background:#FFF4CC;
-          border-radius:13px;
-          color:#705600;
-          font-size:11px;
-          line-height:1.5;
-        "
-      >
-        <strong>
-          Customer Protection
-        </strong>
-        <br>
-        This customer is permanently linked
-        to your retailer account.
-        Transfer can only be performed
-        by REPARO Admin.
-      </div>
-
-    `;
-
-
-    document.getElementById(
-      "customerModal"
-    ).classList.add("show");
-
-  };
-
-
-// =====================================================
-// CLOSE MODAL
-// =====================================================
-
-window.closeCustomer =
-  function() {
-
-    document.getElementById(
-      "customerModal"
-    ).classList.remove(
-      "show"
+  const customer =
+    allCustomers.find(
+      item => item.id === customerId
     );
 
-  };
 
+  if (!customer) {
 
-// =====================================================
-// NEW SERVICE
-// =====================================================
+    showError(
+      "Customer not found."
+    );
 
-window.newCustomerService =
-  function(customerId) {
-
-    location.href =
-      `./new-service-request.html?customerId=${encodeURIComponent(customerId)}`;
-
-  };
-
-
-// =====================================================
-// SEARCH
-// =====================================================
-
-document.getElementById(
-  "searchInput"
-).addEventListener(
-  "input",
-  renderCustomers
-);
-
-
-// =====================================================
-// HELPERS
-// =====================================================
-
-function normalize(value) {
-
-  return String(
-    value || ""
-  )
-    .trim()
-    .toUpperCase();
-
-}
-
-
-function dateValue(value) {
-
-  if (!value)
-    return 0;
-
-
-  try {
-
-    if (
-      typeof value.toMillis ===
-      "function"
-    ) {
-
-      return value.toMillis();
-
-    }
-
-
-    if (
-      typeof value.toDate ===
-      "function"
-    ) {
-
-      return value
-        .toDate()
-        .getTime();
-
-    }
-
-
-    return new Date(value)
-      .getTime() || 0;
-
-  } catch {
-
-    return 0;
+    return;
 
   }
 
+
+  selectedCustomer =
+    customer;
+
+
+  const name =
+    customer.name ||
+    customer.customerName ||
+    "Customer";
+
+
+  modalTitle.textContent =
+    name;
+
+
+  detailList.innerHTML = `
+
+    ${detailRow(
+      "Mobile",
+      customer.mobile ||
+      customer.customerMobile ||
+      "-"
+    )}
+
+    ${detailRow(
+      "Address",
+      customer.address ||
+      "-"
+    )}
+
+    ${detailRow(
+      "Device Brand",
+      customer.deviceBrand ||
+      "-"
+    )}
+
+    ${detailRow(
+      "Device Model",
+      customer.deviceModel ||
+      "-"
+    )}
+
+    ${detailRow(
+      "Screen Size",
+      customer.screenSize
+        ? `${customer.screenSize}"`
+        : "-"
+    )}
+
+    ${detailRow(
+      "Serial Number",
+      customer.serialNumber ||
+      "Not registered"
+    )}
+
+    ${detailRow(
+      "Protection",
+      "Protected by your retailer account"
+    )}
+
+    ${detailRow(
+      "Customer ID",
+      customer.id
+    )}
+
+  `;
+
+
+  modalBackdrop.classList.add(
+    "show"
+  );
+
 }
 
 
+/* =========================================================
+   DETAIL ROW
+========================================================= */
+
+function detailRow(
+  label,
+  value
+) {
+
+  return `
+    <div class="detail-row">
+
+      <div class="detail-label">
+        ${escapeHtml(label)}
+      </div>
+
+      <div class="detail-value">
+        ${escapeHtml(value)}
+      </div>
+
+    </div>
+  `;
+
+}
+
+
+/* =========================================================
+   NEW REQUEST FOR CUSTOMER
+========================================================= */
+
+function createRequestForCustomer(
+  customerId
+) {
+
+  const customer =
+    allCustomers.find(
+      item => item.id === customerId
+    );
+
+
+  if (!customer) {
+
+    showError(
+      "Customer not found."
+    );
+
+    return;
+
+  }
+
+
+  /*
+    Pass customer ID + mobile to
+    New Service Request page.
+
+    The page will still perform its
+    own Firestore protection validation.
+  */
+
+  const params =
+    new URLSearchParams({
+
+      customerId:
+        customer.id,
+
+      mobile:
+        customer.mobile ||
+        customer.customerMobile ||
+        ""
+
+    });
+
+
+  window.location.href =
+    `new-service-request.html?${params.toString()}`;
+
+}
+
+
+/* =========================================================
+   MODAL REQUEST BUTTON
+========================================================= */
+
+modalRequestBtn.addEventListener(
+  "click",
+  () => {
+
+    if (!selectedCustomer) {
+
+      return;
+
+    }
+
+
+    createRequestForCustomer(
+      selectedCustomer.id
+    );
+
+  }
+);
+
+
+/* =========================================================
+   CLOSE MODAL
+========================================================= */
+
+closeModalBtn.addEventListener(
+  "click",
+  closeModal
+);
+
+
+modalBackdrop.addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target === modalBackdrop
+    ) {
+
+      closeModal();
+
+    }
+
+  }
+);
+
+
+function closeModal() {
+
+  modalBackdrop.classList.remove(
+    "show"
+  );
+
+  selectedCustomer =
+    null;
+
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+logoutBtn.addEventListener(
+  "click",
+  async () => {
+
+    try {
+
+      await signOut(auth);
+
+      window.location.href =
+        "../index.html";
+
+    } catch (error) {
+
+      showError(
+        error.message ||
+        "Logout failed."
+      );
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+document
+  .querySelectorAll(
+    ".bottom-nav [data-page]"
+  )
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        const page =
+          button.dataset.page;
+
+        if (page) {
+
+          window.location.href =
+            page;
+
+        }
+
+      }
+    );
+
+  });
+
+
+/* =========================================================
+   DEVICE TEXT
+========================================================= */
+
+function getDeviceText(customer) {
+
+  const parts = [
+
+    customer.deviceBrand,
+
+    customer.deviceModel,
+
+    customer.screenSize
+      ? `${customer.screenSize}"`
+      : null
+
+  ].filter(Boolean);
+
+
+  if (parts.length) {
+
+    return parts.join(" ");
+
+  }
+
+
+  return (
+    customer.device ||
+    customer.product ||
+    "Device not registered"
+  );
+
+}
+
+
+/* =========================================================
+   MESSAGES
+========================================================= */
+
+function showError(message) {
+
+  successBox.style.display =
+    "none";
+
+  errorBox.textContent =
+    message;
+
+  errorBox.style.display =
+    "block";
+
+
+  setTimeout(() => {
+
+    errorBox.style.display =
+      "none";
+
+  }, 5000);
+
+}
+
+
+function showSuccess(message) {
+
+  errorBox.style.display =
+    "none";
+
+  successBox.textContent =
+    message;
+
+  successBox.style.display =
+    "block";
+
+
+  setTimeout(() => {
+
+    successBox.style.display =
+      "none";
+
+  }, 4000);
+
+}
+
+
+/* =========================================================
+   ESCAPE
+========================================================= */
+
 function escapeHtml(value) {
 
-  return String(
-    value ?? ""
-  )
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+}
+
+
+function escapeAttribute(value) {
+
+  return escapeHtml(value);
 
 }
