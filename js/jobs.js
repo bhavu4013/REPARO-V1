@@ -96,7 +96,7 @@ let adminUser = null;
 
 onAuthStateChanged(
   auth,
-  async (user) => {
+  async user => {
 
     if (!user) {
 
@@ -109,17 +109,13 @@ onAuthStateChanged(
 
     try {
 
-      const userRef =
-        doc(
-          db,
-          "users",
-          user.uid
-        );
-
-
       const snapshot =
         await getDoc(
-          userRef
+          doc(
+            db,
+            "users",
+            user.uid
+          )
         );
 
 
@@ -162,8 +158,7 @@ onAuthStateChanged(
     catch (error) {
 
       showError(
-        error.message ||
-        "Authorization error."
+        getErrorMessage(error)
       );
 
     }
@@ -189,8 +184,7 @@ async function loadPage() {
   catch (error) {
 
     showError(
-      error.message ||
-      "Page load failed."
+      getErrorMessage(error)
     );
 
   }
@@ -231,6 +225,12 @@ async function loadTechnicians() {
     }
   );
 
+
+  /*
+    Fallback:
+    If technicians collection is empty,
+    read active technicians from users.
+  */
 
   if (
     technicians.length === 0
@@ -325,12 +325,14 @@ async function loadJobs() {
       (a, b) => {
 
         const aTime =
-          a.createdAt?.seconds ||
-          0;
+          getTimestamp(
+            a.createdAt
+          );
 
         const bTime =
-          b.createdAt?.seconds ||
-          0;
+          getTimestamp(
+            b.createdAt
+          );
 
         return bTime - aTime;
 
@@ -359,8 +361,7 @@ async function loadJobs() {
 
         <div class="empty-text">
           ${escapeHtml(
-            error.message ||
-            "Unable to load jobs."
+            getErrorMessage(error)
           )}
         </div>
 
@@ -371,6 +372,44 @@ async function loadJobs() {
     throw error;
 
   }
+
+}
+
+
+/* =====================================================
+   TIMESTAMP
+===================================================== */
+
+function getTimestamp(timestamp) {
+
+  if (!timestamp) {
+
+    return 0;
+
+  }
+
+
+  if (
+    typeof timestamp.toMillis ===
+    "function"
+  ) {
+
+    return timestamp.toMillis();
+
+  }
+
+
+  if (
+    typeof timestamp.seconds ===
+    "number"
+  ) {
+
+    return timestamp.seconds * 1000;
+
+  }
+
+
+  return 0;
 
 }
 
@@ -388,9 +427,9 @@ function updateSummary() {
   const newCount =
     allJobs.filter(
       job =>
-        String(
-          job.status || ""
-        ).toUpperCase() === "NEW"
+        normalizeStatus(
+          job.status
+        ) === "NEW"
     ).length;
 
 
@@ -406,9 +445,9 @@ function updateSummary() {
   const completedCount =
     allJobs.filter(
       job =>
-        String(
-          job.status || ""
-        ).toUpperCase() === "COMPLETED"
+        normalizeStatus(
+          job.status
+        ) === "COMPLETED"
     ).length;
 
 
@@ -428,36 +467,39 @@ function updateSummary() {
 
 
 /* =====================================================
-   ACTIVE STATUS
+   STATUS HELPERS
 ===================================================== */
 
+function normalizeStatus(status) {
+
+  return String(
+    status || ""
+  )
+    .trim()
+    .toUpperCase();
+
+}
+
+
 function isActiveStatus(status) {
-
-  const value =
-    String(
-      status || ""
-    ).toUpperCase();
-
 
   return [
 
     "ASSIGNED",
-
     "IN PROGRESS",
-
     "DIAGNOSIS",
-
     "CUSTOMER APPROVAL",
-
     "REPAIR"
 
-  ].includes(value);
+  ].includes(
+    normalizeStatus(status)
+  );
 
 }
 
 
 /* =====================================================
-   FILTER EVENTS
+   FILTERS
 ===================================================== */
 
 searchInput.addEventListener(
@@ -473,7 +515,7 @@ statusFilter.addEventListener(
 
 
 /* =====================================================
-   RENDER JOBS
+   RENDER
 ===================================================== */
 
 function renderJobs() {
@@ -484,8 +526,10 @@ function renderJobs() {
       .toLowerCase();
 
 
-  const status =
-    statusFilter.value;
+  const selectedStatus =
+    normalizeStatus(
+      statusFilter.value
+    );
 
 
   const filtered =
@@ -495,44 +539,39 @@ function renderJobs() {
         const searchable = [
 
           job.id,
-
           job.jobId,
-
+          job.requestId,
+          job.customerId,
           job.customerName,
-
           job.customerMobile,
-
           job.mobile,
-
           job.retailerName,
-
+          job.retailerId,
+          job.device,
           job.deviceBrand,
-
           job.deviceModel,
-
           job.serialNumber,
-
-          job.serviceType
+          job.serviceType,
+          job.problem,
+          job.technicianName,
+          job.technicianId
 
         ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
 
 
         const searchMatch =
           !search ||
-          searchable.includes(
-            search
-          );
+          searchable.includes(search);
 
 
         const statusMatch =
-          !status ||
-          String(
-            job.status || ""
-          ).toUpperCase() ===
-          status;
+          !selectedStatus ||
+          normalizeStatus(
+            job.status
+          ) === selectedStatus;
 
 
         return (
@@ -569,6 +608,7 @@ function renderJobs() {
     `;
 
     return;
+
   }
 
 
@@ -585,48 +625,7 @@ function renderJobs() {
   `;
 
 
-  document
-    .querySelectorAll(
-      "[data-view-job]"
-    )
-    .forEach(
-      button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            openJobModal(
-              button.dataset.viewJob
-            );
-
-          }
-        );
-
-      }
-    );
-
-
-  document
-    .querySelectorAll(
-      "[data-assign-job]"
-    )
-    .forEach(
-      button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            openJobModal(
-              button.dataset.assignJob
-            );
-
-          }
-        );
-
-      }
-    );
+  bindJobButtons();
 
 }
 
@@ -638,10 +637,9 @@ function renderJobs() {
 function renderJobCard(job) {
 
   const status =
-    String(
-      job.status ||
-      "NEW"
-    ).toUpperCase();
+    normalizeStatus(
+      job.status || "NEW"
+    );
 
 
   const technician =
@@ -681,12 +679,12 @@ function renderJobCard(job) {
         </div>
 
 
-        <span
-          class="status ${getStatusClass(status)}"
-        >
+        <span class="status ${getStatusClass(status)}">
+
           ${escapeHtml(
             formatStatus(status)
           )}
+
         </span>
 
       </div>
@@ -808,7 +806,59 @@ function renderJobCard(job) {
 
 
 /* =====================================================
-   OPEN JOB MODAL
+   BUTTONS
+===================================================== */
+
+function bindJobButtons() {
+
+  document
+    .querySelectorAll(
+      "[data-view-job]"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            openJobModal(
+              button.dataset.viewJob
+            );
+
+          }
+        );
+
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-assign-job]"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            openJobModal(
+              button.dataset.assignJob
+            );
+
+          }
+        );
+
+      }
+    );
+
+}
+
+
+/* =====================================================
+   JOB MODAL
 ===================================================== */
 
 function openJobModal(jobId) {
@@ -904,11 +954,8 @@ function openJobModal(jobId) {
         Problem
       </label>
 
-      <textarea
-        id="editProblem"
-      >${escapeHtml(
-        job.problem ||
-        ""
+      <textarea id="editProblem">${escapeHtml(
+        job.problem || ""
       )}</textarea>
 
     </div>
@@ -995,19 +1042,12 @@ function statusOptions(current) {
   const statuses = [
 
     "NEW",
-
     "ASSIGNED",
-
     "IN PROGRESS",
-
     "DIAGNOSIS",
-
     "CUSTOMER APPROVAL",
-
     "REPAIR",
-
     "COMPLETED",
-
     "CANCELLED"
 
   ];
@@ -1020,9 +1060,8 @@ function statusOptions(current) {
         <option
           value="${escapeAttribute(status)}"
           ${
-            String(
-              current
-            ).toUpperCase() === status
+            normalizeStatus(current) ===
+            status
               ? "selected"
               : ""
           }
@@ -1052,7 +1091,9 @@ saveJobBtn.addEventListener(
 async function saveJob() {
 
   if (!selectedJobId) {
+
     return;
+
   }
 
 
@@ -1071,6 +1112,7 @@ async function saveJob() {
     );
 
     return;
+
   }
 
 
@@ -1139,19 +1181,16 @@ async function saveJob() {
 
 
     /*
-      Synchronize linked Service Request
-      when technician is assigned.
+      Keep Service Request synchronized
+      with technician assignment.
     */
 
-    if (
+    const requestId =
       job.requestId ||
-      job.serviceRequestId
-    ) {
+      job.serviceRequestId;
 
-      const requestId =
-        job.requestId ||
-        job.serviceRequestId;
 
+    if (requestId) {
 
       const requestRef =
         doc(
@@ -1179,9 +1218,7 @@ async function saveJob() {
         };
 
 
-        if (
-          technicianId
-        ) {
+        if (technicianId) {
 
           requestUpdate.status =
             "ASSIGNED";
@@ -1210,9 +1247,14 @@ async function saveJob() {
   }
   catch (error) {
 
+    console.error(
+      "Job update error:",
+      error
+    );
+
+
     showError(
-      error.message ||
-      "Job update failed."
+      getErrorMessage(error)
     );
 
   }
@@ -1302,8 +1344,12 @@ document.addEventListener(
   event => {
 
     if (
-      morePanel.classList.contains("show") &&
-      !morePanel.contains(event.target) &&
+      morePanel.classList.contains(
+        "show"
+      ) &&
+      !morePanel.contains(
+        event.target
+      ) &&
       event.target !== moreNavBtn
     ) {
 
@@ -1318,13 +1364,15 @@ document.addEventListener(
 
 
 /* =====================================================
-   TECHNICIAN FINDER
+   TECHNICIAN
 ===================================================== */
 
 function getTechnician(uid) {
 
   if (!uid) {
+
     return null;
+
   }
 
 
@@ -1337,28 +1385,31 @@ function getTechnician(uid) {
 
 
 /* =====================================================
-   DEVICE TEXT
+   DEVICE
 ===================================================== */
 
 function getDeviceText(job) {
 
   const parts = [
 
+    job.device,
     job.deviceBrand,
-
     job.deviceModel,
-
     job.screenSize
       ? `${job.screenSize}"`
-
       : null
 
   ]
-  .filter(Boolean);
+    .filter(
+      value =>
+        value !== null &&
+        value !== undefined &&
+        String(value).trim() !== ""
+    );
 
 
   if (
-    parts.length
+    parts.length > 0
   ) {
 
     return parts.join(" ");
@@ -1366,11 +1417,7 @@ function getDeviceText(job) {
   }
 
 
-  return (
-    job.device ||
-    job.product ||
-    "Device"
-  );
+  return "Device not added";
 
 }
 
@@ -1382,9 +1429,7 @@ function getDeviceText(job) {
 function getStatusClass(status) {
 
   switch (
-    String(
-      status
-    ).toUpperCase()
+    normalizeStatus(status)
   ) {
 
     case "NEW":
@@ -1412,7 +1457,7 @@ function getStatusClass(status) {
       return "status-cancelled";
 
     default:
-      return "status-assigned";
+      return "status-new";
 
   }
 
@@ -1426,59 +1471,14 @@ function getStatusClass(status) {
 function formatStatus(status) {
 
   return String(
-    status ||
-    ""
+    status || ""
   )
-
     .toLowerCase()
-
     .replace(
       /\b\w/g,
       letter =>
         letter.toUpperCase()
     );
-
-}
-
-
-/* =====================================================
-   MESSAGES
-===================================================== */
-
-function showError(message) {
-
-  successBox.style.display =
-    "none";
-
-
-  errorBox.textContent =
-    message;
-
-
-  errorBox.style.display =
-    "block";
-
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-
-}
-
-
-function showSuccess(message) {
-
-  errorBox.style.display =
-    "none";
-
-
-  successBox.textContent =
-    message;
-
-
-  successBox.style.display =
-    "block";
 
 }
 
@@ -1505,14 +1505,113 @@ logoutBtn.addEventListener(
     catch (error) {
 
       showError(
-        error.message ||
-        "Logout failed."
+        getErrorMessage(error)
       );
 
     }
 
   }
 );
+
+
+/* =====================================================
+   ERROR
+===================================================== */
+
+function getErrorMessage(error) {
+
+  if (
+    error?.code ===
+    "permission-denied"
+  ) {
+
+    return "Firestore permission denied. Firebase Rules માં Admin access check કરો.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "unauthenticated"
+  ) {
+
+    return "Your login session has expired. Please login again.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "unavailable"
+  ) {
+
+    return "Firebase temporarily unavailable. Internet connection check કરો.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "failed-precondition"
+  ) {
+
+    return "Firestore operation failed. Database configuration check કરો.";
+
+  }
+
+
+  return (
+    error?.message ||
+    "Unable to complete the operation."
+  );
+
+}
+
+
+/* =====================================================
+   SHOW ERROR
+===================================================== */
+
+function showError(message) {
+
+  successBox.style.display =
+    "none";
+
+
+  errorBox.textContent =
+    message;
+
+
+  errorBox.style.display =
+    "block";
+
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+
+}
+
+
+/* =====================================================
+   SHOW SUCCESS
+===================================================== */
+
+function showSuccess(message) {
+
+  errorBox.style.display =
+    "none";
+
+
+  successBox.textContent =
+    message;
+
+
+  successBox.style.display =
+    "block";
+
+}
 
 
 /* =====================================================
