@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Service Status | REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+
+  <style>
+    .customer-page {
+      max-width: 700px;
+      margin: auto;
+      padding: 18px 14px 90px;
+    }
+
+    .customer-header {
+      margin-bottom: 18px;
+    }
+
+    .customer-header h1 {
+      margin: 5px 0;
+      color: #111827;
+    }
+
+    .customer-header p {
+      margin: 0;
+      color: #6B7280;
+      font-size: 13px;
+    }
+
+    .brand-badge {
+      display: inline-block;
+      background: #FFE32B;
+      color: #111827;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 6px 22px rgba(17,24,39,.07);
+    }
+
+    .job-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .job-number {
+      font-size: 16px;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    .job-type {
+      color: #6B7280;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .status {
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 9px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .status-active {
+      background: #E8F4FF;
+      color: #05658A;
+    }
+
+    .status-done {
+      background: #E8F8F0;
+      color: #16734B;
+    }
+
+    .status-wait {
+      background: #FFF4CC;
+      color: #806500;
+    }
+
+    .status-cancel {
+      background: #F3F4F6;
+      color: #6B7280;
+    }
+
+    .device-box {
+      margin-top: 15px;
+      background: #F6F8FB;
+      border-radius: 15px;
+      padding: 13px;
+    }
+
+    .device-box span {
+      display: block;
+      color: #6B7280;
+      font-size: 10px;
+      margin-bottom: 4px;
+    }
+
+    .device-box strong {
+      color: #111827;
+      font-size: 14px;
+    }
+
+    .progress-title {
+      color: #111827;
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 13px;
+    }
+
+    .timeline {
+      position: relative;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 12px;
+      min-height: 58px;
+    }
+
+    .timeline-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #E5E7EB;
+      margin-top: 3px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .timeline-item:not(:last-child)
+    .timeline-dot::after {
+      content: "";
+      position: absolute;
+      top: 13px;
+      left: 5px;
+      width: 3px;
+      height: 45px;
+      background: #E5E7EB;
+      border-radius: 4px;
+    }
+
+    .timeline-item.active .timeline-dot {
+      background: #08AEE0;
+    }
+
+    .timeline-item.active
+    .timeline-dot::after {
+      background: #08AEE0;
+    }
+
+    .timeline-item.current .timeline-dot {
+      background: #F9547C;
+      box-shadow: 0 0 0 5px rgba(249,84,124,.12);
+    }
+
+    .timeline-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #6B7280;
+    }
+
+    .timeline-item.active
+    .timeline-label,
+    .timeline-item.current
+    .timeline-label {
+      color: #111827;
+    }
+
+    .timeline-note {
+      font-size: 10px;
+      color: #6B7280;
+      margin-top: 3px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+    }
+
+    .info-box {
+      background: #F6F8FB;
+      border-radius: 13px;
+      padding: 10px;
+    }
+
+    .info-box.full {
+      grid-column: 1 / -1;
+    }
+
+    .info-box span {
+      display: block;
+      color: #6B7280;
+      font-size: 10px;
+      margin-bottom: 4px;
+    }
+
+    .info-box strong {
+      color: #111827;
+      font-size: 12px;
+      word-break: break-word;
+    }
+
+    .primary-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 13px;
+      padding: 12px;
+      background: #F9547C;
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .secondary-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 13px;
+      padding: 12px;
+      background: #08AEE0;
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .loading,
+    .empty {
+      text-align: center;
+      padding: 35px 15px;
+      color: #6B7280;
+    }
+
+    @media (min-width: 600px) {
+      .customer-page {
+        padding-top: 30px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="customer-page">
+
+  <header class="customer-header">
+
+    <span class="brand-badge">
+      REPARO SERVICE
+    </span>
+
+    <h1>Service Status</h1>
+
+    <p>
+      Track your repair service
+    </p>
+
+  </header>
+
+
+  <div id="loading" class="loading">
+    Loading your service...
+  </div>
+
+
+  <div id="content" style="display:none;">
+
+    <!-- JOB -->
+
+    <section class="card">
+
+      <div class="job-head">
+
+        <div>
+
+          <div class="job-number" id="jobNumber">
+            -
+          </div>
+
+          <div class="job-type" id="serviceType">
+            -
+          </div>
+
+        </div>
+
+        <span
+          id="statusBadge"
+          class="status status-active">
+          -
+        </span>
+
+      </div>
+
+
+      <div class="device-box">
+
+        <span>
+          YOUR DEVICE
+        </span>
+
+        <strong id="device">
+          -
+        </strong>
+
+      </div>
+
+    </section>
+
+
+    <!-- PROGRESS -->
+
+    <section class="card">
+
+      <div class="progress-title">
+        Service Progress
+      </div>
+
+      <div
+        id="timeline"
+        class="timeline">
+      </div>
+
+    </section>
+
+
+    <!-- TECHNICIAN -->
+
+    <section class="card">
+
+      <div class="progress-title">
+        Technician
+      </div>
+
+      <div class="info-grid">
+
+        <div class="info-box">
+
+          <span>Name</span>
+
+          <strong id="technicianName">
+            -
+          </strong>
+
+        </div>
+
+        <div class="info-box">
+
+          <span>Service</span>
+
+          <strong id="technicianService">
+            -
+          </strong>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- DIAGNOSIS -->
+
+    <section class="card">
+
+      <div class="progress-title">
+        Diagnosis
+      </div>
+
+      <div class="info-box">
+
+        <strong id="diagnosis">
+          Diagnosis pending.
+        </strong>
+
+      </div>
+
+    </section>
+
+
+    <!-- ACTIONS -->
+
+    <section class="card">
+
+      <button
+        id="estimateBtn"
+        class="primary-btn">
+        View Estimate
+      </button>
+
+      <button
+        id="invoiceBtn"
+        class="secondary-btn"
+        style="display:none;">
+        View Invoice
+      </button>
+
+    </section>
+
+  </div>
+
+</main>
+
+
+<script
+  type="module"
+  src="../js/customer-status.js">
+</script>
+
+</body>
+</html>
