@@ -1,1700 +1,350 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#F9547C">
 
-  <title>Technicians - REPARO V1</title>
+<meta charset="UTF-8">
 
-  <link rel="stylesheet" href="../css/reparo.css">
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1.0"
+>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<title>REPARO V1</title>
 
-    body {
-      margin: 0;
-      background: #F6F8FB;
-      color: #111827;
-      font-family: Arial, sans-serif;
-      padding-bottom: 90px;
-    }
+<link
+  rel="stylesheet"
+  href="./css/reparo.css"
+>
 
-    .page {
-      width: 100%;
-      max-width: 700px;
-      margin: 0 auto;
-      padding: 18px 16px 30px;
-    }
-
-    /* HEADER */
-
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .header-left h1 {
-      margin: 0;
-      font-size: 25px;
-      font-weight: 800;
-    }
-
-    .header-left p {
-      margin: 5px 0 0;
-      color: #6B7280;
-      font-size: 13px;
-    }
-
-    .add-btn {
-      border: none;
-      background: #F9547C;
-      color: white;
-      font-weight: 700;
-      border-radius: 14px;
-      padding: 12px 15px;
-      cursor: pointer;
-      box-shadow: 0 7px 18px rgba(249, 84, 124, .20);
-    }
-
-    /* SEARCH */
-
-    .search-wrap {
-      margin-bottom: 18px;
-    }
-
-    .search-input {
-      width: 100%;
-      border: 1px solid #E5E7EB;
-      background: white;
-      border-radius: 15px;
-      padding: 14px 15px;
-      font-size: 14px;
-      outline: none;
-    }
-
-    .search-input:focus {
-      border-color: #F9547C;
-    }
-
-    /* SUMMARY */
-
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-
-    .summary-card {
-      background: white;
-      border-radius: 17px;
-      padding: 14px 10px;
-      text-align: center;
-      box-shadow: 0 7px 22px rgba(17, 24, 39, .06);
-    }
-
-    .summary-number {
-      font-size: 21px;
-      font-weight: 800;
-    }
-
-    .summary-label {
-      color: #6B7280;
-      font-size: 11px;
-      margin-top: 4px;
-    }
-
-    /* TECHNICIAN CARD */
-
-    .technician-card {
-      background: white;
-      border-radius: 20px;
-      padding: 16px;
-      margin-bottom: 12px;
-      box-shadow: 0 8px 25px rgba(17, 24, 39, .07);
-    }
-
-    .technician-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .technician-main {
-      min-width: 0;
-    }
-
-    .technician-name {
-      font-size: 17px;
-      font-weight: 800;
-      margin-bottom: 5px;
-      word-break: break-word;
-    }
-
-    .technician-detail {
-      color: #6B7280;
-      font-size: 13px;
-      line-height: 1.65;
-      word-break: break-word;
-    }
-
-    .status {
-      flex-shrink: 0;
-      height: fit-content;
-      padding: 6px 9px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: 800;
-    }
-
-    .status.active {
-      background: #DCFCE7;
-      color: #166534;
-    }
-
-    .status.inactive {
-      background: #FEE2E2;
-      color: #991B1B;
-    }
-
-    .technician-bottom {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 14px;
-      padding-top: 13px;
-      border-top: 1px solid #F0F1F3;
-    }
-
-    .job-count {
-      font-size: 12px;
-      color: #6B7280;
-    }
-
-    .job-count strong {
-      color: #111827;
-      font-size: 14px;
-    }
-
-    .actions {
-      display: flex;
-      gap: 7px;
-    }
-
-    .action-btn {
-      border: none;
-      border-radius: 10px;
-      padding: 9px 12px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .edit-btn {
-      background: #E0F7FF;
-      color: #087EA4;
-    }
-
-    .toggle-btn {
-      background: #FFF4B8;
-      color: #665800;
-    }
-
-    /* EMPTY / LOADING */
-
-    .message {
-      background: white;
-      border-radius: 20px;
-      padding: 35px 20px;
-      text-align: center;
-      color: #6B7280;
-      box-shadow: 0 7px 22px rgba(17, 24, 39, .05);
-    }
-
-    /* MODAL */
-
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(17, 24, 39, .50);
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      z-index: 9999;
-    }
-
-    .modal.show {
-      display: flex;
-    }
-
-    .modal-box {
-      width: 100%;
-      max-width: 700px;
-      background: white;
-      border-radius: 25px 25px 0 0;
-      padding: 20px;
-      max-height: 92vh;
-      overflow-y: auto;
-    }
-
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .modal-header h2 {
-      margin: 0;
-      font-size: 20px;
-    }
-
-    .close-btn {
-      width: 36px;
-      height: 36px;
-      border: none;
-      border-radius: 50%;
-      background: #F6F8FB;
-      font-size: 22px;
-      cursor: pointer;
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #374151;
-    }
-
-    .form-control {
-      width: 100%;
-      border: 1px solid #E5E7EB;
-      background: white;
-      border-radius: 13px;
-      padding: 13px 14px;
-      font-size: 14px;
-      outline: none;
-    }
-
-    .form-control:focus {
-      border-color: #F9547C;
-    }
-
-    textarea.form-control {
-      resize: vertical;
-      min-height: 75px;
-    }
-
-    .required {
-      color: #F9547C;
-    }
-
-    .password-note {
-      color: #6B7280;
-      font-size: 11px;
-      margin-top: 5px;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .modal-actions button {
-      flex: 1;
-      padding: 13px;
-      border-radius: 13px;
-      border: none;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .cancel-btn {
-      background: #F1F3F5;
-      color: #374151;
-    }
-
-    .save-btn {
-      background: #F9547C;
-      color: white;
-    }
-
-    .save-btn:disabled {
-      opacity: .6;
-    }
-
-    /* BOTTOM NAV */
-
-    .bottom-nav {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 70px;
-      background: white;
-      border-top: 1px solid #EAECEF;
-      display: flex;
-      justify-content: center;
-      z-index: 5000;
-      box-shadow: 0 -5px 20px rgba(17, 24, 39, .05);
-    }
-
-    .nav-inner {
-      width: 100%;
-      max-width: 700px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-    }
-
-    .nav-item {
-      text-decoration: none;
-      color: #6B7280;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .nav-icon {
-      font-size: 20px;
-      line-height: 1;
-    }
-
-    .nav-item.active {
-      color: #F9547C;
-    }
-
-    /* RESPONSIVE */
-
-    @media (min-width: 600px) {
-      .modal {
-        align-items: center;
-        padding: 20px;
-      }
-
-      .modal-box {
-        border-radius: 25px;
-        max-height: 90vh;
-      }
-    }
-  </style>
 </head>
+
 
 <body>
 
-  <div class="page">
 
-    <!-- HEADER -->
-
-    <div class="header">
-
-      <div class="header-left">
-        <h1>Technicians</h1>
-        <p>Manage service technicians</p>
-      </div>
-
-      <button class="add-btn" id="addTechnicianBtn">
-        + Add
-      </button>
-
-    </div>
-
-
-    <!-- SEARCH -->
-
-    <div class="search-wrap">
-
-      <input
-        id="searchInput"
-        class="search-input"
-        type="search"
-        placeholder="Search technician..."
-      >
-
-    </div>
-
-
-    <!-- SUMMARY -->
-
-    <div class="summary">
-
-      <div class="summary-card">
-        <div id="totalCount" class="summary-number">0</div>
-        <div class="summary-label">Total</div>
-      </div>
-
-      <div class="summary-card">
-        <div id="activeCount" class="summary-number">0</div>
-        <div class="summary-label">Active</div>
-      </div>
-
-      <div class="summary-card">
-        <div id="inactiveCount" class="summary-number">0</div>
-        <div class="summary-label">Inactive</div>
-      </div>
-
-    </div>
-
-
-    <!-- LIST -->
-
-    <div id="technicianList">
-
-      <div class="message">
-        Loading technicians...
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- ADD / EDIT MODAL -->
-
-  <div id="technicianModal" class="modal">
-
-    <div class="modal-box">
-
-      <div class="modal-header">
-
-        <h2 id="modalTitle">Add Technician</h2>
-
-        <button
-          class="close-btn"
-          id="closeModalBtn"
-          type="button"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <form id="technicianForm">
-
-        <div class="form-group">
-
-          <label>
-            Technician Name
-            <span class="required">*</span>
-          </label>
-
-          <input
-            id="technicianName"
-            class="form-control"
-            type="text"
-            placeholder="Enter full name"
-            required
-          >
-
-        </div>
-
-
-        <div class="form-group">
-
-          <label>
-            Mobile Number
-            <span class="required">*</span>
-          </label>
-
-          <input
-            id="technicianMobile"
-            class="form-control"
-            type="tel"
-            inputmode="numeric"
-            placeholder="Enter mobile number"
-            required
-          >
-
-        </div>
-
-
-        <div class="form-group">
-
-          <label>
-            Email
-            <span class="required">*</span>
-          </label>
-
-          <input
-            id="technicianEmail"
-            class="form-control"
-            type="email"
-            placeholder="Enter login email"
-            required
-          >
-
-        </div>
-
-
-        <div class="form-group" id="passwordGroup">
-
-          <label>
-            Login Password
-            <span class="required">*</span>
-          </label>
-
-          <input
-            id="technicianPassword"
-            class="form-control"
-            type="password"
-            minlength="6"
-            placeholder="Minimum 6 characters"
-          >
-
-          <div class="password-note">
-            Technician will use this email and password to login.
-          </div>
-
-        </div>
-
-
-        <div class="form-group">
-
-          <label>Service Area</label>
-
-          <input
-            id="technicianArea"
-            class="form-control"
-            type="text"
-            placeholder="Example: Surat City"
-          >
-
-        </div>
-
-
-        <div class="form-group">
-
-          <label>Notes</label>
-
-          <textarea
-            id="technicianNotes"
-            class="form-control"
-            placeholder="Optional notes"
-          ></textarea>
-
-        </div>
-
-
-        <div class="modal-actions">
-
-          <button
-            type="button"
-            class="cancel-btn"
-            id="cancelBtn"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="submit"
-            class="save-btn"
-            id="saveBtn"
-          >
-            Create Technician
-          </button>
-
-        </div>
-
-      </form>
-
-    </div>
-
-  </div>
-
-
-  <!-- BOTTOM NAV -->
-
-  <div class="bottom-nav">
-
-    <div class="nav-inner">
-
-      <a
-        href="./dashboard.html"
-        class="nav-item"
-      >
-        <span class="nav-icon">⌂</span>
-        <span>Home</span>
-      </a>
-
-
-      <a
-        href="./retailers.html"
-        class="nav-item"
-      >
-        <span class="nav-icon">▣</span>
-        <span>Retailers</span>
-      </a>
-
-
-      <a
-        href="./technicians.html"
-        class="nav-item active"
-      >
-        <span class="nav-icon">⚙</span>
-        <span>Technicians</span>
-      </a>
-
-
-      <a
-        href="./customers.html"
-        class="nav-item"
-      >
-        <span class="nav-icon">◉</span>
-        <span>Customers</span>
-      </a>
-
-    </div>
-
-  </div>
-
-
-  <!-- FIREBASE -->
-
-  <script type="module">
-
-    import { auth, db } from "../js/firebase.js";
-
-    import {
-      onAuthStateChanged,
-      createUserWithEmailAndPassword,
-      updateProfile
-    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-
-    import {
-      collection,
-      getDocs,
-      query,
-      where,
-      doc,
-      setDoc,
-      updateDoc,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-
-    /* --------------------------------------------------
-       FIREBASE CONFIG
-    -------------------------------------------------- */
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBZehAJk3lMWsOAwrG4-qT24_abBIfGJHs",
-      authDomain: "reparo-v1.firebaseapp.com",
-      projectId: "reparo-v1",
-      storageBucket: "reparo-v1.firebasestorage.app",
-      messagingSenderId: "830095721173",
-      appId: "1:830095721173:web:c5e670fbc94e7cc42b185c"
-    };
-
-
-    /* --------------------------------------------------
-       VARIABLES
-    -------------------------------------------------- */
-
-    let technicians = [];
-
-    let editingTechnicianId = null;
-
-    let secondaryApp = null;
-
-    let secondaryAuth = null;
-
-
-    /* --------------------------------------------------
-       ELEMENTS
-    -------------------------------------------------- */
-
-    const technicianList =
-      document.getElementById("technicianList");
-
-    const searchInput =
-      document.getElementById("searchInput");
-
-    const modal =
-      document.getElementById("technicianModal");
-
-    const modalTitle =
-      document.getElementById("modalTitle");
-
-    const technicianForm =
-      document.getElementById("technicianForm");
-
-    const saveBtn =
-      document.getElementById("saveBtn");
-
-    const passwordGroup =
-      document.getElementById("passwordGroup");
-
-
-    /* --------------------------------------------------
-       AUTH CHECK
-    -------------------------------------------------- */
-
-    onAuthStateChanged(auth, async (user) => {
-
-      if (!user) {
-
-        window.location.href = "../index.html";
-
-        return;
-
-      }
-
-
-      try {
-
-        const userDoc =
-          await getDocs(
-            query(
-              collection(db, "users"),
-              where("__name__", "==", user.uid)
-            )
+<!-- =========================
+     LOGIN
+========================= -->
+
+<section
+  id="loginPage"
+  class="login-page"
+  style="
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  "
+>
+
+  <div
+    class="card"
+    style="
+      width:100%;
+      max-width:420px;
+      padding:30px 24px;
+    "
+  >
+
+    <div
+      class="brand-icon"
+      style="
+        width:64px;
+        height:64px;
+        border-radius:20px;
+        font-size:25px;
+        margin-bottom:18px;
+        background:
+          linear-gradient(
+            135deg,
+            var(--reparo-yellow),
+            var(--reparo-pink)
           );
+      "
+    >
+      R
+    </div>
 
 
-        if (userDoc.empty) {
+    <h1 style="margin:0 0 8px">
+      REPARO V1
+    </h1>
 
-          alert("Admin profile not found.");
+    <p
+      style="
+        color:var(--reparo-muted);
+        margin-bottom:25px;
+      "
+    >
+      Repair. Service. Grow.
+    </p>
 
-          window.location.href = "../index.html";
 
-          return;
+    <div
+      id="loginError"
+      class="hidden"
+      style="
+        background:#FEF2F2;
+        color:#DC2626;
+        padding:11px;
+        border-radius:12px;
+        margin-bottom:14px;
+        font-size:14px;
+      "
+    ></div>
 
+
+    <input
+      id="email"
+      class="input"
+      type="email"
+      placeholder="Email"
+      style="margin-bottom:13px"
+    >
+
+
+    <input
+      id="password"
+      class="input"
+      type="password"
+      placeholder="Password"
+      style="margin-bottom:13px"
+    >
+
+
+    <button
+      id="loginBtn"
+      class="btn btn-primary"
+      style="width:100%"
+    >
+      Login
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     LOADING
+========================= -->
+
+<div
+  id="loading"
+  class="hidden"
+  style="
+    position:fixed;
+    inset:0;
+    background:rgba(255,255,255,.9);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:100;
+    font-weight:800;
+  "
+>
+  REPARO V1 Loading...
+</div>
+
+
+<script type="module">
+
+import {
+  login,
+  getUserProfile,
+  getRolePage
+} from "./js/auth.js";
+
+
+const loginPage =
+  document.getElementById("loginPage");
+
+const loginBtn =
+  document.getElementById("loginBtn");
+
+const emailInput =
+  document.getElementById("email");
+
+const passwordInput =
+  document.getElementById("password");
+
+const loginError =
+  document.getElementById("loginError");
+
+const loading =
+  document.getElementById("loading");
+
+
+loginBtn.addEventListener(
+  "click",
+  handleLogin
+);
+
+
+[emailInput,passwordInput].forEach(
+  input => {
+
+    input.addEventListener(
+      "keydown",
+      event => {
+
+        if(event.key === "Enter") {
+          handleLogin();
         }
 
-
-        const profile =
-          userDoc.docs[0].data();
-
-
-        if (profile.role !== "admin") {
-
-          alert("Admin access required.");
-
-          window.location.href = "../index.html";
-
-          return;
-
-        }
-
-
-        await loadTechnicians();
-
       }
-
-      catch (error) {
-
-        console.error(error);
-
-        technicianList.innerHTML = `
-          <div class="message">
-            Unable to verify admin account.
-          </div>
-        `;
-
-      }
-
-    });
-
-
-    /* --------------------------------------------------
-       LOAD TECHNICIANS
-    -------------------------------------------------- */
-
-    async function loadTechnicians() {
-
-      technicianList.innerHTML = `
-        <div class="message">
-          Loading technicians...
-        </div>
-      `;
-
-
-      try {
-
-        const technicianQuery =
-          query(
-            collection(db, "users"),
-            where("role", "==", "technician")
-          );
-
-
-        const snapshot =
-          await getDocs(technicianQuery);
-
-
-        technicians = [];
-
-
-        snapshot.forEach((item) => {
-
-          technicians.push({
-            id: item.id,
-            ...item.data()
-          });
-
-        });
-
-
-        updateSummary();
-
-        renderTechnicians();
-
-      }
-
-      catch (error) {
-
-        console.error(error);
-
-        technicianList.innerHTML = `
-          <div class="message">
-            Unable to load technicians.
-          </div>
-        `;
-
-      }
-
-    }
-
-
-    /* --------------------------------------------------
-       SUMMARY
-    -------------------------------------------------- */
-
-    function updateSummary() {
-
-      const total =
-        technicians.length;
-
-
-      const active =
-        technicians.filter(
-          tech => tech.active !== false
-        ).length;
-
-
-      const inactive =
-        total - active;
-
-
-      document.getElementById("totalCount")
-        .textContent = total;
-
-
-      document.getElementById("activeCount")
-        .textContent = active;
-
-
-      document.getElementById("inactiveCount")
-        .textContent = inactive;
-
-    }
-
-
-    /* --------------------------------------------------
-       RENDER
-    -------------------------------------------------- */
-
-    function renderTechnicians() {
-
-      const search =
-        searchInput.value
-          .trim()
-          .toLowerCase();
-
-
-      const filtered =
-        technicians.filter((tech) => {
-
-          const name =
-            String(tech.name || "")
-              .toLowerCase();
-
-          const mobile =
-            String(tech.mobile || "")
-              .toLowerCase();
-
-          const email =
-            String(tech.email || "")
-              .toLowerCase();
-
-          const area =
-            String(tech.area || "")
-              .toLowerCase();
-
-
-          return (
-            name.includes(search) ||
-            mobile.includes(search) ||
-            email.includes(search) ||
-            area.includes(search)
-          );
-
-        });
-
-
-      if (filtered.length === 0) {
-
-        technicianList.innerHTML = `
-          <div class="message">
-            No technicians found.
-          </div>
-        `;
-
-        return;
-
-      }
-
-
-      technicianList.innerHTML =
-        filtered.map((tech) => {
-
-          const active =
-            tech.active !== false;
-
-
-          const safeName =
-            escapeHtml(
-              tech.name || "Unnamed Technician"
-            );
-
-
-          const safeMobile =
-            escapeHtml(
-              tech.mobile || "-"
-            );
-
-
-          const safeEmail =
-            escapeHtml(
-              tech.email || "-"
-            );
-
-
-          const safeArea =
-            escapeHtml(
-              tech.area || "Area not set"
-            );
-
-
-          return `
-
-            <div class="technician-card">
-
-              <div class="technician-top">
-
-                <div class="technician-main">
-
-                  <div class="technician-name">
-                    ${safeName}
-                  </div>
-
-                  <div class="technician-detail">
-
-                    📱 ${safeMobile}<br>
-
-                    ✉️ ${safeEmail}<br>
-
-                    📍 ${safeArea}
-
-                  </div>
-
-                </div>
-
-
-                <div class="status ${active ? "active" : "inactive"}">
-
-                  ${active ? "ACTIVE" : "INACTIVE"}
-
-                </div>
-
-              </div>
-
-
-              <div class="technician-bottom">
-
-                <div class="job-count">
-
-                  Jobs:
-                  <strong>
-                    ${Number(tech.completedJobs || 0)}
-                  </strong>
-
-                </div>
-
-
-                <div class="actions">
-
-                  <button
-                    class="action-btn edit-btn"
-                    onclick="editTechnician('${tech.id}')"
-                  >
-                    Edit
-                  </button>
-
-
-                  <button
-                    class="action-btn toggle-btn"
-                    onclick="toggleTechnician('${tech.id}', ${active})"
-                  >
-                    ${active ? "Deactivate" : "Activate"}
-                  </button>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          `;
-
-        }).join("");
-
-    }
-
-
-    /* --------------------------------------------------
-       SEARCH
-    -------------------------------------------------- */
-
-    searchInput.addEventListener(
-      "input",
-      renderTechnicians
     );
 
-
-    /* --------------------------------------------------
-       OPEN ADD
-    -------------------------------------------------- */
-
-    document
-      .getElementById("addTechnicianBtn")
-      .addEventListener("click", () => {
-
-        editingTechnicianId = null;
-
-        technicianForm.reset();
-
-        modalTitle.textContent =
-          "Add Technician";
-
-        saveBtn.textContent =
-          "Create Technician";
-
-        passwordGroup.style.display =
-          "block";
-
-        modal.classList.add("show");
-
-        document
-          .getElementById("technicianName")
-          .focus();
-
-      });
+  }
+);
 
 
-    /* --------------------------------------------------
-       CLOSE MODAL
-    -------------------------------------------------- */
+async function handleLogin() {
 
-    function closeModal() {
+  const email =
+    emailInput.value.trim();
 
-      modal.classList.remove("show");
-
-      editingTechnicianId = null;
-
-      technicianForm.reset();
-
-    }
+  const password =
+    passwordInput.value;
 
 
-    document
-      .getElementById("closeModalBtn")
-      .addEventListener(
-        "click",
-        closeModal
+  loginError.classList.add(
+    "hidden"
+  );
+
+
+  if(!email || !password) {
+
+    showError(
+      "Email અને Password બંને નાખો."
+    );
+
+    return;
+  }
+
+
+  try {
+
+    loading.classList.remove(
+      "hidden"
+    );
+
+    loginBtn.disabled = true;
+
+    loginBtn.textContent =
+      "Logging in...";
+
+
+    const result =
+      await login(
+        email,
+        password
       );
 
 
-    document
-      .getElementById("cancelBtn")
-      .addEventListener(
-        "click",
-        closeModal
+    const profile =
+      await getUserProfile(
+        result.user.uid
       );
 
 
-    modal.addEventListener(
-      "click",
-      (event) => {
-
-        if (event.target === modal) {
-
-          closeModal();
-
-        }
-
-      }
-    );
-
-
-    /* --------------------------------------------------
-       EDIT TECHNICIAN
-    -------------------------------------------------- */
-
-    window.editTechnician =
-      function(id) {
-
-        const tech =
-          technicians.find(
-            item => item.id === id
-          );
-
-
-        if (!tech) return;
-
-
-        editingTechnicianId = id;
-
-
-        modalTitle.textContent =
-          "Edit Technician";
-
-
-        saveBtn.textContent =
-          "Update Technician";
-
-
-        passwordGroup.style.display =
-          "none";
-
-
-        document.getElementById(
-          "technicianName"
-        ).value =
-          tech.name || "";
-
-
-        document.getElementById(
-          "technicianMobile"
-        ).value =
-          tech.mobile || "";
-
-
-        document.getElementById(
-          "technicianEmail"
-        ).value =
-          tech.email || "";
-
-
-        document.getElementById(
-          "technicianArea"
-        ).value =
-          tech.area || "";
-
-
-        document.getElementById(
-          "technicianNotes"
-        ).value =
-          tech.notes || "";
-
-
-        modal.classList.add("show");
-
-      };
-
-
-    /* --------------------------------------------------
-       SAVE / UPDATE
-    -------------------------------------------------- */
-
-    technicianForm.addEventListener(
-      "submit",
-      async (event) => {
-
-        event.preventDefault();
-
-
-        const name =
-          document.getElementById(
-            "technicianName"
-          ).value.trim();
-
-
-        const mobile =
-          document.getElementById(
-            "technicianMobile"
-          ).value.trim();
-
-
-        const email =
-          document.getElementById(
-            "technicianEmail"
-          ).value.trim();
-
-
-        const password =
-          document.getElementById(
-            "technicianPassword"
-          ).value;
-
-
-        const area =
-          document.getElementById(
-            "technicianArea"
-          ).value.trim();
-
-
-        const notes =
-          document.getElementById(
-            "technicianNotes"
-          ).value.trim();
-
-
-        if (!name || !mobile || !email) {
-
-          alert(
-            "Please fill all required fields."
-          );
-
-          return;
-
-        }
-
-
-        saveBtn.disabled = true;
-
-
-        try {
-
-
-          /* ------------------------------------------
-             UPDATE
-          ------------------------------------------ */
-
-          if (editingTechnicianId) {
-
-            await updateDoc(
-              doc(
-                db,
-                "users",
-                editingTechnicianId
-              ),
-              {
-
-                name,
-                mobile,
-                email,
-                area,
-                notes,
-
-                updatedAt:
-                  serverTimestamp()
-
-              }
-            );
-
-
-            await setDoc(
-              doc(
-                db,
-                "technicians",
-                editingTechnicianId
-              ),
-              {
-
-                technicianId:
-                  editingTechnicianId,
-
-                name,
-                mobile,
-                email,
-                area,
-                notes,
-
-                updatedAt:
-                  serverTimestamp()
-
-              },
-              {
-                merge: true
-              }
-            );
-
-
-            alert(
-              "Technician updated successfully."
-            );
-
-          }
-
-
-          /* ------------------------------------------
-             CREATE
-          ------------------------------------------ */
-
-          else {
-
-            if (!password || password.length < 6) {
-
-              alert(
-                "Login password must be at least 6 characters."
-              );
-
-              saveBtn.disabled = false;
-
-              return;
-
-            }
-
-
-            /*
-             * Secondary Firebase Auth instance.
-             *
-             * This prevents the Admin account from
-             * being logged out while creating a
-             * technician account.
-             */
-
-            if (!secondaryApp) {
-
-              const {
-                initializeApp,
-                getApps
-              } =
-                await import(
-                  "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js"
-                );
-
-
-              const existingApps =
-                getApps();
-
-
-              secondaryApp =
-                existingApps.find(
-                  app =>
-                    app.name ===
-                    "REPARO-Technician-Creation"
-                );
-
-
-              if (!secondaryApp) {
-
-                secondaryApp =
-                  initializeApp(
-                    firebaseConfig,
-                    "REPARO-Technician-Creation"
-                  );
-
-              }
-
-            }
-
-
-            if (!secondaryAuth) {
-
-              const {
-                getAuth
-              } =
-                await import(
-                  "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js"
-                );
-
-
-              secondaryAuth =
-                getAuth(
-                  secondaryApp
-                );
-
-            }
-
-
-            const credential =
-              await createUserWithEmailAndPassword(
-                secondaryAuth,
-                email,
-                password
-              );
-
-
-            const uid =
-              credential.user.uid;
-
-
-            await updateProfile(
-              credential.user,
-              {
-                displayName: name
-              }
-            );
-
-
-            /* USER PROFILE */
-
-            await setDoc(
-              doc(
-                db,
-                "users",
-                uid
-              ),
-              {
-
-                name,
-                mobile,
-                email,
-                area,
-                notes,
-
-                role: "technician",
-
-                active: true,
-
-                createdAt:
-                  serverTimestamp(),
-
-                updatedAt:
-                  serverTimestamp()
-
-              }
-            );
-
-
-            /* TECHNICIAN PROFILE */
-
-            await setDoc(
-              doc(
-                db,
-                "technicians",
-                uid
-              ),
-              {
-
-                technicianId: uid,
-
-                name,
-                mobile,
-                email,
-                area,
-                notes,
-
-                active: true,
-
-                completedJobs: 0,
-
-                pendingJobs: 0,
-
-                totalEarnings: 0,
-
-                payableAmount: 0,
-
-                paidAmount: 0,
-
-                createdAt:
-                  serverTimestamp(),
-
-                updatedAt:
-                  serverTimestamp()
-
-              }
-            );
-
-
-            alert(
-              "Technician account created successfully."
-            );
-
-          }
-
-
-          closeModal();
-
-          await loadTechnicians();
-
-        }
-
-
-        catch (error) {
-
-          console.error(
-            "Technician save error:",
-            error
-          );
-
-
-          let message =
-            "Unable to save technician.";
-
-
-          if (
-            error.code ===
-            "auth/email-already-in-use"
-          ) {
-
-            message =
-              "This email is already registered.";
-
-          }
-
-
-          else if (
-            error.code ===
-            "auth/invalid-email"
-          ) {
-
-            message =
-              "Please enter a valid email address.";
-
-          }
-
-
-          else if (
-            error.code ===
-            "auth/weak-password"
-          ) {
-
-            message =
-              "Password must be at least 6 characters.";
-
-          }
-
-
-          else if (
-            error.code ===
-            "permission-denied"
-          ) {
-
-            message =
-              "Permission denied. Check Firestore Rules.";
-
-          }
-
-
-          alert(message);
-
-        }
-
-
-        finally {
-
-          saveBtn.disabled = false;
-
-        }
-
-      }
-    );
-
-
-    /* --------------------------------------------------
-       ACTIVATE / DEACTIVATE
-    -------------------------------------------------- */
-
-    window.toggleTechnician =
-      async function(id, currentStatus) {
-
-        const action =
-          currentStatus
-            ? "deactivate"
-            : "activate";
-
-
-        const confirmed =
-          confirm(
-            `Are you sure you want to ${action} this technician?`
-          );
-
-
-        if (!confirmed) return;
-
-
-        try {
-
-          await updateDoc(
-            doc(
-              db,
-              "users",
-              id
-            ),
-            {
-
-              active:
-                !currentStatus,
-
-              updatedAt:
-                serverTimestamp()
-
-            }
-          );
-
-
-          await setDoc(
-            doc(
-              db,
-              "technicians",
-              id
-            ),
-            {
-
-              active:
-                !currentStatus,
-
-              updatedAt:
-                serverTimestamp()
-
-            },
-            {
-              merge: true
-            }
-          );
-
-
-          await loadTechnicians();
-
-        }
-
-        catch (error) {
-
-          console.error(error);
-
-          alert(
-            "Unable to change technician status."
-          );
-
-        }
-
-      };
-
-
-    /* --------------------------------------------------
-       HTML ESCAPE
-    -------------------------------------------------- */
-
-    function escapeHtml(value) {
-
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    if(profile.active !== true) {
+
+      throw new Error(
+        "ACCOUNT_INACTIVE"
+      );
 
     }
 
-  </script>
+
+    const page =
+      getRolePage(
+        profile.role
+      );
+
+
+    window.location.href =
+      page;
+
+
+  } catch(error) {
+
+    console.error(error);
+
+
+    let message =
+      "Login failed.";
+
+
+    if(
+      error.message ===
+      "ACCOUNT_INACTIVE"
+    ) {
+
+      message =
+        "તમારું REPARO account inactive છે.";
+
+    }
+    else if(
+      error.message ===
+      "USER_PROFILE_NOT_FOUND"
+    ) {
+
+      message =
+        "Firestoreમાં user profile મળ્યું નથી.";
+
+    }
+    else if(
+      error.code ===
+      "auth/invalid-credential"
+    ) {
+
+      message =
+        "Email અથવા Password ખોટો છે.";
+
+    }
+    else {
+
+      message =
+        "Login error: " +
+        (error.code ||
+         error.message);
+
+    }
+
+
+    showError(message);
+
+  } finally {
+
+    loading.classList.add(
+      "hidden"
+    );
+
+    loginBtn.disabled = false;
+
+    loginBtn.textContent =
+      "Login";
+
+  }
+
+}
+
+
+function showError(message) {
+
+  loginError.textContent =
+    message;
+
+  loginError.classList.remove(
+    "hidden"
+  );
+
+}
+
+</script>
 
 </body>
 </html>
