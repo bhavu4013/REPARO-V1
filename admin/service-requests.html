@@ -12,11 +12,12 @@
       --yellow: #ffe32b;
       --blue: #08aee0;
       --navy: #172033;
-      --muted: #737987;
+      --muted: #6b7280;
       --bg: #f6f7fb;
-      --border: #e4e6eb;
-      --green: #18a558;
-      --red: #dc3545;
+      --border: #e5e7eb;
+      --green: #16a34a;
+      --red: #dc2626;
+      --orange: #f59e0b;
     }
 
     * {
@@ -24,18 +25,12 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    html,
     body {
       margin: 0;
-      padding: 0;
-      width: 100%;
-      min-height: 100%;
-    }
-
-    body {
       background: var(--bg);
       color: var(--navy);
       font-family: Arial, Helvetica, sans-serif;
+      min-height: 100vh;
       padding-bottom: 86px;
     }
 
@@ -50,193 +45,249 @@
       cursor: pointer;
     }
 
-    /* ================= HEADER ================= */
+    /* HEADER */
 
     .topbar {
-      background: #fff;
-      border-bottom: 1px solid #eee;
-      padding: 15px 18px;
       position: sticky;
       top: 0;
       z-index: 50;
+
+      background: rgba(255,255,255,.97);
+      border-bottom: 1px solid #eeeeee;
+      padding: 14px 16px;
+
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .brand-row {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
     }
 
     .brand {
       display: flex;
       align-items: center;
       gap: 10px;
+
       font-size: 23px;
       font-weight: 900;
     }
 
-    .logo {
+    .brand-logo {
       width: 42px;
       height: 42px;
       border-radius: 13px;
+
       background: var(--yellow);
+
       display: flex;
       align-items: center;
       justify-content: center;
+
       font-size: 22px;
       font-weight: 900;
     }
 
     .logout {
       border: 0;
-      border-radius: 22px;
       background: #f1f3f6;
       color: var(--navy);
-      padding: 10px 17px;
+
+      border-radius: 22px;
+      padding: 10px 16px;
+
       font-size: 13px;
       font-weight: 800;
     }
 
-    /* ================= MAIN ================= */
+    /* MAIN */
 
     main {
       width: 100%;
       max-width: 900px;
       margin: 0 auto;
-      padding: 22px 16px 30px;
+
+      padding: 22px 16px;
     }
 
-    /* ================= PAGE HEADER ================= */
-
-    .page-head {
+    .heading-row {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 22px;
+      align-items: flex-start;
+
+      gap: 12px;
+      margin-bottom: 20px;
     }
 
-    .page-title-wrap {
-      min-width: 0;
-      flex: 1;
-    }
-
-    .page-title {
+    h1 {
       margin: 0;
+
       font-size: 32px;
       line-height: 1.05;
       font-weight: 900;
       letter-spacing: -1px;
     }
 
-    .page-subtitle {
+    .subtitle {
       margin: 8px 0 0;
+
       color: var(--muted);
-      font-size: 15px;
-      line-height: 1.3;
+      font-size: 14px;
+      line-height: 1.4;
     }
 
-    .new-btn {
-      flex: 0 0 auto;
+    .add-btn {
       border: 0;
-      background: var(--blue);
+
+      background: var(--pink);
       color: #fff;
-      border-radius: 19px;
-      padding: 14px 18px;
-      font-size: 15px;
+
+      border-radius: 15px;
+      padding: 12px 15px;
+
+      font-size: 14px;
       font-weight: 900;
+
       white-space: nowrap;
-      box-shadow: 0 8px 18px rgba(8, 174, 224, .18);
+
+      box-shadow:
+        0 8px 18px rgba(249,84,124,.20);
     }
 
-    .new-btn:active {
-      transform: scale(.98);
-    }
-
-    /* ================= MESSAGE ================= */
+    /* MESSAGES */
 
     .message {
       display: none;
+
       border-radius: 15px;
       padding: 13px 15px;
-      margin-bottom: 16px;
+      margin-bottom: 15px;
+
       font-size: 13px;
       font-weight: 700;
       line-height: 1.4;
     }
 
-    .error {
+    .message.error {
       background: #fee2e2;
       color: #991b1b;
     }
 
-    .success {
+    .message.success {
       background: #dcfce7;
       color: #166534;
     }
 
-    /* ================= SUMMARY ================= */
+    /* SUMMARY */
 
     .summary {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
+
       gap: 10px;
       margin-bottom: 18px;
     }
 
     .summary-card {
       background: #fff;
-      border-radius: 24px;
-      padding: 22px 27px;
-      min-height: 140px;
-      box-shadow: 0 6px 20px rgba(15, 23, 42, .045);
+
+      border-radius: 20px;
+      padding: 15px 12px;
+
+      box-shadow:
+        0 5px 18px rgba(15,23,42,.05);
     }
 
     .summary-label {
       color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 20px;
+
+      font-size: 10px;
+      font-weight: 900;
+
+      text-transform: uppercase;
+      margin-bottom: 5px;
     }
 
     .summary-value {
-      font-size: 31px;
-      line-height: 1;
+      font-size: 25px;
       font-weight: 900;
     }
 
-    /* ================= FILTER ================= */
-
-    .filter-section {
-      margin-bottom: 18px;
+    .summary-card.new .summary-value {
+      color: var(--pink);
     }
 
-    .search-input,
-    .status-select {
-      display: block;
-      width: 100%;
-      border: 1px solid var(--border);
+    .summary-card.active .summary-value {
+      color: var(--blue);
+    }
+
+    .summary-card.completed .summary-value {
+      color: var(--green);
+    }
+
+    /* FILTER */
+
+    .filter-card {
       background: #fff;
-      border-radius: 19px;
-      padding: 16px 24px;
+
+      border-radius: 24px;
+      padding: 18px;
+      margin-bottom: 18px;
+
+      box-shadow:
+        0 5px 20px rgba(15,23,42,.055);
+    }
+
+    .filter-title {
+      margin: 0;
+
+      font-size: 21px;
+      font-weight: 900;
+    }
+
+    .filter-subtitle {
+      margin: 6px 0 15px;
+
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) 180px;
+
+      gap: 9px;
+    }
+
+    .filters input,
+    .filters select {
+      width: 100%;
+
+      border: 1px solid var(--border);
+      background: #fafbfc;
+
+      border-radius: 14px;
+      padding: 13px 14px;
+
       outline: none;
       color: var(--navy);
-      font-size: 15px;
+      font-size: 14px;
     }
 
-    .search-input {
-      margin-bottom: 10px;
+    .filters input:focus,
+    .filters select:focus {
+      border-color: var(--pink);
+      background: #fff;
     }
 
-    .search-input::placeholder {
-      color: #777;
-    }
-
-    .search-input:focus,
-    .status-select:focus {
-      border-color: var(--blue);
-    }
-
-    /* ================= REQUEST LIST ================= */
+    /* REQUEST LIST */
 
     .request-list {
       display: flex;
@@ -246,65 +297,77 @@
 
     .request-card {
       background: #fff;
-      border-radius: 23px;
-      padding: 18px;
-      box-shadow: 0 6px 20px rgba(15, 23, 42, .05);
+
+      border-radius: 22px;
+      padding: 17px;
+
+      box-shadow:
+        0 5px 19px rgba(15,23,42,.055);
     }
 
     .request-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 12px;
+
+      gap: 10px;
     }
 
     .request-id {
       margin: 0;
-      font-size: 18px;
+
+      font-size: 19px;
+      line-height: 1.2;
       font-weight: 900;
+
       word-break: break-word;
     }
 
-    .customer {
-      margin-top: 5px;
+    .customer-name {
+      margin-top: 4px;
+
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
     }
 
-    .status {
+    .badge {
+      flex: 0 0 auto;
+
       border-radius: 999px;
       padding: 7px 10px;
+
       font-size: 10px;
       font-weight: 900;
+
       white-space: nowrap;
     }
 
-    .status-new {
-      background: #ffe3eb;
+    .badge-new {
+      background: #ffe4ec;
       color: #c72554;
     }
 
-    .status-contacted {
-      background: #e0f7fd;
+    .badge-contacted {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .badge-accepted {
+      background: #fff3c4;
+      color: #796000;
+    }
+
+    .badge-assigned {
+      background: #dff7fd;
       color: #08779a;
     }
 
-    .status-accepted {
-      background: #fff1b8;
-      color: #735d00;
+    .badge-converted {
+      background: #dcfce7;
+      color: #166534;
     }
 
-    .status-assigned {
-      background: #e5ddff;
-      color: #6335a5;
-    }
-
-    .status-job {
-      background: #dbeafe;
-      color: #1d4ed8;
-    }
-
-    .status-cancelled {
+    .badge-cancelled {
       background: #fee2e2;
       color: #991b1b;
     }
@@ -312,27 +375,32 @@
     .request-info {
       display: grid;
       gap: 9px;
+
       margin-top: 15px;
     }
 
     .info-row {
       display: flex;
       align-items: flex-start;
+
       gap: 9px;
-      color: #4b5563;
+
       font-size: 13px;
-      line-height: 1.4;
+      line-height: 1.35;
+      color: #4b5563;
     }
 
     .info-icon {
       width: 21px;
       flex: 0 0 21px;
+
       text-align: center;
     }
 
     .divider {
       height: 1px;
-      background: #eee;
+      background: #eeeeee;
+
       margin: 15px 0;
     }
 
@@ -343,75 +411,80 @@
 
     .action {
       flex: 1;
+
       border: 0;
       border-radius: 13px;
+
       padding: 11px;
+
       font-size: 13px;
       font-weight: 800;
     }
 
-    .view {
+    .view-btn {
       background: #dff5fc;
       color: #08779a;
     }
 
-    .job {
+    .job-btn {
       background: #fff2a8;
       color: #5d5100;
     }
 
-    /* ================= EMPTY / LOADING ================= */
-
     .empty,
     .loading {
       background: #fff;
+
       border-radius: 23px;
-      min-height: 190px;
       padding: 40px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+
       text-align: center;
-      box-shadow: 0 6px 20px rgba(15, 23, 42, .04);
+
+      box-shadow:
+        0 5px 18px rgba(15,23,42,.04);
+    }
+
+    .loading {
+      color: var(--muted);
+      font-size: 14px;
     }
 
     .empty-icon {
-      font-size: 38px;
+      font-size: 40px;
       margin-bottom: 10px;
     }
 
     .empty-title {
       font-size: 20px;
       font-weight: 900;
+      margin-bottom: 7px;
     }
 
     .empty-text {
-      margin-top: 7px;
       color: var(--muted);
       font-size: 14px;
-      line-height: 1.4;
+      line-height: 1.45;
     }
 
-    .loading {
-      color: var(--muted);
-      font-size: 15px;
-    }
+    /* MODAL */
 
-    /* ================= MODAL ================= */
-
-    .modal-bg {
+    .modal-backdrop {
       display: none;
+
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, .55);
+
+      background: rgba(15,23,42,.55);
+
       z-index: 100;
+
       padding: 15px;
       overflow-y: auto;
     }
 
-    .modal-bg.show {
+    .modal-backdrop.show {
       display: flex;
+
       align-items: center;
       justify-content: center;
     }
@@ -419,33 +492,43 @@
     .modal {
       width: 100%;
       max-width: 580px;
+
       background: #fff;
+
       border-radius: 27px;
       padding: 20px;
-      box-shadow: 0 25px 70px rgba(0,0,0,.25);
+
+      box-shadow:
+        0 25px 70px rgba(0,0,0,.25);
     }
 
     .modal-head {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      align-items: center;
+
+      gap: 12px;
       margin-bottom: 18px;
     }
 
     .modal-head h2 {
       margin: 0;
+
       font-size: 22px;
       font-weight: 900;
     }
 
-    .close {
+    .close-btn {
       width: 39px;
       height: 39px;
+
       flex: 0 0 39px;
+
       border: 0;
       border-radius: 50%;
+
       background: #f1f3f6;
+
       font-size: 23px;
     }
 
@@ -454,88 +537,114 @@
       gap: 12px;
     }
 
-    .field label {
+    .form-field label {
       display: block;
+
       margin: 0 0 6px 3px;
+
       color: #4b5563;
+
       font-size: 12px;
       font-weight: 800;
     }
 
-    .field input,
-    .field select,
-    .field textarea {
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
       width: 100%;
+
       border: 1px solid var(--border);
-      border-radius: 14px;
       background: #fafbfc;
+
+      border-radius: 14px;
+
       padding: 13px;
+
       outline: none;
+
       color: var(--navy);
       font-size: 14px;
     }
 
-    .field input:focus,
-    .field select:focus,
-    .field textarea:focus {
-      border-color: var(--blue);
+    .form-field textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+      border-color: var(--pink);
       background: #fff;
     }
 
-    .field textarea {
-      min-height: 80px;
-      resize: vertical;
+    .form-section {
+      color: var(--pink);
+
+      font-size: 14px;
+      font-weight: 900;
+
+      margin-top: 5px;
+      padding-bottom: 3px;
     }
 
     .modal-actions {
       display: flex;
       gap: 9px;
+
       margin-top: 18px;
     }
 
-    .modal-btn {
+    .modal-action {
       flex: 1;
+
       border: 0;
       border-radius: 14px;
+
       padding: 13px;
+
+      font-size: 14px;
       font-weight: 900;
     }
 
-    .cancel {
+    .cancel-btn {
       background: #f1f3f6;
       color: #374151;
     }
 
-    .save {
-      background: var(--blue);
+    .save-btn {
+      background: var(--pink);
       color: #fff;
     }
 
-    /* ================= MORE PANEL ================= */
-
-    .more-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, .25);
-      z-index: 70;
+    .modal-action:disabled {
+      opacity: .6;
+      cursor: not-allowed;
     }
 
-    .more-overlay.show {
-      display: block;
-    }
+    /* MORE */
 
     .more-panel {
       display: none;
+
       position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 76px;
+
+      left: 12px;
+      right: 12px;
+      bottom: 86px;
+
+      max-width: 420px;
+      margin: 0 auto;
+
       background: #fff;
-      border-radius: 25px 25px 0 0;
-      padding: 20px 16px 18px;
-      box-shadow: 0 -12px 35px rgba(15,23,42,.14);
-      z-index: 80;
+
+      border-radius: 22px;
+      padding: 10px;
+
+      box-shadow:
+        0 15px 45px rgba(15,23,42,.18);
+
+      z-index: 45;
     }
 
     .more-panel.show {
@@ -543,61 +652,84 @@
     }
 
     .more-title {
-      margin: 0 0 14px;
-      font-size: 20px;
+      padding: 10px 12px 7px;
+
+      color: var(--muted);
+
+      font-size: 13px;
       font-weight: 900;
     }
 
-    .more-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 9px;
-    }
+    .more-link {
+      display: flex;
+      align-items: center;
 
-    .more-item {
+      gap: 11px;
+
+      width: 100%;
+
+      padding: 13px 12px;
+
+      border-radius: 14px;
+
       text-decoration: none;
+
       color: var(--navy);
-      background: #f7f8fa;
-      border-radius: 15px;
-      padding: 12px 6px;
-      text-align: center;
-      font-size: 11px;
+
+      font-size: 14px;
       font-weight: 800;
     }
 
-    .more-icon {
-      display: block;
-      font-size: 21px;
-      margin-bottom: 5px;
+    .more-link:hover {
+      background: #f6f7fb;
     }
 
-    /* ================= BOTTOM NAV ================= */
+    .more-icon {
+      width: 25px;
+      text-align: center;
+      font-size: 18px;
+    }
+
+    /* BOTTOM NAV */
 
     .bottom-nav {
       position: fixed;
+
       left: 0;
       right: 0;
       bottom: 0;
+
       height: 76px;
+
       background: #fff;
+
       border-top: 1px solid #e8e8e8;
+
       display: flex;
-      z-index: 90;
+
+      z-index: 40;
     }
 
     .nav-item {
       flex: 1;
       min-width: 0;
+
       border: 0;
       background: #fff;
+
       text-decoration: none;
-      color: #737987;
+
+      color: #6b7280;
+
       display: flex;
       flex-direction: column;
+
       align-items: center;
       justify-content: center;
-      gap: 5px;
-      font-size: 11px;
+
+      gap: 4px;
+
+      font-size: 10px;
       font-weight: 800;
     }
 
@@ -606,107 +738,59 @@
     }
 
     .nav-icon {
-      font-size: 21px;
+      font-size: 20px;
       line-height: 1;
     }
 
-    /* ================= MOBILE ================= */
-
-    @media (max-width: 620px) {
-
-      main {
-        padding: 18px 0 28px;
-      }
-
-      .page-head {
-        padding: 0 16px;
-        align-items: flex-start;
-      }
-
-      .page-title {
-        font-size: 31px;
-      }
-
-      .page-subtitle {
-        font-size: 14px;
-      }
-
-      .new-btn {
-        padding: 14px 15px;
-        font-size: 14px;
-      }
+    @media (max-width: 650px) {
 
       .summary {
-        padding: 0;
-        gap: 10px;
+        grid-template-columns: repeat(2, 1fr);
       }
 
-      .summary-card {
-        border-radius: 24px;
-        padding: 21px 27px;
-        min-height: 140px;
+      .filters {
+        grid-template-columns: 1fr;
       }
 
-      .filter-section {
-        padding: 0;
+      .actions {
+        flex-direction: column;
       }
 
-      .search-input,
-      .status-select {
-        border-radius: 19px;
+      .action {
+        width: 100%;
       }
 
-      .request-list {
-        padding: 0 0;
+      .add-btn {
+        padding: 11px 12px;
       }
 
-      .request-card,
-      .empty,
-      .loading {
+      .modal {
         border-radius: 23px;
-      }
-
-      .more-grid {
-        grid-template-columns: repeat(4, 1fr);
+        padding: 17px;
       }
     }
 
-    @media (max-width: 430px) {
+    @media (max-width: 380px) {
 
-      .page-head {
-        gap: 10px;
+      .brand {
+        font-size: 20px;
       }
 
-      .page-title {
-        font-size: 29px;
+      .brand-logo {
+        width: 40px;
+        height: 40px;
       }
 
-      .new-btn {
-        font-size: 13px;
-        padding: 13px 12px;
+      h1 {
+        font-size: 28px;
       }
 
-      .summary-card {
-        padding: 20px 25px;
+      .add-btn {
+        font-size: 12px;
       }
 
       .summary-value {
-        font-size: 29px;
-      }
-    }
-
-    @media (max-width: 360px) {
-
-      .page-title {
-        font-size: 27px;
-      }
-
-      .new-btn {
-        padding: 12px 10px;
-      }
-
-      .more-grid {
-        grid-template-columns: repeat(3, 1fr);
+        font-size: 23px;
       }
     }
   </style>
@@ -714,22 +798,14 @@
 
 <body>
 
-  <!-- HEADER -->
-
   <header class="topbar">
 
     <div class="brand-row">
 
       <div class="brand">
-
-        <div class="logo">
-          R
-        </div>
-
+        <div class="brand-logo">R</div>
         <span>REPARO</span>
-
       </div>
-
 
       <button
         id="logoutBtn"
@@ -744,28 +820,21 @@
   </header>
 
 
-  <!-- MAIN -->
-
   <main>
 
-    <div class="page-head">
+    <div class="heading-row">
 
-      <div class="page-title-wrap">
+      <div>
+        <h1>Service Requests</h1>
 
-        <h1 class="page-title">
-          Service Requests
-        </h1>
-
-        <p class="page-subtitle">
-          Manage retailer service requests
+        <p class="subtitle">
+          Manage incoming service requests & job conversion
         </p>
-
       </div>
 
-
       <button
-        id="newRequestBtn"
-        class="new-btn"
+        id="addRequestBtn"
+        class="add-btn"
         type="button"
       >
         + New Request
@@ -779,25 +848,22 @@
       class="message error"
     ></div>
 
-
     <div
       id="successBox"
       class="message success"
     ></div>
 
 
-    <!-- SUMMARY -->
-
     <section class="summary">
 
       <div class="summary-card">
 
         <div class="summary-label">
-          Total
+          Total Requests
         </div>
 
         <div
-          id="totalCount"
+          id="totalRequests"
           class="summary-value"
         >
           0
@@ -806,14 +872,14 @@
       </div>
 
 
-      <div class="summary-card">
+      <div class="summary-card new">
 
         <div class="summary-label">
           New
         </div>
 
         <div
-          id="newCount"
+          id="newRequests"
           class="summary-value"
         >
           0
@@ -822,14 +888,30 @@
       </div>
 
 
-      <div class="summary-card">
+      <div class="summary-card active">
 
         <div class="summary-label">
-          Jobs
+          Active
         </div>
 
         <div
-          id="jobCount"
+          id="activeRequests"
+          class="summary-value"
+        >
+          0
+        </div>
+
+      </div>
+
+
+      <div class="summary-card completed">
+
+        <div class="summary-label">
+          Converted
+        </div>
+
+        <div
+          id="convertedRequests"
           class="summary-value"
         >
           0
@@ -840,57 +922,63 @@
     </section>
 
 
-    <!-- FILTER -->
+    <section class="filter-card">
 
-    <section class="filter-section">
+      <h2 class="filter-title">
+        Request Management
+      </h2>
 
-      <input
-        id="searchInput"
-        class="search-input"
-        type="search"
-        placeholder="Search customer, mobile, request ID..."
-      >
+      <p class="filter-subtitle">
+        Search and manage service requests
+      </p>
 
 
-      <select
-        id="statusFilter"
-        class="status-select"
-      >
+      <div class="filters">
 
-        <option value="">
-          All Status
-        </option>
+        <input
+          id="searchInput"
+          type="search"
+          placeholder="Search Request ID, customer, mobile..."
+          autocomplete="off"
+        >
 
-        <option value="NEW">
-          New
-        </option>
 
-        <option value="CONTACTED">
-          Contacted
-        </option>
+        <select id="statusFilter">
 
-        <option value="ACCEPTED">
-          Accepted
-        </option>
+          <option value="">
+            All Status
+          </option>
 
-        <option value="ASSIGNED">
-          Assigned
-        </option>
+          <option value="NEW">
+            New
+          </option>
 
-        <option value="CONVERTED TO JOB">
-          Converted to Job
-        </option>
+          <option value="CONTACTED">
+            Contacted
+          </option>
 
-        <option value="CANCELLED">
-          Cancelled
-        </option>
+          <option value="ACCEPTED">
+            Accepted
+          </option>
 
-      </select>
+          <option value="ASSIGNED">
+            Assigned
+          </option>
+
+          <option value="CONVERTED TO JOB">
+            Converted to Job
+          </option>
+
+          <option value="CANCELLED">
+            Cancelled
+          </option>
+
+        </select>
+
+      </div>
 
     </section>
 
-
-    <!-- REQUESTS -->
 
     <section id="requestContainer">
 
@@ -903,102 +991,58 @@
   </main>
 
 
-  <!-- MORE OVERLAY -->
-
-  <div
-    id="moreOverlay"
-    class="more-overlay"
-  ></div>
-
-
   <!-- MORE PANEL -->
 
-  <section
+  <div
     id="morePanel"
     class="more-panel"
   >
 
-    <h3 class="more-title">
-      More
-    </h3>
-
-
-    <div class="more-grid">
-
-      <a
-        class="more-item"
-        href="./retailers.html"
-      >
-        <span class="more-icon">🏪</span>
-        Retailers
-      </a>
-
-
-      <a
-        class="more-item"
-        href="./technicians.html"
-      >
-        <span class="more-icon">🔧</span>
-        Technicians
-      </a>
-
-
-      <a
-        class="more-item"
-        href="./customers.html"
-      >
-        <span class="more-icon">👤</span>
-        Customers
-      </a>
-
-
-      <a
-        class="more-item"
-        href="./earnings.html"
-      >
-        <span class="more-icon">₹</span>
-        Earnings
-      </a>
-
-
-      <a
-        class="more-item"
-        href="./warranty.html"
-      >
-        <span class="more-icon">🛡️</span>
-        Warranty
-      </a>
-
-
-      <a
-        class="more-item"
-        href="./schemes.html"
-      >
-        <span class="more-icon">🎁</span>
-        Schemes
-      </a>
-
-
-      <a
-        class="more-item"
-        href="./payments.html"
-      >
-        <span class="more-icon">💳</span>
-        Payments
-      </a>
-
-
-      <a
-        class="more-item"
-        href="./reports.html"
-      >
-        <span class="more-icon">📊</span>
-        Reports
-      </a>
-
+    <div class="more-title">
+      More Admin
     </div>
 
-  </section>
+    <a class="more-link" href="./retailers.html">
+      <span class="more-icon">🏪</span>
+      <span>Retailers</span>
+    </a>
+
+    <a class="more-link" href="./technicians.html">
+      <span class="more-icon">👨‍🔧</span>
+      <span>Technicians</span>
+    </a>
+
+    <a class="more-link" href="./customers.html">
+      <span class="more-icon">👤</span>
+      <span>Customers</span>
+    </a>
+
+    <a class="more-link" href="./commissions.html">
+      <span class="more-icon">₹</span>
+      <span>Commissions</span>
+    </a>
+
+    <a class="more-link" href="./warranty.html">
+      <span class="more-icon">🛡️</span>
+      <span>Warranty</span>
+    </a>
+
+    <a class="more-link" href="./schemes.html">
+      <span class="more-icon">🎁</span>
+      <span>Schemes</span>
+    </a>
+
+    <a class="more-link" href="./payments.html">
+      <span class="more-icon">💳</span>
+      <span>Payments</span>
+    </a>
+
+    <a class="more-link" href="./reports.html">
+      <span class="more-icon">📊</span>
+      <span>Reports</span>
+    </a>
+
+  </div>
 
 
   <!-- BOTTOM NAV -->
@@ -1006,40 +1050,36 @@
   <nav class="bottom-nav">
 
     <a
-      href="./dashboard.html"
       class="nav-item"
+      href="./dashboard.html"
     >
       <span class="nav-icon">⌂</span>
       <span>Home</span>
     </a>
 
-
     <a
-      href="./service-requests.html"
       class="nav-item active"
+      href="./service-requests.html"
     >
       <span class="nav-icon">▣</span>
       <span>Requests</span>
     </a>
 
-
     <a
-      href="./jobs.html"
       class="nav-item"
+      href="./jobs.html"
     >
       <span class="nav-icon">🔧</span>
       <span>Jobs</span>
     </a>
 
-
     <a
-      href="./products.html"
       class="nav-item"
+      href="./products.html"
     >
       <span class="nav-icon">📦</span>
       <span>Products</span>
     </a>
-
 
     <button
       id="moreNavBtn"
@@ -1056,8 +1096,8 @@
   <!-- REQUEST MODAL -->
 
   <div
-    id="modalBg"
-    class="modal-bg"
+    id="modalBackdrop"
+    class="modal-backdrop"
   >
 
     <div class="modal">
@@ -1069,8 +1109,8 @@
         </h2>
 
         <button
-          id="closeModal"
-          class="close"
+          id="closeModalBtn"
+          class="close-btn"
           type="button"
         >
           ×
@@ -1082,14 +1122,30 @@
       <form id="requestForm">
 
         <input
-          id="editRequestId"
           type="hidden"
+          id="editRequestId"
         >
 
 
         <div class="form-grid">
 
-          <div class="field">
+          <div class="form-field">
+
+            <label>
+              Customer ID *
+            </label>
+
+            <input
+              id="customerId"
+              type="text"
+              required
+              placeholder="Customer document ID"
+            >
+
+          </div>
+
+
+          <div class="form-field">
 
             <label>
               Customer Name *
@@ -1105,106 +1161,101 @@
           </div>
 
 
-          <div class="field">
+          <div class="form-field">
 
             <label>
-              Mobile *
+              Customer Mobile *
             </label>
 
             <input
               id="customerMobile"
               type="tel"
-              inputmode="numeric"
-              maxlength="10"
               required
-              placeholder="10 digit mobile"
+              placeholder="Mobile number"
             >
 
           </div>
 
 
-          <div class="field">
-
-            <label>
-              Address
-            </label>
-
-            <input
-              id="customerAddress"
-              type="text"
-              placeholder="Customer address"
-            >
-
+          <div class="form-section">
+            Device & Service
           </div>
 
 
-          <div class="field">
+          <div class="form-field">
 
             <label>
-              Device
-            </label>
-
-            <input
-              id="device"
-              type="text"
-              placeholder="TV / DTH / other device"
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label>
-              Brand
+              Device Brand
             </label>
 
             <input
               id="deviceBrand"
               type="text"
-              placeholder="Brand"
+              placeholder="e.g. Samsung"
             >
 
           </div>
 
 
-          <div class="field">
+          <div class="form-field">
 
             <label>
-              Model
+              Device Model
             </label>
 
             <input
               id="deviceModel"
               type="text"
-              placeholder="Model"
+              placeholder="Model number"
             >
 
           </div>
 
 
-          <div class="field">
+          <div class="form-field">
 
             <label>
-              Service Type
+              Serial Number
             </label>
 
-            <select id="serviceType">
+            <input
+              id="serialNumber"
+              type="text"
+              placeholder="Serial number"
+            >
 
-              <option value="REPAIR">
-                Repair
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Service Type *
+            </label>
+
+            <select
+              id="serviceType"
+              required
+            >
+
+              <option value="">
+                Select Service
               </option>
 
-              <option value="INSTALLATION">
-                Installation
+              <option value="TV REPAIR">
+                TV Repair
               </option>
 
-              <option value="DEMO">
-                Demo
+              <option value="TV INSTALLATION">
+                TV Installation
               </option>
 
-              <option value="DTH">
+              <option value="DTH SERVICE">
                 DTH Service
+              </option>
+
+              <option value="ACCESSORY">
+                Accessory
               </option>
 
               <option value="OTHER">
@@ -1216,16 +1267,33 @@
           </div>
 
 
-          <div class="field">
+          <div class="form-field">
 
             <label>
-              Problem / Requirement
+              Problem / Request *
             </label>
 
             <textarea
               id="problem"
+              required
               placeholder="Describe customer problem..."
             ></textarea>
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Retailer ID *
+            </label>
+
+            <input
+              id="retailerId"
+              type="text"
+              required
+              placeholder="Retailer UID"
+            >
 
           </div>
 
@@ -1235,18 +1303,17 @@
         <div class="modal-actions">
 
           <button
-            id="cancelModal"
+            id="cancelBtn"
             type="button"
-            class="modal-btn cancel"
+            class="modal-action cancel-btn"
           >
             Cancel
           </button>
 
-
           <button
             id="saveBtn"
             type="submit"
-            class="modal-btn save"
+            class="modal-action save-btn"
           >
             Create Request
           </button>
@@ -1259,6 +1326,8 @@
 
   </div>
 
+
+  <!-- ONLY EXTERNAL JAVASCRIPT -->
 
   <script
     type="module"
