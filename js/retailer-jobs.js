@@ -1,139 +1,227 @@
-import { auth, db } from "./firebase.js";
-
 import {
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
   collection,
   getDocs,
-  getDoc,
   doc,
+  getDoc,
   query,
   where
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-
-let currentUser = null;
-
-let jobs = [];
-
-let technicians = {};
+import {
+  auth,
+  db
+} from "./firebase.js";
 
 
-// =====================================================
-// AUTH
-// =====================================================
+/* =========================================================
+   DOM
+========================================================= */
 
-onAuthStateChanged(auth, async user => {
+const jobContainer = document.getElementById("jobContainer");
+
+const searchInput = document.getElementById("searchInput");
+
+const statusFilter = document.getElementById("statusFilter");
+
+const logoutBtn = document.getElementById("logoutBtn");
+
+const errorBox = document.getElementById("errorBox");
+
+const successBox = document.getElementById("successBox");
+
+const totalJobs = document.getElementById("totalJobs");
+
+const activeJobs = document.getElementById("activeJobs");
+
+const completedJobs = document.getElementById("completedJobs");
+
+const modalBackdrop = document.getElementById("modalBackdrop");
+
+const closeModalBtn = document.getElementById("closeModalBtn");
+
+const modalTitle = document.getElementById("modalTitle");
+
+const modalContent = document.getElementById("modalContent");
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let allJobs = [];
+
+let retailerUser = null;
+
+let retailerProfile = null;
+
+
+/* =========================================================
+   AUTH
+========================================================= */
+
+onAuthStateChanged(auth, async (user) => {
 
   if (!user) {
 
-    location.href =
-      "../index.html";
+    window.location.href = "../index.html";
 
     return;
-
   }
 
 
   try {
 
-    const profile =
-      await getDoc(
-        doc(
-          db,
-          "users",
-          user.uid
-        )
-      );
+    const userRef = doc(db, "users", user.uid);
+
+    const snapshot = await getDoc(userRef);
 
 
-    if (
-      !profile.exists() ||
-      profile.data().role !== "retailer"
-    ) {
+    if (!snapshot.exists()) {
 
-      location.href =
-        "../index.html";
+      await signOut(auth);
+
+      window.location.href = "../index.html";
 
       return;
-
     }
 
 
-    currentUser = user;
+    const profile = snapshot.data();
 
 
-    await loadTechnicians();
+    if (
+      profile.role !== "retailer" ||
+      profile.active !== true
+    ) {
+
+      await signOut(auth);
+
+      window.location.href = "../index.html";
+
+      return;
+    }
+
+
+    retailerUser = user;
+
+    retailerProfile = profile;
+
 
     await loadJobs();
 
-    render();
-
   } catch (error) {
 
-    console.error(error);
-
-    document.getElementById(
-      "jobList"
-    ).innerHTML =
-      `
-      <div class="empty">
-        Unable to load jobs.
-      </div>
-      `;
+    showError(
+      error.message ||
+      "Authorization failed."
+    );
 
   }
 
 });
 
 
-// =====================================================
-// TECHNICIANS
-// =====================================================
+/* =========================================================
+   LOAD JOBS
+========================================================= */
 
-async function loadTechnicians() {
+async function loadJobs() {
 
-  technicians = {};
+  jobContainer.innerHTML = `
+    <div class="loading">
+      Loading jobs...
+    </div>
+  `;
 
 
   try {
 
-    const snap =
-      await getDocs(
-        collection(
-          db,
-          "users"
-        )
-      );
+    /*
+      IMPORTANT:
+
+      Retailer can only read jobs where
+      retailerId == logged-in retailer UID.
+
+      This matches Firestore security rules.
+    */
+
+    const jobsQuery = query(
+      collection(db, "jobs"),
+      where(
+        "retailerId",
+        "==",
+        retailerUser.uid
+      )
+    );
 
 
-    snap.forEach(item => {
-
-      const data =
-        item.data();
+    const snapshot = await getDocs(jobsQuery);
 
 
-      if (
-        data.role ===
-        "technician"
-      ) {
+    allJobs = [];
 
-        technicians[item.id] = {
-          id: item.id,
-          ...data
-        };
 
-      }
+    snapshot.forEach((item) => {
+
+      allJobs.push({
+        id: item.id,
+        ...item.data()
+      });
 
     });
 
+
+    allJobs.sort((a, b) => {
+
+      const aTime =
+        a.createdAt?.seconds ||
+        0;
+
+      const bTime =
+        b.createdAt?.seconds ||
+        0;
+
+      return bTime - aTime;
+
+    });
+
+
+    updateSummary();
+
+    renderJobs();
+
+
   } catch (error) {
 
-    console.error(
-      "Technician loading error:",
-      error
+    jobContainer.innerHTML = `
+      <div class="empty">
+
+        <div class="empty-icon">
+          ⚠️
+        </div>
+
+        <div class="empty-title">
+          Jobs Load Error
+        </div>
+
+        <div class="empty-text">
+          ${escapeHtml(
+            error.message ||
+            "Unable to load jobs."
+          )}
+        </div>
+
+      </div>
+    `;
+
+    showError(
+      error.message ||
+      "Unable to load jobs."
     );
 
   }
@@ -141,998 +229,958 @@ async function loadTechnicians() {
 }
 
 
-// =====================================================
-// JOBS
-// =====================================================
+/* =========================================================
+   SUMMARY
+========================================================= */
 
-async function loadJobs() {
+function updateSummary() {
 
-  jobs = [];
+  const total =
+    allJobs.length;
 
-
-  const snap =
-    await getDocs(
-      query(
-        collection(
-          db,
-          "jobs"
-        ),
-        where(
-          "retailerId",
-          "==",
-          currentUser.uid
-        )
-      )
-    );
-
-
-  snap.forEach(item => {
-
-    jobs.push({
-      id: item.id,
-      ...item.data()
-    });
-
-  });
-
-
-  jobs.sort(
-    (a, b) =>
-      dateValue(b.createdAt) -
-      dateValue(a.createdAt)
-  );
-
-}
-
-
-// =====================================================
-// RENDER
-// =====================================================
-
-function render() {
-
-  renderSummary();
-
-  renderJobs();
-
-}
-
-
-// =====================================================
-// SUMMARY
-// =====================================================
-
-function renderSummary() {
 
   const active =
-    jobs.filter(job => {
-
-      const status =
-        normalize(
-          job.status
-        );
-
-
-      return ![
-        "COMPLETED",
-        "CANCELLED"
-      ].includes(status);
-
-    }).length;
-
-
-  const approval =
-    jobs.filter(job =>
-      normalize(
-        job.status
-      ) ===
-      "CUSTOMER APPROVAL"
+    allJobs.filter(
+      job => isActiveStatus(job.status)
     ).length;
 
 
   const completed =
-    jobs.filter(job =>
-      normalize(
-        job.status
-      ) ===
-      "COMPLETED"
+    allJobs.filter(
+      job =>
+        String(job.status || "")
+          .toUpperCase() === "COMPLETED"
     ).length;
 
 
-  document.getElementById(
-    "totalJobs"
-  ).textContent =
-    jobs.length;
+  totalJobs.textContent = total;
 
+  activeJobs.textContent = active;
 
-  document.getElementById(
-    "activeJobs"
-  ).textContent =
-    active;
-
-
-  document.getElementById(
-    "approvalJobs"
-  ).textContent =
-    approval;
-
-
-  document.getElementById(
-    "completedJobs"
-  ).textContent =
-    completed;
+  completedJobs.textContent = completed;
 
 }
 
 
-// =====================================================
-// JOB LIST
-// =====================================================
+/* =========================================================
+   FILTER EVENTS
+========================================================= */
+
+searchInput.addEventListener(
+  "input",
+  renderJobs
+);
+
+
+statusFilter.addEventListener(
+  "change",
+  renderJobs
+);
+
+
+/* =========================================================
+   RENDER JOBS
+========================================================= */
 
 function renderJobs() {
 
-  const container =
-    document.getElementById(
-      "jobList"
-    );
-
-
   const search =
-    document.getElementById(
-      "searchInput"
-    ).value
+    searchInput.value
       .trim()
       .toLowerCase();
 
 
-  const filter =
-    document.getElementById(
-      "statusFilter"
-    ).value;
+  const selectedStatus =
+    statusFilter.value;
 
 
   const filtered =
-    jobs.filter(job => {
+    allJobs.filter(job => {
 
-      const text =
-        [
-          job.jobId,
-          job.jobNumber,
-          job.customerName,
-          job.customerMobile,
-          job.deviceBrand,
-          job.deviceModel,
-          job.serialNumber,
-          job.serviceType
-        ]
-          .join(" ")
-          .toLowerCase();
+      const searchable = [
+
+        job.id,
+
+        job.jobId,
+
+        job.requestId,
+
+        job.customerName,
+
+        job.customerMobile,
+
+        job.mobile,
+
+        job.deviceBrand,
+
+        job.deviceModel,
+
+        job.serialNumber,
+
+        job.serviceType,
+
+        job.problem
+
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
 
-      const matchesSearch =
+      const searchMatch =
         !search ||
-        text.includes(search);
+        searchable.includes(search);
 
 
-      const status =
-        normalize(
-          job.status
-        );
-
-
-      const matchesStatus =
-        filter === "ALL" ||
-        status === filter;
+      const statusMatch =
+        !selectedStatus ||
+        String(job.status || "")
+          .toUpperCase() === selectedStatus;
 
 
       return (
-        matchesSearch &&
-        matchesStatus
+        searchMatch &&
+        statusMatch
       );
 
     });
 
 
-  if (!filtered.length) {
+  if (filtered.length === 0) {
 
-    container.innerHTML =
-      `
+    jobContainer.innerHTML = `
       <div class="empty">
-        ${
-          search
-            ? "No matching jobs found."
-            : "No jobs found."
-        }
+
+        <div class="empty-icon">
+          🔧
+        </div>
+
+        <div class="empty-title">
+          No Jobs Found
+        </div>
+
+        <div class="empty-text">
+          No service jobs match your search.
+        </div>
+
       </div>
-      `;
+    `;
 
     return;
-
   }
 
 
-  container.innerHTML =
-    filtered
-      .map(
-        job =>
-          createJobCard(job)
-      )
-      .join("");
+  jobContainer.innerHTML = `
+    <div>
+      ${filtered
+        .map(renderJobCard)
+        .join("")}
+    </div>
+  `;
+
+
+  document
+    .querySelectorAll("[data-view-job]")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          openJobModal(
+            button.dataset.viewJob
+          );
+
+        }
+      );
+
+    });
 
 }
 
 
-// =====================================================
-// JOB CARD
-// =====================================================
+/* =========================================================
+   JOB CARD
+========================================================= */
 
-function createJobCard(job) {
+function renderJobCard(job) {
 
   const status =
-    normalize(
-      job.status ||
-      "ASSIGNED"
-    );
-
-
-  const technician =
-    technicians[
-      job.technicianId
-    ];
+    String(
+      job.status || "NEW"
+    ).toUpperCase();
 
 
   const technicianName =
-    technician?.name ||
     job.technicianName ||
-    "Not assigned";
+    "Not Assigned";
 
 
-  const customer =
-    job.customerName ||
-    "Customer";
-
-
-  const device =
-    [
-      job.deviceBrand,
-      job.deviceModel
-    ]
-      .filter(Boolean)
-      .join(" ") ||
-    "Device";
-
-
-  const amount =
-    getCustomerAmount(job);
+  const deviceText =
+    getDeviceText(job);
 
 
   return `
+
     <div class="job-card">
 
       <div class="job-top">
 
         <div>
 
-          <div class="job-number">
+          <h3 class="job-id">
             ${escapeHtml(
-              job.jobNumber ||
               job.jobId ||
               job.id
             )}
-          </div>
+          </h3>
 
-          <div class="job-customer">
-            ${escapeHtml(customer)}
-            •
+          <div class="customer-name">
             ${escapeHtml(
-              job.customerMobile ||
-              "-"
+              job.customerName ||
+              "Customer"
             )}
           </div>
 
         </div>
 
-        <span class="status status-${statusClass(status)}">
-          ${escapeHtml(status)}
+
+        <span
+          class="status ${getStatusClass(status)}"
+        >
+          ${escapeHtml(
+            formatStatus(status)
+          )}
         </span>
 
       </div>
 
 
-      <div class="job-grid">
+      <div class="job-info">
 
-        <div class="info-box">
+        <div class="info-row">
 
-          <span>Service</span>
-
-          <strong>
-            ${escapeHtml(
-              job.serviceType ||
-              "-"
-            )}
-          </strong>
-
-        </div>
-
-
-        <div class="info-box">
-
-          <span>Device</span>
-
-          <strong>
-            ${escapeHtml(device)}
-          </strong>
-
-        </div>
-
-
-        <div class="info-box">
-
-          <span>Technician</span>
-
-          <strong>
-            ${escapeHtml(
-              technicianName
-            )}
-          </strong>
-
-        </div>
-
-
-        <div class="info-box">
-
-          <span>Invoice</span>
-
-          <strong>
-            ${escapeHtml(
-              job.invoiceNumber ||
-              (job.invoiceId
-                ? "Generated"
-                : "Pending")
-            )}
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      ${progressHTML(status)}
-
-
-      <button
-        class="job-action"
-        onclick="viewJob('${job.id}')">
-
-        View Job Details
-
-      </button>
-
-    </div>
-  `;
-
-}
-
-
-// =====================================================
-// PROGRESS
-// =====================================================
-
-function progressHTML(status) {
-
-  const steps = [
-    "ASSIGNED",
-    "DIAGNOSIS",
-    "CUSTOMER APPROVAL",
-    "REPAIR",
-    "COMPLETED"
-  ];
-
-
-  let index =
-    steps.indexOf(
-      status
-    );
-
-
-  if (index < 0) {
-
-    if (
-      status ===
-      "IN PROGRESS"
-    ) {
-
-      index = 0;
-
-    } else {
-
-      index = 0;
-
-    }
-
-  }
-
-
-  return `
-
-    <div class="progress-wrap">
-
-      <div class="progress-title">
-        Service Progress
-      </div>
-
-      <div class="progress-line">
-
-        ${steps.map(
-          (_, i) => `
-            <div class="progress-step ${
-              i <= index
-                ? "active"
-                : ""
-            }"></div>
-          `
-        ).join("")}
-
-      </div>
-
-
-      <div class="progress-labels">
-
-        <span>Assigned</span>
-
-        <span>Diagnosis</span>
-
-        <span>Approval</span>
-
-        <span>Repair</span>
-
-        <span>Done</span>
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-// =====================================================
-// VIEW JOB
-// =====================================================
-
-window.viewJob =
-  function(jobId) {
-
-    const job =
-      jobs.find(
-        item =>
-          item.id ===
-          jobId
-      );
-
-
-    if (!job)
-      return;
-
-
-    const status =
-      normalize(
-        job.status
-      );
-
-
-    const technician =
-      technicians[
-        job.technicianId
-      ];
-
-
-    const technicianName =
-      technician?.name ||
-      job.technicianName ||
-      "Not assigned";
-
-
-    const amount =
-      getCustomerAmount(job);
-
-
-    document.getElementById(
-      "modalJobTitle"
-    ).textContent =
-      job.jobNumber ||
-      job.jobId ||
-      "Job Details";
-
-
-    document.getElementById(
-      "modalContent"
-    ).innerHTML = `
-
-      <!-- CUSTOMER -->
-
-      <div class="detail-section">
-
-        <h3>
-          Customer
-        </h3>
-
-        <div class="job-grid">
-
-          <div class="info-box">
-
-            <span>Name</span>
-
-            <strong>
-              ${escapeHtml(
-                job.customerName ||
-                "-"
-              )}
-            </strong>
-
-          </div>
-
-
-          <div class="info-box">
-
-            <span>Mobile</span>
-
-            <strong>
-              ${escapeHtml(
-                job.customerMobile ||
-                "-"
-              )}
-            </strong>
-
-          </div>
-
-
-          <div class="info-box full">
-
-            <span>Address</span>
-
-            <strong>
-              ${escapeHtml(
-                job.customerAddress ||
-                "-"
-              )}
-            </strong>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- DEVICE -->
-
-      <div class="detail-section">
-
-        <h3>
-          Device
-        </h3>
-
-        <div class="job-grid">
-
-          <div class="info-box">
-
-            <span>Brand</span>
-
-            <strong>
-              ${escapeHtml(
-                job.deviceBrand ||
-                "-"
-              )}
-            </strong>
-
-          </div>
-
-
-          <div class="info-box">
-
-            <span>Model</span>
-
-            <strong>
-              ${escapeHtml(
-                job.deviceModel ||
-                "-"
-              )}
-            </strong>
-
-          </div>
-
-
-          <div class="info-box">
-
-            <span>Serial Number</span>
-
-            <strong>
-              ${escapeHtml(
-                job.serialNumber ||
-                "-"
-              )}
-            </strong>
-
-          </div>
-
-
-          <div class="info-box">
-
-            <span>Service</span>
-
-            <strong>
-              ${escapeHtml(
-                job.serviceType ||
-                "-"
-              )}
-            </strong>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- TECHNICIAN -->
-
-      <div class="detail-section">
-
-        <h3>
-          Technician
-        </h3>
-
-        <div class="info-box">
-
-          <span>Assigned Technician</span>
-
-          <strong>
-            ${escapeHtml(
-              technicianName
-            )}
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- PROGRESS -->
-
-      <div class="detail-section">
-
-        <h3>
-          Service Progress
-        </h3>
-
-        ${progressHTML(status)}
-
-      </div>
-
-
-      <!-- DIAGNOSIS -->
-
-      <div class="detail-section">
-
-        <h3>
-          Diagnosis
-        </h3>
-
-        <div class="info-box">
-
-          <strong>
-            ${escapeHtml(
-              job.diagnosis ||
-              "Diagnosis not updated yet."
-            )}
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- CUSTOMER APPROVAL -->
-
-      <div class="detail-section">
-
-        <h3>
-          Customer Approval
-        </h3>
-
-        <div class="info-box">
-
-          <strong>
-            ${
-              job.customerApproval === true
-                ? "APPROVED"
-                : job.customerApproval === false
-                  ? "REJECTED"
-                  : "PENDING"
-            }
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- CUSTOMER AMOUNT -->
-
-      <div class="detail-section">
-
-        <h3>
-          Customer Billing
-        </h3>
-
-        <div class="estimate-box">
-
-          <span>
-            Customer Amount
+          <span class="info-icon">
+            📱
           </span>
 
-          <strong>
-            ${money(amount)}
-          </strong>
+          <span>
+            ${escapeHtml(
+              job.customerMobile ||
+              job.mobile ||
+              "-"
+            )}
+          </span>
 
         </div>
 
-      </div>
 
+        <div class="info-row">
 
-      <!-- INVOICE -->
+          <span class="info-icon">
+            📺
+          </span>
 
-      <div class="detail-section">
-
-        <h3>
-          Invoice & Warranty
-        </h3>
-
-        <div class="job-grid">
-
-          <div class="info-box">
-
-            <span>Invoice</span>
-
-            <strong>
-              ${
-                job.invoiceNumber ||
-                (job.invoiceId
-                  ? "Generated"
-                  : "Pending")
-              }
-            </strong>
-
-          </div>
-
-
-          <div class="info-box">
-
-            <span>Warranty</span>
-
-            <strong>
-              ${
-                job.warrantyDays
-                  ? job.warrantyDays + " Days"
-                  : "Not set"
-              }
-            </strong>
-
-          </div>
+          <span>
+            ${escapeHtml(
+              deviceText
+            )}
+          </span>
 
         </div>
 
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            🔧
+          </span>
+
+          <span>
+            ${escapeHtml(
+              job.serviceType ||
+              "Service"
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            👨‍🔧
+          </span>
+
+          <span>
+            ${escapeHtml(
+              technicianName
+            )}
+          </span>
+
+        </div>
+
+
+        ${
+          job.problem
+            ? `
+              <div class="info-row">
+
+                <span class="info-icon">
+                  ⚠️
+                </span>
+
+                <span>
+                  ${escapeHtml(
+                    job.problem
+                  )}
+                </span>
+
+              </div>
+            `
+            : ""
+        }
+
       </div>
 
 
-      <!-- PRIVACY -->
+      <div class="job-divider"></div>
 
-      <div class="privacy-note">
 
-        <strong>
-          Partner Privacy
-        </strong>
+      <div class="job-actions">
 
-        <br>
-
-        You can view customer-facing
-        service information, billing and
-        warranty status.
-
-        REPARO internal purchase cost,
-        technician payout and actual
-        profit are not included here.
+        <button
+          type="button"
+          class="view-btn"
+          data-view-job="${escapeAttribute(
+            job.id
+          )}"
+        >
+          View Details
+        </button>
 
       </div>
 
-    `;
+    </div>
+
+  `;
+
+}
 
 
-    document.getElementById(
-      "jobModal"
-    ).classList.add("show");
+/* =========================================================
+   JOB DETAILS MODAL
+========================================================= */
 
-  };
+async function openJobModal(jobId) {
 
-
-// =====================================================
-// CLOSE
-// =====================================================
-
-window.closeJob =
-  function() {
-
-    document.getElementById(
-      "jobModal"
-    ).classList.remove(
-      "show"
+  const job =
+    allJobs.find(
+      item => item.id === jobId
     );
 
-  };
 
+  if (!job) {
 
-// =====================================================
-// SEARCH
-// =====================================================
-
-document.getElementById(
-  "searchInput"
-).addEventListener(
-  "input",
-  renderJobs
-);
-
-
-document.getElementById(
-  "statusFilter"
-).addEventListener(
-  "change",
-  renderJobs
-);
-
-
-// =====================================================
-// CUSTOMER AMOUNT
-// =====================================================
-
-function getCustomerAmount(job) {
-
-  if (
-    job.finalTotal !==
-    undefined &&
-    job.finalTotal !==
-    null
-  ) {
-
-    return Number(
-      job.finalTotal
+    showError(
+      "Job not found."
     );
 
+    return;
   }
 
 
-  if (
-    job.totalAmount !==
-    undefined &&
-    job.totalAmount !==
-    null
-  ) {
-
-    return Number(
-      job.totalAmount
-    );
-
-  }
+  modalTitle.textContent =
+    "Job Details";
 
 
-  const labour =
-    Number(
-      job.finalLabour ??
-      job.labourCharge ??
-      0
-    );
+  /*
+    IMPORTANT:
+
+    This modal intentionally does NOT show:
+
+    - REPARO purchase cost
+    - internal profit
+    - technician payout
+    - internal margin
+    - internal commission calculation
+
+    Retailer sees only service-facing information.
+  */
 
 
-  const parts =
-    Number(
-      job.finalParts ??
-      job.partsAmount ??
-      0
-    );
+  modalContent.innerHTML = `
+
+    <div class="detail-section">
+
+      <div class="detail-title">
+        Job Information
+      </div>
 
 
-  return labour + parts;
-
-}
-
-
-// =====================================================
-// HELPERS
-// =====================================================
-
-function normalize(value) {
-
-  return String(
-    value || ""
-  )
-    .trim()
-    .toUpperCase();
-
-}
+      ${detailRow(
+        "Job ID",
+        job.jobId || job.id
+      )}
 
 
-function statusClass(status) {
+      ${detailRow(
+        "Request ID",
+        job.requestId ||
+        job.serviceRequestId ||
+        "-"
+      )}
 
-  return normalize(status)
-    .toLowerCase()
-    .replace(/\s+/g, "-");
 
-}
+      ${detailRow(
+        "Status",
+        formatStatus(
+          job.status || "NEW"
+        )
+      )}
 
 
-function money(value) {
+      ${detailRow(
+        "Service Type",
+        job.serviceType ||
+        "Service"
+      )}
 
-  return (
-    "₹" +
-    Number(
-      value || 0
-    ).toLocaleString(
-      "en-IN"
-    )
+    </div>
+
+
+    <div class="detail-section">
+
+      <div class="detail-title">
+        Customer
+      </div>
+
+
+      ${detailRow(
+        "Name",
+        job.customerName ||
+        "-"
+      )}
+
+
+      ${detailRow(
+        "Mobile",
+        job.customerMobile ||
+        job.mobile ||
+        "-"
+      )}
+
+
+      ${detailRow(
+        "Address",
+        job.customerAddress ||
+        job.address ||
+        "-"
+      )}
+
+    </div>
+
+
+    <div class="detail-section">
+
+      <div class="detail-title">
+        Device
+      </div>
+
+
+      ${detailRow(
+        "Device",
+        getDeviceText(job)
+      )}
+
+
+      ${detailRow(
+        "Serial Number",
+        job.serialNumber ||
+        "-"
+      )}
+
+
+      ${detailRow(
+        "Problem",
+        job.problem ||
+        "-"
+      )}
+
+    </div>
+
+
+    <div class="detail-section">
+
+      <div class="detail-title">
+        Technician
+      </div>
+
+
+      ${detailRow(
+        "Technician",
+        job.technicianName ||
+        "Not Assigned"
+      )}
+
+
+      ${detailRow(
+        "Progress",
+        getProgressText(
+          job.status
+        )
+      )}
+
+    </div>
+
+
+    ${
+      getCustomerVisibleAmount(job) !== null
+        ? `
+
+          <div class="detail-section">
+
+            <div class="detail-title">
+              Service Amount
+            </div>
+
+            ${detailRow(
+              "Estimated / Service Amount",
+              formatCurrency(
+                getCustomerVisibleAmount(job)
+              )
+            )}
+
+          </div>
+
+        `
+        : ""
+    }
+
+
+    ${
+      job.diagnosis
+        ? `
+
+          <div class="detail-section">
+
+            <div class="detail-title">
+              Diagnosis
+            </div>
+
+            ${detailRow(
+              "Diagnosis",
+              job.diagnosis
+            )}
+
+          </div>
+
+        `
+        : ""
+    }
+
+
+    ${
+      job.repairNotes
+        ? `
+
+          <div class="detail-section">
+
+            <div class="detail-title">
+              Repair Update
+            </div>
+
+            ${detailRow(
+              "Notes",
+              job.repairNotes
+            )}
+
+          </div>
+
+        `
+        : ""
+    }
+
+  `;
+
+
+  modalBackdrop.classList.add(
+    "show"
   );
 
 }
 
 
-function dateValue(value) {
+/* =========================================================
+   DETAIL ROW
+========================================================= */
 
-  if (!value)
-    return 0;
+function detailRow(
+  label,
+  value
+) {
+
+  return `
+
+    <div class="detail-row">
+
+      <span class="detail-label">
+        ${escapeHtml(label)}
+      </span>
+
+      <span class="detail-value">
+        ${escapeHtml(value)}
+      </span>
+
+    </div>
+
+  `;
+
+}
 
 
-  try {
+/* =========================================================
+   CUSTOMER VISIBLE AMOUNT
+========================================================= */
+
+function getCustomerVisibleAmount(job) {
+
+  const candidates = [
+
+    job.finalTotal,
+
+    job.estimateTotal,
+
+    job.totalAmount,
+
+    job.serviceAmount
+
+  ];
+
+
+  for (const value of candidates) {
+
+    const number =
+      Number(value);
+
 
     if (
-      typeof value.toMillis ===
-      "function"
+      Number.isFinite(number) &&
+      number > 0
     ) {
 
-      return value.toMillis();
+      return number;
 
     }
 
-
-    if (
-      typeof value.toDate ===
-      "function"
-    ) {
-
-      return value
-        .toDate()
-        .getTime();
-
-    }
+  }
 
 
-    return new Date(value)
-      .getTime() || 0;
+  return null;
 
-  } catch {
+}
 
-    return 0;
+
+/* =========================================================
+   CURRENCY
+========================================================= */
+
+function formatCurrency(
+  amount
+) {
+
+  return "₹" +
+    Number(amount)
+      .toLocaleString("en-IN");
+
+}
+
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+function getProgressText(
+  status
+) {
+
+  switch (
+    String(status || "")
+      .toUpperCase()
+  ) {
+
+    case "NEW":
+      return "Service job created";
+
+    case "ASSIGNED":
+      return "Technician assigned";
+
+    case "IN PROGRESS":
+      return "Service in progress";
+
+    case "DIAGNOSIS":
+      return "Device diagnosis in progress";
+
+    case "CUSTOMER APPROVAL":
+      return "Waiting for customer approval";
+
+    case "REPAIR":
+      return "Repair in progress";
+
+    case "COMPLETED":
+      return "Service completed";
+
+    case "CANCELLED":
+      return "Service cancelled";
+
+    default:
+      return "Service update available";
 
   }
 
 }
 
 
-function escapeHtml(value) {
+/* =========================================================
+   DEVICE TEXT
+========================================================= */
 
-  return String(
-    value ?? ""
-  )
+function getDeviceText(job) {
+
+  const parts = [
+
+    job.deviceBrand,
+
+    job.deviceModel,
+
+    job.screenSize
+      ? `${job.screenSize}"`
+      : null
+
+  ].filter(Boolean);
+
+
+  if (parts.length) {
+
+    return parts.join(" ");
+
+  }
+
+
+  return (
+    job.device ||
+    job.product ||
+    "Device"
+  );
+
+}
+
+
+/* =========================================================
+   ACTIVE STATUS
+========================================================= */
+
+function isActiveStatus(
+  status
+) {
+
+  const value =
+    String(status || "")
+      .toUpperCase();
+
+
+  return [
+
+    "ASSIGNED",
+
+    "IN PROGRESS",
+
+    "DIAGNOSIS",
+
+    "CUSTOMER APPROVAL",
+
+    "REPAIR"
+
+  ].includes(value);
+
+}
+
+
+/* =========================================================
+   STATUS CLASS
+========================================================= */
+
+function getStatusClass(
+  status
+) {
+
+  switch (
+    String(status || "")
+      .toUpperCase()
+  ) {
+
+    case "NEW":
+      return "status-new";
+
+    case "ASSIGNED":
+      return "status-assigned";
+
+    case "IN PROGRESS":
+      return "status-progress";
+
+    case "DIAGNOSIS":
+      return "status-diagnosis";
+
+    case "CUSTOMER APPROVAL":
+      return "status-approval";
+
+    case "REPAIR":
+      return "status-repair";
+
+    case "COMPLETED":
+      return "status-completed";
+
+    case "CANCELLED":
+      return "status-cancelled";
+
+    default:
+      return "status-assigned";
+
+  }
+
+}
+
+
+/* =========================================================
+   FORMAT STATUS
+========================================================= */
+
+function formatStatus(
+  status
+) {
+
+  return String(status || "")
+    .toLowerCase()
+    .replace(
+      /\b\w/g,
+      letter =>
+        letter.toUpperCase()
+    );
+
+}
+
+
+/* =========================================================
+   CLOSE MODAL
+========================================================= */
+
+function closeModal() {
+
+  modalBackdrop.classList.remove(
+    "show"
+  );
+
+  modalContent.innerHTML = "";
+
+}
+
+
+closeModalBtn.addEventListener(
+  "click",
+  closeModal
+);
+
+
+modalBackdrop.addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target ===
+      modalBackdrop
+    ) {
+
+      closeModal();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+logoutBtn.addEventListener(
+  "click",
+  async () => {
+
+    try {
+
+      await signOut(auth);
+
+      window.location.href =
+        "../index.html";
+
+    } catch (error) {
+
+      showError(
+        error.message ||
+        "Logout failed."
+      );
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   MESSAGES
+========================================================= */
+
+function showError(
+  message
+) {
+
+  successBox.style.display =
+    "none";
+
+  errorBox.textContent =
+    message;
+
+  errorBox.style.display =
+    "block";
+
+}
+
+
+function showSuccess(
+  message
+) {
+
+  errorBox.style.display =
+    "none";
+
+  successBox.textContent =
+    message;
+
+  successBox.style.display =
+    "block";
+
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHtml(
+  value
+) {
+
+  return String(value ?? "")
     .replaceAll(
       "&",
       "&amp;"
@@ -1153,5 +1201,14 @@ function escapeHtml(value) {
       "'",
       "&#039;"
     );
+
+}
+
+
+function escapeAttribute(
+  value
+) {
+
+  return escapeHtml(value);
 
 }
