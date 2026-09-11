@@ -1,544 +1,705 @@
-import { auth, db } from "./firebase.js";
-
 import {
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
   collection,
   getDocs,
-  getDoc,
-  addDoc,
-  updateDoc,
   doc,
-  query,
-  where,
+  getDoc,
+  updateDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-
-let currentUser = null;
-let customers = [];
-let retailers = [];
-let jobs = [];
-let editingCustomerId = null;
-
-
-// =====================================================
-// ELEMENTS
-// =====================================================
-
-const loading =
-  document.getElementById("loading");
-
-const customerList =
-  document.getElementById("customerList");
-
-const modal =
-  document.getElementById("customerModal");
-
-const detailModal =
-  document.getElementById("detailModal");
-
-
-// =====================================================
-// AUTH
-// =====================================================
-
-onAuthStateChanged(
+import {
   auth,
-  async user => {
+  db
+} from "./firebase.js";
 
-    if (!user) {
 
-      location.href =
-        "../index.html";
+/* =========================================================
+   DOM
+========================================================= */
 
+const customerContainer =
+  document.getElementById("customerContainer");
+
+const searchInput =
+  document.getElementById("searchInput");
+
+const protectionFilter =
+  document.getElementById("protectionFilter");
+
+const totalCustomers =
+  document.getElementById("totalCustomers");
+
+const protectedCustomers =
+  document.getElementById("protectedCustomers");
+
+const unprotectedCustomers =
+  document.getElementById("unprotectedCustomers");
+
+const serialCustomers =
+  document.getElementById("serialCustomers");
+
+const logoutBtn =
+  document.getElementById("logoutBtn");
+
+const errorBox =
+  document.getElementById("errorBox");
+
+const successBox =
+  document.getElementById("successBox");
+
+const modalBackdrop =
+  document.getElementById("modalBackdrop");
+
+const closeModalBtn =
+  document.getElementById("closeModalBtn");
+
+const cancelModalBtn =
+  document.getElementById("cancelModalBtn");
+
+const modalTitle =
+  document.getElementById("modalTitle");
+
+const customerForm =
+  document.getElementById("customerForm");
+
+const saveCustomerBtn =
+  document.getElementById("saveCustomerBtn");
+
+const editCustomerId =
+  document.getElementById("editCustomerId");
+
+const customerName =
+  document.getElementById("customerName");
+
+const customerMobile =
+  document.getElementById("customerMobile");
+
+const customerAddress =
+  document.getElementById("customerAddress");
+
+const deviceBrand =
+  document.getElementById("deviceBrand");
+
+const deviceModel =
+  document.getElementById("deviceModel");
+
+const screenSize =
+  document.getElementById("screenSize");
+
+const serialNumber =
+  document.getElementById("serialNumber");
+
+const originalRetailerId =
+  document.getElementById("originalRetailerId");
+
+const protectedText =
+  document.getElementById("protectedText");
+
+const duplicateWarning =
+  document.getElementById("duplicateWarning");
+
+const moreNavBtn =
+  document.getElementById("moreNavBtn");
+
+const morePanel =
+  document.getElementById("morePanel");
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let allCustomers = [];
+let allRetailers = [];
+let selectedCustomerId = null;
+let adminUser = null;
+
+
+/* =========================================================
+   AUTHORIZATION
+========================================================= */
+
+onAuthStateChanged(auth, async (user) => {
+
+  if (!user) {
+    window.location.href = "../index.html";
+    return;
+  }
+
+  try {
+
+    const userRef = doc(db, "users", user.uid);
+
+    const snapshot = await getDoc(userRef);
+
+    if (!snapshot.exists()) {
+      await signOut(auth);
+      window.location.href = "../index.html";
       return;
-
     }
 
+    const profile = snapshot.data();
 
-    try {
+    if (
+      profile.role !== "admin" ||
+      profile.active !== true
+    ) {
+      await signOut(auth);
+      window.location.href = "../index.html";
+      return;
+    }
 
-      const profileSnap =
-        await getDoc(
-          doc(
-            db,
-            "users",
-            user.uid
-          )
-        );
+    adminUser = user;
 
+    await loadPage();
+
+  } catch (error) {
+
+    showError(
+      error.message || "Authorization error."
+    );
+
+  }
+
+});
+
+
+/* =========================================================
+   LOAD PAGE
+========================================================= */
+
+async function loadPage() {
+
+  try {
+
+    await Promise.all([
+      loadRetailers(),
+      loadCustomers()
+    ]);
+
+  } catch (error) {
+
+    showError(
+      error.message || "Unable to load customer module."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   LOAD RETAILERS
+========================================================= */
+
+async function loadRetailers() {
+
+  const snapshot =
+    await getDocs(collection(db, "retailers"));
+
+  allRetailers = [];
+
+  snapshot.forEach(item => {
+
+    allRetailers.push({
+      uid: item.id,
+      ...item.data()
+    });
+
+  });
+
+  /*
+    Fallback:
+    If retailers master collection is empty,
+    read retailer users from users collection.
+  */
+
+  if (allRetailers.length === 0) {
+
+    const usersSnapshot =
+      await getDocs(collection(db, "users"));
+
+    usersSnapshot.forEach(item => {
+
+      const data = item.data();
 
       if (
-        !profileSnap.exists()
-        ||
-        profileSnap.data().role !== "admin"
+        data.role === "retailer" &&
+        data.active === true
       ) {
 
-        showError(
-          "Admin access required."
-        );
-
-        return;
+        allRetailers.push({
+          uid: item.id,
+          ...data
+        });
 
       }
 
-
-      currentUser = user;
-
-
-      await loadData();
-
-    } catch (error) {
-
-      console.error(error);
-
-      showError(
-        "Unable to load customer data."
-      );
-
-    }
+    });
 
   }
+
+  renderRetailerOptions();
+
+}
+
+
+/* =========================================================
+   RENDER RETAILER OPTIONS
+========================================================= */
+
+function renderRetailerOptions() {
+
+  originalRetailerId.innerHTML = `
+    <option value="">-- No Retailer --</option>
+    ${
+      allRetailers
+        .map(retailer => {
+
+          const name =
+            retailer.businessName ||
+            retailer.shopName ||
+            retailer.name ||
+            retailer.mobile ||
+            retailer.uid;
+
+          return `
+            <option value="${escapeAttribute(retailer.uid)}">
+              ${escapeHtml(name)}
+            </option>
+          `;
+
+        })
+        .join("")
+    }
+  `;
+
+}
+
+
+/* =========================================================
+   LOAD CUSTOMERS
+========================================================= */
+
+async function loadCustomers() {
+
+  customerContainer.innerHTML = `
+    <div class="loading">
+      Loading customers...
+    </div>
+  `;
+
+  try {
+
+    const snapshot =
+      await getDocs(collection(db, "customers"));
+
+    allCustomers = [];
+
+    snapshot.forEach(item => {
+
+      allCustomers.push({
+        id: item.id,
+        ...item.data()
+      });
+
+    });
+
+    allCustomers.sort((a, b) => {
+
+      const aTime =
+        a.updatedAt?.seconds ||
+        a.createdAt?.seconds ||
+        0;
+
+      const bTime =
+        b.updatedAt?.seconds ||
+        b.createdAt?.seconds ||
+        0;
+
+      return bTime - aTime;
+
+    });
+
+    updateSummary();
+
+    renderCustomers();
+
+  } catch (error) {
+
+    customerContainer.innerHTML = `
+      <div class="empty">
+
+        <div class="empty-icon">⚠️</div>
+
+        <div class="empty-title">
+          Customer Load Error
+        </div>
+
+        <div class="empty-text">
+          ${escapeHtml(
+            error.message ||
+            "Unable to load customers."
+          )}
+        </div>
+
+      </div>
+    `;
+
+    throw error;
+
+  }
+
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+function updateSummary() {
+
+  const total =
+    allCustomers.length;
+
+  const protectedCount =
+    allCustomers.filter(customer =>
+      isProtectedCustomer(customer)
+    ).length;
+
+  const unprotectedCount =
+    total - protectedCount;
+
+  const serialCount =
+    allCustomers.filter(customer =>
+      String(customer.serialNumber || "").trim()
+    ).length;
+
+  totalCustomers.textContent =
+    total;
+
+  protectedCustomers.textContent =
+    protectedCount;
+
+  unprotectedCustomers.textContent =
+    unprotectedCount;
+
+  serialCustomers.textContent =
+    serialCount;
+
+}
+
+
+/* =========================================================
+   PROTECTED CUSTOMER
+========================================================= */
+
+function isProtectedCustomer(customer) {
+
+  return Boolean(
+    customer.originalRetailerId ||
+    customer.protected === true
+  );
+
+}
+
+
+/* =========================================================
+   FILTER EVENTS
+========================================================= */
+
+searchInput.addEventListener(
+  "input",
+  renderCustomers
+);
+
+protectionFilter.addEventListener(
+  "change",
+  renderCustomers
 );
 
 
-// =====================================================
-// LOAD DATA
-// =====================================================
+/* =========================================================
+   RENDER CUSTOMERS
+========================================================= */
 
-async function loadData() {
-
-  const [
-    customerSnap,
-    retailerSnap,
-    jobsSnap
-  ] = await Promise.all([
-
-    getDocs(
-      collection(
-        db,
-        "customers"
-      )
-    ),
-
-    getDocs(
-      query(
-        collection(
-          db,
-          "users"
-        ),
-        where(
-          "role",
-          "==",
-          "retailer"
-        )
-      )
-    ),
-
-    getDocs(
-      collection(
-        db,
-        "jobs"
-      )
-    )
-
-  ]);
-
-
-  customers = [];
-
-  customerSnap.forEach(item => {
-
-    customers.push({
-      id: item.id,
-      ...item.data()
-    });
-
-  });
-
-
-  retailers = [];
-
-  retailerSnap.forEach(item => {
-
-    retailers.push({
-      id: item.id,
-      ...item.data()
-    });
-
-  });
-
-
-  jobs = [];
-
-  jobsSnap.forEach(item => {
-
-    jobs.push({
-      id: item.id,
-      ...item.data()
-    });
-
-  });
-
-
-  customers.sort(
-    (a, b) =>
-      String(a.name || "")
-        .localeCompare(
-          String(b.name || "")
-        )
-  );
-
-
-  populateRetailerFilters();
-
-  render();
-
-}
-
-
-// =====================================================
-// RETAILER FILTERS
-// =====================================================
-
-function populateRetailerFilters() {
-
-  const formSelect =
-    document.getElementById(
-      "retailerId"
-    );
-
-  const filter =
-    document.getElementById(
-      "retailerFilter"
-    );
-
-
-  const options =
-    retailers
-      .sort(
-        (a,b) =>
-          String(a.name || "")
-            .localeCompare(
-              String(b.name || "")
-            )
-      )
-      .map(
-        retailer => `
-          <option value="${escapeHtml(retailer.id)}">
-            ${escapeHtml(
-              retailer.name ||
-              retailer.businessName ||
-              retailer.email ||
-              retailer.id
-            )}
-          </option>
-        `
-      )
-      .join("");
-
-
-  formSelect.innerHTML =
-    `
-      <option value="">
-        Select retailer
-      </option>
-      ${options}
-    `;
-
-
-  filter.innerHTML =
-    `
-      <option value="ALL">
-        All Retailers
-      </option>
-      ${options}
-    `;
-
-}
-
-
-// =====================================================
-// RENDER
-// =====================================================
-
-function render() {
+function renderCustomers() {
 
   const search =
-    document.getElementById(
-      "searchInput"
-    )
-      .value
+    searchInput.value
       .trim()
       .toLowerCase();
 
-
-  const status =
-    document.getElementById(
-      "statusFilter"
-    ).value;
-
-
-  const retailerId =
-    document.getElementById(
-      "retailerFilter"
-    ).value;
-
+  const protection =
+    protectionFilter.value;
 
   const filtered =
-    customers.filter(
-      customer => {
+    allCustomers.filter(customer => {
 
-        const searchable = [
-          customer.name,
-          customer.mobile,
-          customer.email,
-          customer.city,
-          customer.id
-        ]
-          .join(" ")
-          .toLowerCase();
+      const searchable = [
 
+        customer.id,
 
-        const searchMatch =
-          !search ||
-          searchable.includes(search);
+        customer.customerId,
 
+        customer.name,
 
-        const active =
-          customer.active !== false;
+        customer.customerName,
 
+        customer.mobile,
 
-        const statusMatch =
-          status === "ALL"
-          ||
-          (
-            status === "ACTIVE"
-            && active
-          )
-          ||
-          (
-            status === "INACTIVE"
-            && !active
-          );
+        customer.customerMobile,
 
+        customer.phone,
 
-        const retailerMatch =
-          retailerId === "ALL"
-          ||
-          customer.originalRetailerId ===
-            retailerId;
+        customer.address,
 
+        customer.deviceBrand,
 
-        return (
-          searchMatch
-          &&
-          statusMatch
-          &&
-          retailerMatch
+        customer.deviceModel,
+
+        customer.serialNumber,
+
+        customer.screenSize
+
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const searchMatch =
+        !search ||
+        searchable.includes(search);
+
+      const protectedStatus =
+        isProtectedCustomer(customer);
+
+      const protectionMatch =
+        !protection ||
+        (
+          protection === "PROTECTED" &&
+          protectedStatus
+        ) ||
+        (
+          protection === "UNPROTECTED" &&
+          !protectedStatus
         );
 
-      }
-    );
+      return (
+        searchMatch &&
+        protectionMatch
+      );
+
+    });
 
 
-  updateSummary();
+  if (filtered.length === 0) {
 
+    customerContainer.innerHTML = `
+      <div class="empty">
 
-  if (!filtered.length) {
+        <div class="empty-icon">👥</div>
 
-    customerList.style.display =
-      "block";
-
-    customerList.innerHTML =
-      `
-        <div class="empty">
-          No customers found.
+        <div class="empty-title">
+          No Customers Found
         </div>
-      `;
 
-    loading.style.display =
-      "none";
+        <div class="empty-text">
+          No customer matches your search or filter.
+        </div>
+
+      </div>
+    `;
 
     return;
 
   }
 
 
-  customerList.innerHTML =
-    filtered
-      .map(
-        customer =>
-          customerCard(
-            customer
-          )
-      )
-      .join("");
-
-
-  loading.style.display =
-    "none";
-
-  customerList.style.display =
-    "block";
+  customerContainer.innerHTML = `
+    <div class="customer-list">
+      ${filtered
+        .map(renderCustomerCard)
+        .join("")}
+    </div>
+  `;
 
 
   document
-    .querySelectorAll(
-      "[data-customer-id]"
-    )
-    .forEach(
-      element => {
+    .querySelectorAll("[data-view-customer]")
+    .forEach(button => {
 
-        element.addEventListener(
-          "click",
-          () => {
+      button.addEventListener(
+        "click",
+        () => openCustomerModal(
+          button.dataset.viewCustomer
+        )
+      );
 
-            const id =
-              element.dataset.customerId;
+    });
 
-            showDetails(id);
 
-          }
-        );
+  document
+    .querySelectorAll("[data-edit-customer]")
+    .forEach(button => {
 
-      }
-    );
+      button.addEventListener(
+        "click",
+        () => openCustomerModal(
+          button.dataset.editCustomer
+        )
+      );
+
+    });
 
 }
 
 
-// =====================================================
-// CUSTOMER CARD
-// =====================================================
+/* =========================================================
+   CUSTOMER CARD
+========================================================= */
 
-function customerCard(customer) {
+function renderCustomerCard(customer) {
 
-  const active =
-    customer.active !== false;
+  const protectedCustomer =
+    isProtectedCustomer(customer);
 
+  const name =
+    customer.name ||
+    customer.customerName ||
+    "Customer";
+
+  const mobile =
+    customer.mobile ||
+    customer.customerMobile ||
+    customer.phone ||
+    "-";
+
+  const address =
+    customer.address ||
+    "-";
+
+  const device =
+    getDeviceText(customer);
 
   const retailer =
-    findRetailer(
-      customer.originalRetailerId
-    );
+    getRetailer(customer.originalRetailerId);
 
-
-  const customerJobs =
-    jobs.filter(
-      job =>
-        job.customerId ===
-        customer.id
-    );
-
+  const retailerName =
+    retailer
+      ? (
+          retailer.businessName ||
+          retailer.shopName ||
+          retailer.name ||
+          retailer.mobile ||
+          retailer.uid
+        )
+      : (
+          customer.originalRetailerName ||
+          customer.retailerName ||
+          "No Retailer"
+        );
 
   return `
-    <div
-      class="customer-card"
-      data-customer-id="${escapeHtml(customer.id)}">
+    <div class="customer-card">
 
-      <div class="customer-top">
+      <div class="customer-head">
 
         <div>
 
           <div class="customer-name">
-            ${escapeHtml(
-              customer.name ||
-              "Unnamed Customer"
-            )}
+            ${escapeHtml(name)}
           </div>
 
           <div class="customer-mobile">
-            ${escapeHtml(
-              customer.mobile ||
-              "No mobile"
-            )}
+            📱 ${escapeHtml(mobile)}
           </div>
 
         </div>
 
-
-        <span class="status ${
-          active
-            ? "active"
-            : "inactive"
-        }">
-
-          ${
-            active
-              ? "ACTIVE"
-              : "INACTIVE"
-          }
-
-        </span>
+        ${
+          protectedCustomer
+            ? `
+              <span class="protected-badge">
+                🛡️ PROTECTED
+              </span>
+            `
+            : `
+              <span class="normal-badge">
+                UNPROTECTED
+              </span>
+            `
+        }
 
       </div>
 
 
       <div class="customer-info">
 
-        <div class="info">
+        <div class="info-row">
+          <span class="info-icon">📍</span>
+          <span>${escapeHtml(address)}</span>
+        </div>
 
+        <div class="info-row">
+          <span class="info-icon">📺</span>
+          <span>${escapeHtml(device)}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-icon">🔢</span>
           <span>
-            PROTECTED RETAILER
-          </span>
-
-          <strong>
             ${escapeHtml(
-              retailer?.name ||
-              retailer?.businessName ||
-              "Not linked"
+              customer.serialNumber ||
+              "Serial not registered"
             )}
-          </strong>
-
-        </div>
-
-
-        <div class="info">
-
-          <span>
-            SERVICE JOBS
           </span>
-
-          <strong>
-            ${customerJobs.length}
-          </strong>
-
         </div>
 
-
-        <div class="info">
-
-          <span>
-            EMAIL
-          </span>
-
-          <strong>
-            ${escapeHtml(
-              customer.email ||
-              "Not added"
-            )}
-          </strong>
-
-        </div>
+      </div>
 
 
-        <div class="info">
+      <div class="retailer-box">
 
-          <span>
-            CUSTOMER ID
-          </span>
+        <strong>Original Retailer:</strong>
+        ${escapeHtml(retailerName)}
 
-          <strong>
-            ${escapeHtml(
-              customer.id
-            )}
-          </strong>
+        ${
+          protectedCustomer
+            ? `
+              <br>
+              <span>
+                Customer relationship protected.
+              </span>
+            `
+            : ""
+        }
 
-        </div>
+      </div>
+
+
+      <div class="customer-actions">
+
+        <button
+          type="button"
+          class="action-btn view-btn"
+          data-view-customer="${escapeAttribute(customer.id)}"
+        >
+          View
+        </button>
+
+        <button
+          type="button"
+          class="action-btn edit-btn"
+          data-edit-customer="${escapeAttribute(customer.id)}"
+        >
+          Edit
+        </button>
 
       </div>
 
@@ -548,124 +709,677 @@ function customerCard(customer) {
 }
 
 
-// =====================================================
-// SUMMARY
-// =====================================================
+/* =========================================================
+   OPEN CUSTOMER MODAL
+========================================================= */
 
-function updateSummary() {
+function openCustomerModal(customerId) {
 
-  const total =
-    customers.length;
+  const customer =
+    allCustomers.find(
+      item => item.id === customerId
+    );
 
+  if (!customer) {
 
-  const active =
-    customers.filter(
-      item =>
-        item.active !== false
-    ).length;
+    showError("Customer not found.");
 
+    return;
 
-  const protectedCount =
-    customers.filter(
-      item =>
-        !!item.originalRetailerId
-    ).length;
+  }
 
+  selectedCustomerId =
+    customerId;
 
-  document.getElementById(
-    "totalCount"
-  ).textContent =
-    total;
+  modalTitle.textContent =
+    "Customer Details";
 
+  editCustomerId.value =
+    customer.id;
 
-  document.getElementById(
-    "activeCount"
-  ).textContent =
-    active;
+  customerName.value =
+    customer.name ||
+    customer.customerName ||
+    "";
 
+  customerMobile.value =
+    customer.mobile ||
+    customer.customerMobile ||
+    customer.phone ||
+    "";
 
-  document.getElementById(
-    "protectedCount"
-  ).textContent =
-    protectedCount;
+  customerAddress.value =
+    customer.address ||
+    "";
+
+  deviceBrand.value =
+    customer.deviceBrand ||
+    "";
+
+  deviceModel.value =
+    customer.deviceModel ||
+    "";
+
+  screenSize.value =
+    customer.screenSize ||
+    "";
+
+  serialNumber.value =
+    customer.serialNumber ||
+    "";
+
+  originalRetailerId.value =
+    customer.originalRetailerId ||
+    "";
+
+  updateProtectionPanel(customer);
+
+  duplicateWarning.style.display =
+    "none";
+
+  modalBackdrop.classList.add("show");
 
 }
 
 
-// =====================================================
-// ADD CUSTOMER
-// =====================================================
+/* =========================================================
+   PROTECTION PANEL
+========================================================= */
 
-document.getElementById(
-  "addBtn"
-).addEventListener(
-  "click",
-  () => {
+function updateProtectionPanel(customer) {
 
-    openAddModal();
+  const protectedCustomer =
+    isProtectedCustomer(customer);
+
+  if (protectedCustomer) {
+
+    const retailer =
+      getRetailer(
+        customer.originalRetailerId
+      );
+
+    const retailerName =
+      retailer
+        ? (
+            retailer.businessName ||
+            retailer.shopName ||
+            retailer.name ||
+            retailer.mobile ||
+            retailer.uid
+          )
+        : (
+            customer.originalRetailerName ||
+            customer.retailerName ||
+            customer.originalRetailerId ||
+            "Original Retailer"
+          );
+
+    protectedText.innerHTML = `
+      This customer is protected by
+      <strong>${escapeHtml(retailerName)}</strong>.
+      The original retailer relationship should not normally be changed.
+      Transfer is an Admin-only operation.
+    `;
+
+  } else {
+
+    protectedText.textContent =
+      "This customer is not currently protected by a retailer. Assigning an original retailer will protect the customer relationship.";
 
   }
+
+}
+
+
+/* =========================================================
+   SAVE CUSTOMER
+========================================================= */
+
+saveCustomerBtn.addEventListener(
+  "click",
+  saveCustomer
 );
 
 
-// =====================================================
-// OPEN ADD
-// =====================================================
+async function saveCustomer() {
 
-function openAddModal() {
+  if (!selectedCustomerId) {
 
-  editingCustomerId =
-    null;
+    showError(
+      "No customer selected."
+    );
 
+    return;
 
-  document.getElementById(
-    "modalTitle"
-  ).textContent =
-    "Add Customer";
+  }
 
+  const customer =
+    allCustomers.find(
+      item => item.id === selectedCustomerId
+    );
 
-  document.getElementById(
-    "customerForm"
-  ).reset();
+  if (!customer) {
 
+    showError(
+      "Customer not found."
+    );
 
-  document.getElementById(
-    "active"
-  ).value =
-    "true";
+    return;
 
-
-  document.getElementById(
-    "authUserId"
-  ).value =
-    "";
+  }
 
 
-  modal.classList.add(
-    "show"
+  const name =
+    customerName.value.trim();
+
+  const mobile =
+    normalizeMobile(
+      customerMobile.value
+    );
+
+  const address =
+    customerAddress.value.trim();
+
+  const brand =
+    deviceBrand.value.trim();
+
+  const model =
+    deviceModel.value.trim();
+
+  const size =
+    screenSize.value.trim();
+
+  const serial =
+    serialNumber.value.trim();
+
+  const retailerId =
+    originalRetailerId.value || "";
+
+
+  if (!name) {
+
+    showError(
+      "Customer name is required."
+    );
+
+    return;
+
+  }
+
+
+  if (!mobile) {
+
+    showError(
+      "Customer mobile number is required."
+    );
+
+    return;
+
+  }
+
+
+  /*
+    Duplicate check.
+    The current customer itself is ignored.
+  */
+
+  const duplicate =
+    findPossibleDuplicate(
+      mobile,
+      name,
+      address,
+      brand,
+      model,
+      serial,
+      customer.id
+    );
+
+
+  if (duplicate) {
+
+    duplicateWarning.style.display =
+      "block";
+
+    showError(
+      `Possible duplicate customer found: ${
+        duplicate.name ||
+        duplicate.customerName ||
+        duplicate.mobile ||
+        duplicate.id
+      }`
+    );
+
+    return;
+
+  }
+
+
+  /*
+    Protection rule:
+    Once originalRetailerId exists,
+    normal customer editing must NOT change it.
+    
+    Since this is Admin UI, we allow an explicit
+    Admin transfer only when the retailer value
+    is deliberately changed.
+  */
+
+  const existingRetailerId =
+    customer.originalRetailerId || "";
+
+  const retailerChanged =
+    existingRetailerId !== retailerId;
+
+
+  if (
+    existingRetailerId &&
+    retailerChanged
+  ) {
+
+    const confirmed =
+      window.confirm(
+        "This customer is already protected by an original retailer.\n\n" +
+        "Changing the retailer will transfer customer protection.\n\n" +
+        "Continue?"
+      );
+
+    if (!confirmed) {
+
+      originalRetailerId.value =
+        existingRetailerId;
+
+      return;
+
+    }
+
+  }
+
+
+  saveCustomerBtn.disabled =
+    true;
+
+  saveCustomerBtn.textContent =
+    "Saving...";
+
+
+  try {
+
+    const retailer =
+      getRetailer(retailerId);
+
+
+    const updateData = {
+
+      name,
+
+      customerName: name,
+
+      mobile,
+
+      customerMobile: mobile,
+
+      address,
+
+      deviceBrand: brand,
+
+      deviceModel: model,
+
+      screenSize: size,
+
+      serialNumber: serial,
+
+      updatedAt: serverTimestamp()
+
+    };
+
+
+    /*
+      Protect customer when retailer is assigned.
+    */
+
+    if (retailerId) {
+
+      updateData.originalRetailerId =
+        retailerId;
+
+      updateData.protected =
+        true;
+
+      updateData.originalRetailerName =
+        retailer
+          ? (
+              retailer.businessName ||
+              retailer.shopName ||
+              retailer.name ||
+              retailer.mobile ||
+              retailer.uid
+            )
+          : "";
+
+    } else {
+
+      /*
+        Only remove protection if Admin explicitly
+        confirms the retailer change.
+      */
+
+      if (existingRetailerId) {
+
+        const confirmed =
+          window.confirm(
+            "You are removing the original retailer protection from this customer.\n\nContinue?"
+          );
+
+        if (!confirmed) {
+
+          originalRetailerId.value =
+            existingRetailerId;
+
+          saveCustomerBtn.disabled =
+            false;
+
+          saveCustomerBtn.textContent =
+            "Save Customer";
+
+          return;
+
+        }
+
+      }
+
+      updateData.originalRetailerId =
+        "";
+
+      updateData.originalRetailerName =
+        "";
+
+      updateData.protected =
+        false;
+
+    }
+
+
+    await updateDoc(
+      doc(
+        db,
+        "customers",
+        selectedCustomerId
+      ),
+      updateData
+    );
+
+
+    closeModal();
+
+    await loadCustomers();
+
+    showSuccess(
+      "Customer updated successfully."
+    );
+
+
+  } catch (error) {
+
+    showError(
+      error.message ||
+      "Customer update failed."
+    );
+
+  } finally {
+
+    saveCustomerBtn.disabled =
+      false;
+
+    saveCustomerBtn.textContent =
+      "Save Customer";
+
+  }
+
+}
+
+
+/* =========================================================
+   DUPLICATE DETECTION
+========================================================= */
+
+function findPossibleDuplicate(
+  mobile,
+  name,
+  address,
+  brand,
+  model,
+  serial,
+  currentId
+) {
+
+  const normalizedName =
+    normalizeText(name);
+
+  const normalizedAddress =
+    normalizeText(address);
+
+  const normalizedBrand =
+    normalizeText(brand);
+
+  const normalizedModel =
+    normalizeText(model);
+
+  const normalizedSerial =
+    normalizeText(serial);
+
+
+  for (const customer of allCustomers) {
+
+    if (customer.id === currentId) {
+      continue;
+    }
+
+
+    const otherMobile =
+      normalizeMobile(
+        customer.mobile ||
+        customer.customerMobile ||
+        customer.phone ||
+        ""
+      );
+
+    const otherName =
+      normalizeText(
+        customer.name ||
+        customer.customerName ||
+        ""
+      );
+
+    const otherAddress =
+      normalizeText(
+        customer.address ||
+        ""
+      );
+
+    const otherBrand =
+      normalizeText(
+        customer.deviceBrand ||
+        ""
+      );
+
+    const otherModel =
+      normalizeText(
+        customer.deviceModel ||
+        ""
+      );
+
+    const otherSerial =
+      normalizeText(
+        customer.serialNumber ||
+        ""
+      );
+
+
+    /*
+      Strong duplicate:
+      Same mobile.
+    */
+
+    if (
+      mobile &&
+      otherMobile &&
+      mobile === otherMobile
+    ) {
+
+      return customer;
+
+    }
+
+
+    /*
+      Strong duplicate:
+      Same serial number.
+    */
+
+    if (
+      normalizedSerial &&
+      otherSerial &&
+      normalizedSerial === otherSerial
+    ) {
+
+      return customer;
+
+    }
+
+
+    /*
+      Medium duplicate:
+      Same name + address + device.
+    */
+
+    const sameName =
+      normalizedName &&
+      otherName &&
+      normalizedName === otherName;
+
+    const sameAddress =
+      normalizedAddress &&
+      otherAddress &&
+      normalizedAddress === otherAddress;
+
+    const sameDevice =
+      normalizedBrand &&
+      normalizedModel &&
+      normalizedBrand === otherBrand &&
+      normalizedModel === otherModel;
+
+
+    if (
+      sameName &&
+      sameAddress &&
+      sameDevice
+    ) {
+
+      return customer;
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =========================================================
+   RETAILER LOOKUP
+========================================================= */
+
+function getRetailer(uid) {
+
+  if (!uid) {
+    return null;
+  }
+
+  return (
+    allRetailers.find(
+      retailer => retailer.uid === uid
+    ) || null
   );
 
 }
 
 
-// =====================================================
-// CLOSE
-// =====================================================
+/* =========================================================
+   DEVICE TEXT
+========================================================= */
 
-document.getElementById(
-  "closeModal"
-).addEventListener(
+function getDeviceText(customer) {
+
+  const parts = [
+
+    customer.deviceBrand,
+
+    customer.deviceModel,
+
+    customer.screenSize
+      ? `${customer.screenSize}"`
+      : null
+
+  ].filter(Boolean);
+
+
+  if (parts.length) {
+
+    return parts.join(" ");
+
+  }
+
+
+  return (
+    customer.device ||
+    customer.product ||
+    "Device not registered"
+  );
+
+}
+
+
+/* =========================================================
+   CLOSE MODAL
+========================================================= */
+
+function closeModal() {
+
+  modalBackdrop.classList.remove(
+    "show"
+  );
+
+  selectedCustomerId =
+    null;
+
+  customerForm.reset();
+
+  duplicateWarning.style.display =
+    "none";
+
+}
+
+
+closeModalBtn.addEventListener(
   "click",
   closeModal
 );
 
 
-modal.addEventListener(
+cancelModalBtn.addEventListener(
+  "click",
+  closeModal
+);
+
+
+modalBackdrop.addEventListener(
   "click",
   event => {
 
     if (
-      event.target === modal
+      event.target === modalBackdrop
     ) {
 
       closeModal();
@@ -676,235 +1390,119 @@ modal.addEventListener(
 );
 
 
-function closeModal() {
+/* =========================================================
+   MORE MENU
+========================================================= */
 
-  modal.classList.remove(
-    "show"
-  );
+moreNavBtn.addEventListener(
+  "click",
+  event => {
 
-}
+    event.stopPropagation();
 
+    morePanel.classList.toggle(
+      "show"
+    );
 
-// =====================================================
-// SAVE CUSTOMER
-// =====================================================
-
-document.getElementById(
-  "customerForm"
-).addEventListener(
-  "submit",
-  async event => {
-
-    event.preventDefault();
+  }
+);
 
 
-    const saveBtn =
-      document.getElementById(
-        "saveBtn"
-      );
+morePanel
+  .querySelectorAll("[data-page]")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        const page =
+          button.dataset.page;
+
+        if (page) {
+
+          window.location.href =
+            page;
+
+        }
+
+      }
+    );
+
+  });
 
 
-    const name =
-      document.getElementById(
-        "name"
-      ).value.trim();
-
-
-    const mobile =
-      document.getElementById(
-        "mobile"
-      ).value.trim();
-
-
-    const email =
-      document.getElementById(
-        "email"
-      ).value.trim();
-
-
-    const retailerId =
-      document.getElementById(
-        "retailerId"
-      ).value;
-
-
-    const active =
-      document.getElementById(
-        "active"
-      ).value === "true";
-
-
-    const address =
-      document.getElementById(
-        "address"
-      ).value.trim();
-
-
-    const city =
-      document.getElementById(
-        "city"
-      ).value.trim();
-
-
-    const pincode =
-      document.getElementById(
-        "pincode"
-      ).value.trim();
-
-
-    const authUserId =
-      document.getElementById(
-        "authUserId"
-      ).value.trim();
-
-
-    if (!name || !mobile) {
-
-      alert(
-        "Name and mobile are required."
-      );
-
-      return;
-
-    }
-
-
-    if (!retailerId) {
-
-      alert(
-        "Please select the original retailer."
-      );
-
-      return;
-
-    }
-
+document.addEventListener(
+  "click",
+  event => {
 
     if (
-      !/^\d{10}$/.test(
-        mobile.replace(/\D/g,"")
-      )
+      morePanel.classList.contains("show") &&
+      !morePanel.contains(event.target) &&
+      event.target !== moreNavBtn
     ) {
 
-      alert(
-        "Please enter a valid 10 digit mobile number."
+      morePanel.classList.remove(
+        "show"
       );
-
-      return;
 
     }
 
-
-    const cleanMobile =
-      mobile.replace(
-        /\D/g,
-        ""
-      );
+  }
+);
 
 
-    saveBtn.disabled =
-      true;
+/* =========================================================
+   BOTTOM NAVIGATION
+========================================================= */
 
-    saveBtn.textContent =
-      "Saving...";
+document
+  .querySelectorAll(
+    ".bottom-nav [data-page]"
+  )
+  .forEach(button => {
 
+    button.addEventListener(
+      "click",
+      () => {
+
+        const page =
+          button.dataset.page;
+
+        if (page) {
+
+          window.location.href =
+            page;
+
+        }
+
+      }
+    );
+
+  });
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+logoutBtn.addEventListener(
+  "click",
+  async () => {
 
     try {
 
-      const data = {
+      await signOut(auth);
 
-        name,
-
-        mobile:
-          cleanMobile,
-
-        email,
-
-        originalRetailerId:
-          retailerId,
-
-        address,
-
-        city,
-
-        pincode,
-
-        active,
-
-        updatedAt:
-          serverTimestamp()
-
-      };
-
-
-      if (authUserId) {
-
-        data.authUserId =
-          authUserId;
-
-      }
-
-
-      if (
-        editingCustomerId
-      ) {
-
-        await updateDoc(
-          doc(
-            db,
-            "customers",
-            editingCustomerId
-          ),
-          data
-        );
-
-
-        alert(
-          "Customer updated successfully."
-        );
-
-      } else {
-
-        data.createdAt =
-          serverTimestamp();
-
-
-        await addDoc(
-          collection(
-            db,
-            "customers"
-          ),
-          data
-        );
-
-
-        alert(
-          "Customer created successfully."
-        );
-
-      }
-
-
-      closeModal();
-
-      await loadData();
+      window.location.href =
+        "../index.html";
 
     } catch (error) {
 
-      console.error(error);
-
-      alert(
-        "Unable to save customer.\n\n" +
-        error.message
+      showError(
+        error.message ||
+        "Logout failed."
       );
-
-    } finally {
-
-      saveBtn.disabled =
-        false;
-
-      saveBtn.textContent =
-        "Save Customer";
 
     }
 
@@ -912,453 +1510,99 @@ document.getElementById(
 );
 
 
-// =====================================================
-// CUSTOMER DETAILS
-// =====================================================
+/* =========================================================
+   NORMALIZE MOBILE
+========================================================= */
 
-function showDetails(id) {
+function normalizeMobile(value) {
 
-  const customer =
-    customers.find(
-      item =>
-        item.id === id
-    );
-
-
-  if (!customer)
-    return;
-
-
-  const retailer =
-    findRetailer(
-      customer.originalRetailerId
-    );
-
-
-  const customerJobs =
-    jobs.filter(
-      job =>
-        job.customerId === id
-    );
-
-
-  const active =
-    customer.active !== false;
-
-
-  document.getElementById(
-    "detailContent"
-  ).innerHTML =
-    `
-
-      <div class="detail-section">
-
-        <h3>
-          Customer
-        </h3>
-
-        <div class="detail-row">
-          <span>Name</span>
-          <strong>
-            ${escapeHtml(
-              customer.name || "-"
-            )}
-          </strong>
-        </div>
-
-        <div class="detail-row">
-          <span>Mobile</span>
-          <strong>
-            ${escapeHtml(
-              customer.mobile || "-"
-            )}
-          </strong>
-        </div>
-
-        <div class="detail-row">
-          <span>Email</span>
-          <strong>
-            ${escapeHtml(
-              customer.email || "-"
-            )}
-          </strong>
-        </div>
-
-        <div class="detail-row">
-          <span>Status</span>
-          <strong>
-            ${
-              active
-                ? "ACTIVE"
-                : "INACTIVE"
-            }
-          </strong>
-        </div>
-
-        <div class="detail-row">
-          <span>Customer ID</span>
-          <strong>
-            ${escapeHtml(id)}
-          </strong>
-        </div>
-
-      </div>
-
-
-      <div class="detail-section">
-
-        <h3>
-          Protected Relationship
-        </h3>
-
-        <div class="detail-row">
-          <span>Original Retailer</span>
-          <strong>
-            ${escapeHtml(
-              retailer?.name ||
-              retailer?.businessName ||
-              "Not linked"
-            )}
-          </strong>
-        </div>
-
-        <div class="detail-row">
-          <span>Retailer ID</span>
-          <strong>
-            ${escapeHtml(
-              customer.originalRetailerId ||
-              "-"
-            )}
-          </strong>
-        </div>
-
-      </div>
-
-
-      <div class="detail-section">
-
-        <h3>
-          Address
-        </h3>
-
-        <div class="detail-row">
-          <span>Address</span>
-          <strong>
-            ${escapeHtml(
-              customer.address || "-"
-            )}
-          </strong>
-        </div>
-
-        <div class="detail-row">
-          <span>City</span>
-          <strong>
-            ${escapeHtml(
-              customer.city || "-"
-            )}
-          </strong>
-        </div>
-
-        <div class="detail-row">
-          <span>Pincode</span>
-          <strong>
-            ${escapeHtml(
-              customer.pincode || "-"
-            )}
-          </strong>
-        </div>
-
-      </div>
-
-
-      <div class="detail-section">
-
-        <h3>
-          Account Linking
-        </h3>
-
-        <div class="detail-row">
-          <span>Firebase Auth UID</span>
-          <strong>
-            ${escapeHtml(
-              customer.authUserId ||
-              "Not linked"
-            )}
-          </strong>
-        </div>
-
-      </div>
-
-
-      <div class="detail-section">
-
-        <h3>
-          Service History
-        </h3>
-
-        <div class="detail-row">
-          <span>Total Jobs</span>
-          <strong>
-            ${customerJobs.length}
-          </strong>
-        </div>
-
-        <div class="detail-row">
-          <span>Completed</span>
-          <strong>
-            ${
-              customerJobs.filter(
-                job =>
-                  String(
-                    job.status || ""
-                  ).toUpperCase()
-                  === "COMPLETED"
-              ).length
-            }
-          </strong>
-        </div>
-
-        <div class="detail-row">
-          <span>Active</span>
-          <strong>
-            ${
-              customerJobs.filter(
-                job =>
-                  String(
-                    job.status || ""
-                  ).toUpperCase()
-                  !== "COMPLETED"
-                  &&
-                  String(
-                    job.status || ""
-                  ).toUpperCase()
-                  !== "CANCELLED"
-              ).length
-            }
-          </strong>
-        </div>
-
-      </div>
-
-
-      <button
-        id="editCustomerBtn"
-        class="save-btn">
-
-        Edit Customer
-
-      </button>
-
-    `;
-
-
-  detailModal.classList.add(
-    "show"
-  );
-
-
-  document.getElementById(
-    "editCustomerBtn"
-  ).onclick =
-    () => {
-
-      closeDetailModal();
-
-      openEditModal(
-        customer
-      );
-
-    };
+  return String(value || "")
+    .replace(/\D/g, "")
+    .slice(-10);
 
 }
 
 
-// =====================================================
-// EDIT CUSTOMER
-// =====================================================
+/* =========================================================
+   NORMALIZE TEXT
+========================================================= */
 
-function openEditModal(customer) {
+function normalizeText(value) {
 
-  editingCustomerId =
-    customer.id;
-
-
-  document.getElementById(
-    "modalTitle"
-  ).textContent =
-    "Edit Customer";
-
-
-  document.getElementById(
-    "name"
-  ).value =
-    customer.name || "";
-
-
-  document.getElementById(
-    "mobile"
-  ).value =
-    customer.mobile || "";
-
-
-  document.getElementById(
-    "email"
-  ).value =
-    customer.email || "";
-
-
-  document.getElementById(
-    "retailerId"
-  ).value =
-    customer.originalRetailerId || "";
-
-
-  document.getElementById(
-    "active"
-  ).value =
-    customer.active === false
-      ? "false"
-      : "true";
-
-
-  document.getElementById(
-    "address"
-  ).value =
-    customer.address || "";
-
-
-  document.getElementById(
-    "city"
-  ).value =
-    customer.city || "";
-
-
-  document.getElementById(
-    "pincode"
-  ).value =
-    customer.pincode || "";
-
-
-  document.getElementById(
-    "authUserId"
-  ).value =
-    customer.authUserId || "";
-
-
-  modal.classList.add(
-    "show"
-  );
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
 
 }
 
 
-// =====================================================
-// DETAIL CLOSE
-// =====================================================
-
-document.getElementById(
-  "closeDetail"
-).addEventListener(
-  "click",
-  closeDetailModal
-);
-
-
-detailModal.addEventListener(
-  "click",
-  event => {
-
-    if (
-      event.target ===
-      detailModal
-    ) {
-
-      closeDetailModal();
-
-    }
-
-  }
-);
-
-
-function closeDetailModal() {
-
-  detailModal.classList.remove(
-    "show"
-  );
-
-}
-
-
-// =====================================================
-// FILTER EVENTS
-// =====================================================
-
-document.getElementById(
-  "searchInput"
-).addEventListener(
-  "input",
-  render
-);
-
-
-document.getElementById(
-  "statusFilter"
-).addEventListener(
-  "change",
-  render
-);
-
-
-document.getElementById(
-  "retailerFilter"
-).addEventListener(
-  "change",
-  render
-);
-
-
-// =====================================================
-// HELPERS
-// =====================================================
-
-function findRetailer(id) {
-
-  if (!id)
-    return null;
-
-
-  return retailers.find(
-    retailer =>
-      retailer.id === id
-  ) || null;
-
-}
-
-
-function escapeHtml(value) {
-
-  return String(
-    value ?? ""
-  )
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-
-}
-
+/* =========================================================
+   ERROR / SUCCESS
+========================================================= */
 
 function showError(message) {
 
-  loading.textContent =
+  successBox.style.display =
+    "none";
+
+  errorBox.textContent =
     message;
 
-  loading.style.display =
+  errorBox.style.display =
     "block";
 
-  customerList.style.display =
+
+  setTimeout(() => {
+
+    errorBox.style.display =
+      "none";
+
+  }, 5000);
+
+}
+
+
+function showSuccess(message) {
+
+  errorBox.style.display =
     "none";
+
+  successBox.textContent =
+    message;
+
+  successBox.style.display =
+    "block";
+
+
+  setTimeout(() => {
+
+    successBox.style.display =
+      "none";
+
+  }, 4000);
+
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHtml(value) {
+
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+}
+
+
+function escapeAttribute(value) {
+
+  return escapeHtml(value);
 
 }
