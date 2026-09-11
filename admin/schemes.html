@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Schemes | REPARO V1</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      background: #f8fafc;
+      color: #172033;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding-bottom: 82px;
+    }
+
+    .page {
+      max-width: 700px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 13px;
+      margin-top: 3px;
+    }
+
+    .logout {
+      border: 0;
+      background: #172033;
+      color: white;
+      border-radius: 12px;
+      padding: 9px 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .summary-card {
+      background: white;
+      border-radius: 18px;
+      padding: 15px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    }
+
+    .summary-label {
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .summary-value {
+      font-size: 24px;
+      font-weight: 800;
+      margin-top: 5px;
+    }
+
+    .active-number {
+      color: #059669;
+    }
+
+    .inactive-number {
+      color: #dc2626;
+    }
+
+    .search-box {
+      background: white;
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+    }
+
+    .search-box input,
+    .search-box select {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      outline: none;
+      background: #f8fafc;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .search-box input:focus,
+    .search-box select:focus {
+      border-color: #ec4899;
+      background: white;
+    }
+
+    .add-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 13px;
+      padding: 12px;
+      background: #ec4899;
+      color: white;
+      font-size: 14px;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+
+    .scheme-card {
+      background: white;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 5px 18px rgba(15, 23, 42, 0.07);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .scheme-name {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .scheme-type {
+      color: #64748b;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .status {
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .status-active {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-inactive {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .scheme-highlight {
+      background: #fff1f2;
+      border-radius: 14px;
+      padding: 12px;
+      margin-top: 13px;
+    }
+
+    .reward-label {
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    .reward-value {
+      color: #be185d;
+      font-size: 20px;
+      font-weight: 800;
+      margin-top: 3px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .info-box {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .info-label {
+      color: #64748b;
+      font-size: 10px;
+    }
+
+    .info-value {
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+
+    .card-divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 14px 0;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      flex: 1;
+      border: 0;
+      border-radius: 12px;
+      padding: 11px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .edit-btn {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .toggle-btn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .empty,
+    .loading {
+      background: white;
+      border-radius: 18px;
+      padding: 30px 18px;
+      text-align: center;
+      color: #64748b;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+    }
+
+    .empty-icon {
+      font-size: 30px;
+      margin-bottom: 8px;
+    }
+
+    .empty-title {
+      color: #172033;
+      font-weight: 800;
+    }
+
+    .empty-text {
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .message {
+      display: none;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 700px;
+      max-height: 92vh;
+      overflow-y: auto;
+      background: white;
+      border-radius: 24px 24px 0 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .close-btn {
+      border: 0;
+      background: #f1f5f9;
+      border-radius: 10px;
+      width: 36px;
+      height: 36px;
+      font-size: 20px;
+    }
+
+    .form-field {
+      margin-bottom: 13px;
+    }
+
+    .form-field label {
+      display: block;
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 11px;
+      background: #f8fafc;
+      outline: none;
+      font-size: 13px;
+    }
+
+    .form-field textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+      border-color: #ec4899;
+      background: white;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field-help {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px;
+      font-weight: 800;
+    }
+
+    .cancel-btn {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    .save-btn {
+      background: #ec4899;
+      color: white;
+    }
+
+    .save-btn:disabled {
+      opacity: 0.6;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+      height: 68px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 500;
+    }
+
+    .nav-item {
+      border: 0;
+      background: transparent;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 8px;
+    }
+
+    .nav-item.active {
+      color: #ec4899;
+    }
+
+    @media (min-width: 640px) {
+      .summary-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .modal-backdrop {
+        align-items: center;
+      }
+
+      .modal {
+        border-radius: 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="page">
+
+    <header class="header">
+      <div>
+        <div class="title">Schemes</div>
+        <div class="subtitle">Retailer incentives & special schemes</div>
+      </div>
+
+      <button id="logoutBtn" class="logout">Logout</button>
+    </header>
+
+    <div id="errorBox" class="message error"></div>
+    <div id="successBox" class="message success"></div>
+
+    <section class="summary-grid">
+
+      <div class="summary-card">
+        <div class="summary-label">Total Schemes</div>
+        <div id="totalSchemes" class="summary-value">0</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">Active</div>
+        <div id="activeSchemes" class="summary-value active-number">0</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">Inactive</div>
+        <div id="inactiveSchemes" class="summary-value inactive-number">0</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">Slab Schemes</div>
+        <div id="slabSchemes" class="summary-value">0</div>
+      </div>
+
+    </section>
+
+    <section class="search-box">
+
+      <input
+        id="searchInput"
+        type="search"
+        placeholder="Search scheme, category..."
+      >
+
+      <select id="statusFilter">
+        <option value="">All Status</option>
+        <option value="ACTIVE">Active</option>
+        <option value="INACTIVE">Inactive</option>
+      </select>
+
+      <select id="typeFilter">
+        <option value="">All Types</option>
+        <option value="PERCENTAGE">Extra Percentage</option>
+        <option value="FIXED">Fixed ₹</option>
+        <option value="PER_REQUEST">Per Service Request</option>
+        <option value="SLAB">Slab</option>
+        <option value="REVENUE_SLAB">Revenue Slab</option>
+      </select>
+
+      <button id="addSchemeBtn" class="add-btn">
+        + Create New Scheme
+      </button>
+
+    </section>
+
+    <section id="schemeContainer">
+      <div class="loading">Loading schemes...</div>
+    </section>
+
+  </main>
+
+
+  <div id="modalBackdrop" class="modal-backdrop">
+
+    <div class="modal">
+
+      <div class="modal-header">
+
+        <div id="modalTitle" class="modal-title">
+          Create Scheme
+        </div>
+
+        <button id="closeModalBtn" class="close-btn">
+          ×
+        </button>
+
+      </div>
+
+
+      <form id="schemeForm">
+
+        <input
+          id="editSchemeId"
+          type="hidden"
+        >
+
+
+        <div class="form-field">
+
+          <label>Scheme Name *</label>
+
+          <input
+            id="schemeName"
+            type="text"
+            placeholder="Example: Diwali Retailer Bonus"
+            required
+          >
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>Scheme Type *</label>
+
+          <select id="schemeType" required>
+
+            <option value="PERCENTAGE">
+              Extra Percentage
+            </option>
+
+            <option value="FIXED">
+              Fixed ₹
+            </option>
+
+            <option value="PER_REQUEST">
+              Per Service Request
+            </option>
+
+            <option value="SLAB">
+              Lead / Service Request Slab
+            </option>
+
+            <option value="REVENUE_SLAB">
+              Revenue Slab
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div class="form-grid">
+
+          <div class="form-field">
+
+            <label>Reward Value</label>
+
+            <input
+              id="rewardValue"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="10"
+            >
+
+            <div class="field-help">
+              % or ₹ depending on scheme type
+            </div>
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>Maximum Cap ₹</label>
+
+            <input
+              id="maxCap"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="Optional"
+            >
+
+          </div>
+
+        </div>
+
+
+        <div class="form-grid">
+
+          <div class="form-field">
+
+            <label>Start Date *</label>
+
+            <input
+              id="startDate"
+              type="date"
+              required
+            >
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>End Date *</label>
+
+            <input
+              id="endDate"
+              type="date"
+              required
+            >
+
+          </div>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>Retailer Scope</label>
+
+          <select id="retailerScope">
+
+            <option value="ALL">
+              All Retailers
+            </option>
+
+            <option value="SELECTED">
+              Selected Retailers
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div
+          id="retailerIdsField"
+          class="form-field"
+          style="display:none;"
+        >
+
+          <label>
+            Selected Retailer IDs
+          </label>
+
+          <textarea
+            id="retailerIds"
+            placeholder="Enter retailer UID / ID separated by comma"
+          ></textarea>
+
+          <div class="field-help">
+            Example: retailerUid1, retailerUid2
+          </div>
+
+        </div>
+
+
+        <div class="form-grid">
+
+          <div class="form-field">
+
+            <label>Category</label>
+
+            <input
+              id="category"
+              type="text"
+              placeholder="Example: TV Repair"
+            >
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>Service Type</label>
+
+            <input
+              id="serviceType"
+              type="text"
+              placeholder="Example: Installation"
+            >
+
+          </div>
+
+        </div>
+
+
+        <div class="form-grid">
+
+          <div class="form-field">
+
+            <label>Minimum Requests</label>
+
+            <input
+              id="minRequests"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="0"
+            >
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>Minimum Revenue ₹</label>
+
+            <input
+              id="minRevenue"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="0"
+            >
+
+          </div>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>Slab Rules</label>
+
+          <textarea
+            id="slabRules"
+            placeholder='Example: 50=500,100=1500,200=3500'
+          ></textarea>
+
+          <div class="field-help">
+            For SLAB: requests=bonus. For Revenue Slab: revenue=bonus.
+          </div>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>Conditions / Notes</label>
+
+          <textarea
+            id="conditions"
+            placeholder="Additional conditions for this scheme..."
+          ></textarea>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>Status</label>
+
+          <select id="schemeStatus">
+
+            <option value="ACTIVE">
+              Active
+            </option>
+
+            <option value="INACTIVE">
+              Inactive
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+          <button
+            id="cancelModalBtn"
+            type="button"
+            class="cancel-btn"
+          >
+            Cancel
+          </button>
+
+          <button
+            id="saveSchemeBtn"
+            type="submit"
+            class="save-btn"
+          >
+            Save Scheme
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <nav class="bottom-nav">
+
+    <button
+      class="nav-item"
+      onclick="window.location.href='./dashboard.html'"
+    >
+      🏠<br>Dashboard
+    </button>
+
+    <button
+      class="nav-item"
+      onclick="window.location.href='./service-requests.html'"
+    >
+      📋<br>Requests
+    </button>
+
+    <button
+      class="nav-item"
+      onclick="window.location.href='./jobs.html'"
+    >
+      🔧<br>Jobs
+    </button>
+
+    <button class="nav-item active">
+      🎁<br>Schemes
+    </button>
+
+    <button
+      class="nav-item"
+      onclick="window.location.href='./reports.html'"
+    >
+      📊<br>Reports
+    </button>
+
+  </nav>
+
+
+  <script
+    type="module"
+    src="../js/schemes.js"
+  ></script>
+
+</body>
+</html>
