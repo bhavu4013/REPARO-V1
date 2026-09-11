@@ -1,5 +1,3 @@
-import { auth, db } from "../js/firebase.js";
-
 import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
@@ -11,73 +9,166 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+  auth,
+  db
+} from "./firebase.js";
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const content =
+  document.getElementById(
+    "content"
+  );
+
+const headerJobId =
+  document.getElementById(
+    "headerJobId"
+  );
+
+const errorBox =
+  document.getElementById(
+    "errorBox"
+  );
+
+const successBox =
+  document.getElementById(
+    "successBox"
+  );
+
+const backBtn =
+  document.getElementById(
+    "backBtn"
+  );
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let customerUser = null;
+
+let customerProfile = null;
 
 let currentJob = null;
 
+let jobId = null;
+
+
+/* =========================================================
+   URL
+========================================================= */
+
 const params =
   new URLSearchParams(
-    location.search
+    window.location.search
   );
 
-const jobId =
+jobId =
   params.get("jobId");
 
 
-// =====================================================
-// AUTH
-// =====================================================
+/* =========================================================
+   BACK
+========================================================= */
+
+backBtn.addEventListener(
+  "click",
+  () => {
+
+    window.location.href =
+      "./status.html";
+
+  }
+);
+
+
+/* =========================================================
+   AUTH
+========================================================= */
 
 onAuthStateChanged(
   auth,
-  async user => {
+  async (user) => {
 
     if (!user) {
 
-      location.href =
-        "../index.html";
+      window.location.href =
+        "./login.html";
 
       return;
-
     }
 
 
     try {
 
-      const profile =
+      const userRef =
+        doc(
+          db,
+          "users",
+          user.uid
+        );
+
+
+      const snapshot =
         await getDoc(
-          doc(
-            db,
-            "users",
-            user.uid
-          )
+          userRef
         );
 
 
-      if (
-        !profile.exists() ||
-        profile.data().role !==
-          "customer"
-      ) {
+      if (!snapshot.exists()) {
 
-        showError(
-          "Customer access required."
-        );
+        window.location.href =
+          "./login.html";
 
         return;
-
       }
 
 
-      await loadJob(
-        profile.data()
-      );
+      const profile =
+        snapshot.data();
+
+
+      if (
+        profile.role !== "customer" ||
+        profile.active !== true
+      ) {
+
+        window.location.href =
+          "./login.html";
+
+        return;
+      }
+
+
+      customerUser =
+        user;
+
+      customerProfile =
+        profile;
+
+
+      if (!jobId) {
+
+        showError(
+          "Job ID is missing."
+        );
+
+        return;
+      }
+
+
+      await loadJob();
+
 
     } catch (error) {
 
-      console.error(error);
-
       showError(
-        "Unable to load estimate."
+        error.message ||
+        "Unable to open estimate."
       );
 
     }
@@ -86,430 +177,946 @@ onAuthStateChanged(
 );
 
 
-// =====================================================
-// LOAD JOB
-// =====================================================
+/* =========================================================
+   LOAD JOB
+========================================================= */
 
-async function loadJob(profile) {
+async function loadJob() {
 
-  if (!jobId) {
+  content.innerHTML = `
+    <div class="loading">
+      Loading estimate...
+    </div>
+  `;
 
-    showError(
-      "Job ID is missing."
+
+  const jobRef =
+    doc(
+      db,
+      "jobs",
+      jobId
     );
 
-    return;
 
-  }
-
-
-  const snap =
+  const snapshot =
     await getDoc(
-      doc(
-        db,
-        "jobs",
-        jobId
-      )
+      jobRef
     );
 
 
-  if (!snap.exists()) {
+  if (!snapshot.exists()) {
 
-    showError(
-      "Job not found."
-    );
+    content.innerHTML = `
+      <div class="loading">
+        Estimate / Job not found.
+      </div>
+    `;
 
     return;
-
-  }
-
-
-  const job =
-    snap.data();
-
-
-  if (
-    job.customerId !==
-    profile.customerId
-  ) {
-
-    showError(
-      "You do not have access to this service."
-    );
-
-    return;
-
   }
 
 
   currentJob = {
-    id: snap.id,
-    ...job
+    id: snapshot.id,
+    ...snapshot.data()
   };
 
 
-  render();
+  /*
+    Firestore rules are the real security
+    boundary.
+
+    This client-side check prevents an
+    accidental mismatch as well.
+  */
+
+  if (
+    currentJob.customerId !==
+    customerProfile.customerId
+  ) {
+
+    content.innerHTML = `
+      <div class="loading">
+        This estimate does not belong to your account.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  headerJobId.textContent =
+    currentJob.jobId ||
+    currentJob.id;
+
+
+  renderEstimate();
 
 }
 
 
-// =====================================================
-// RENDER
-// =====================================================
+/* =========================================================
+   RENDER
+========================================================= */
 
-function render() {
+function renderEstimate() {
 
-  document.getElementById(
-    "jobTitle"
-  ).textContent =
-    currentJob.jobNumber ||
-    currentJob.jobId ||
-    "Service Job";
+  const status =
+    normalizeStatus(
+      currentJob.status
+    );
 
 
-  document.getElementById(
-    "customer"
-  ).textContent =
-    currentJob.customerName ||
-    "-";
-
-
-  document.getElementById(
-    "device"
-  ).textContent =
-    [
-      currentJob.deviceBrand,
-      currentJob.deviceModel
-    ]
-      .filter(Boolean)
-      .join(" ") ||
-    "-";
-
-
-  document.getElementById(
-    "problem"
-  ).textContent =
-    currentJob.problem ||
-    currentJob.issue ||
-    "-";
-
-
-  document.getElementById(
-    "diagnosis"
-  ).textContent =
-    currentJob.diagnosis ||
-    "Diagnosis pending.";
+  const approval =
+    currentJob.customerApproval;
 
 
   const labour =
     Number(
-      currentJob.labourCharge ||
-      currentJob.finalLabour ||
+      currentJob.labourCharge ??
+      currentJob.finalLabour ??
       0
     );
 
 
   const parts =
     Number(
-      currentJob.partsAmount ||
-      currentJob.finalParts ||
+      currentJob.partsAmount ??
+      currentJob.finalParts ??
       0
     );
 
 
-  const total =
+  let total =
     Number(
-      currentJob.estimateTotal ??
-      labour + parts
+      currentJob.estimateTotal
     );
 
 
-  document.getElementById(
-    "labour"
-  ).textContent =
-    money(labour);
+  if (
+    !Number.isFinite(total)
+  ) {
+
+    total =
+      labour + parts;
+
+  }
 
 
-  document.getElementById(
-    "parts"
-  ).textContent =
-    money(parts);
+  content.innerHTML = `
+
+    ${renderJobCard(status)}
+
+    ${renderDeviceCard()}
+
+    ${renderEstimateCard(
+      labour,
+      parts,
+      total
+    )}
+
+    ${renderApprovalCard(
+      approval,
+      status
+    )}
+
+    ${renderActions(
+      approval,
+      status
+    )}
+
+  `;
 
 
-  document.getElementById(
-    "total"
-  ).textContent =
-    money(total);
-
-
-  renderApproval();
+  bindActions();
 
 }
 
 
-// =====================================================
-// APPROVAL
-// =====================================================
+/* =========================================================
+   JOB CARD
+========================================================= */
 
-function renderApproval() {
+function renderJobCard(
+  status
+) {
 
-  const approved =
-    currentJob.customerApproval;
+  return `
+
+    <section class="card">
+
+      <div class="job-header">
+
+        <div>
+
+          <div class="job-id">
+            ${escapeHtml(
+              currentJob.jobId ||
+              currentJob.id
+            )}
+          </div>
+
+          <div
+            style="
+              margin-top:5px;
+              color:#7b8494;
+              font-size:12px;
+            "
+          >
+            Repair Estimate
+          </div>
+
+        </div>
 
 
-  const box =
-    document.getElementById(
-      "approvalStatus"
-    );
+        <span
+          class="status ${getStatusClass(status)}"
+        >
+          ${escapeHtml(
+            formatStatus(status)
+          )}
+        </span>
 
-
-  const actions =
-    document.getElementById(
-      "approvalActions"
-    );
-
-
-  if (approved === true) {
-
-    box.className =
-      "status approved";
-
-    box.textContent =
-      "REPAIR APPROVED";
-
-
-    actions.innerHTML =
-      `
-      <div class="approval-box">
-        You approved this repair.
-        The technician can proceed with the repair.
       </div>
-      `;
 
+    </section>
+
+  `;
+
+}
+
+
+/* =========================================================
+   DEVICE
+========================================================= */
+
+function renderDeviceCard() {
+
+  return `
+
+    <section class="card">
+
+      <h2 class="card-title">
+        Service Details
+      </h2>
+
+
+      ${infoRow(
+        "Customer",
+        currentJob.customerName ||
+        "-"
+      )}
+
+
+      ${infoRow(
+        "Device",
+        getDeviceText(
+          currentJob
+        )
+      )}
+
+
+      ${infoRow(
+        "Serial Number",
+        currentJob.serialNumber ||
+        "-"
+      )}
+
+
+      ${infoRow(
+        "Service Type",
+        currentJob.serviceType ||
+        "Repair"
+      )}
+
+
+      ${infoRow(
+        "Problem",
+        currentJob.problem ||
+        "-"
+      )}
+
+
+      ${
+        currentJob.diagnosis
+          ? infoRow(
+              "Diagnosis",
+              currentJob.diagnosis
+            )
+          : ""
+      }
+
+    </section>
+
+  `;
+
+}
+
+
+/* =========================================================
+   ESTIMATE CARD
+========================================================= */
+
+function renderEstimateCard(
+  labour,
+  parts,
+  total
+) {
+
+  return `
+
+    <section class="card">
+
+      <h2 class="card-title">
+        Estimate Breakdown
+      </h2>
+
+
+      <div class="amount-row">
+
+        <span class="amount-label">
+          Labour / Service
+        </span>
+
+        <span class="amount-value">
+          ₹${formatNumber(
+            labour
+          )}
+        </span>
+
+      </div>
+
+
+      <div class="amount-row">
+
+        <span class="amount-label">
+          Parts / Material
+        </span>
+
+        <span class="amount-value">
+          ₹${formatNumber(
+            parts
+          )}
+        </span>
+
+      </div>
+
+
+      <div class="total-row">
+
+        <span class="total-label">
+          Total Estimate
+        </span>
+
+        <span class="total-value">
+          ₹${formatNumber(
+            total
+          )}
+        </span>
+
+      </div>
+
+    </section>
+
+  `;
+
+}
+
+
+/* =========================================================
+   APPROVAL CARD
+========================================================= */
+
+function renderApprovalCard(
+  approval,
+  status
+) {
+
+  if (
+    approval === true
+  ) {
+
+    return `
+
+      <section class="card">
+
+        <h2 class="card-title">
+          Customer Approval
+        </h2>
+
+        <div class="approval-box approved">
+          You have approved this repair estimate.
+          The technician can proceed with the repair.
+        </div>
+
+      </section>
+
+    `;
+
+  }
+
+
+  if (
+    approval === false
+  ) {
+
+    return `
+
+      <section class="card">
+
+        <h2 class="card-title">
+          Customer Approval
+        </h2>
+
+        <div class="approval-box rejected">
+          You have declined this repair estimate.
+          Please contact REPARO if you want to discuss
+          the estimate.
+        </div>
+
+      </section>
+
+    `;
+
+  }
+
+
+  return `
+
+    <section class="card">
+
+      <h2 class="card-title">
+        Customer Approval
+      </h2>
+
+      <div class="approval-box">
+        Please review the estimate and choose
+        Approve Repair or Reject Estimate.
+      </div>
+
+    </section>
+
+  `;
+
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+function renderActions(
+  approval,
+  status
+) {
+
+  /*
+    Approval buttons should only appear
+    while the job is waiting for approval.
+  */
+
+  if (
+    status !== "CUSTOMER APPROVAL" ||
+    approval !== undefined &&
+    approval !== null
+  ) {
+
+    return "";
+
+  }
+
+
+  return `
+
+    <section class="card action-area">
+
+      <button
+        id="approveBtn"
+        class="btn approve-btn"
+        type="button"
+      >
+        Approve Repair
+      </button>
+
+
+      <button
+        id="rejectBtn"
+        class="btn reject-btn"
+        type="button"
+      >
+        Reject Estimate
+      </button>
+
+    </section>
+
+  `;
+
+}
+
+
+/* =========================================================
+   BIND ACTIONS
+========================================================= */
+
+function bindActions() {
+
+  const approveBtn =
+    document.getElementById(
+      "approveBtn"
+    );
+
+
+  const rejectBtn =
+    document.getElementById(
+      "rejectBtn"
+    );
+
+
+  if (approveBtn) {
+
+    approveBtn.addEventListener(
+      "click",
+      approveEstimate
+    );
+
+  }
+
+
+  if (rejectBtn) {
+
+    rejectBtn.addEventListener(
+      "click",
+      rejectEstimate
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   APPROVE
+========================================================= */
+
+async function approveEstimate() {
+
+  const confirmed =
+    window.confirm(
+      "Approve this repair estimate and allow the technician to proceed?"
+    );
+
+
+  if (!confirmed) {
 
     return;
 
   }
 
 
-  if (approved === false) {
-
-    box.className =
-      "status rejected";
-
-    box.textContent =
-      "ESTIMATE REJECTED";
+  const button =
+    document.getElementById(
+      "approveBtn"
+    );
 
 
-    actions.innerHTML =
-      `
-      <div class="approval-box">
-        This estimate was rejected.
-        Please contact the service partner if
-        you want to discuss the estimate.
-      </div>
-      `;
+  if (button) {
 
+    button.disabled = true;
+
+    button.textContent =
+      "Approving...";
+
+  }
+
+
+  try {
+
+    /*
+      Customer is allowed by Firestore rules
+      to update only:
+
+        customerApproval
+        customerApprovalAt
+        status
+        updatedAt
+
+      This keeps the customer from changing
+      any financial or ownership fields.
+    */
+
+    await updateDoc(
+      doc(
+        db,
+        "jobs",
+        jobId
+      ),
+      {
+        customerApproval: true,
+
+        customerApprovalAt:
+          serverTimestamp(),
+
+        status: "REPAIR",
+
+        updatedAt:
+          serverTimestamp()
+      }
+    );
+
+
+    showSuccess(
+      "Repair approved successfully."
+    );
+
+
+    await loadJob();
+
+
+  } catch (error) {
+
+    showError(
+      error.message ||
+      "Approval failed."
+    );
+
+
+    if (button) {
+
+      button.disabled = false;
+
+      button.textContent =
+        "Approve Repair";
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   REJECT
+========================================================= */
+
+async function rejectEstimate() {
+
+  const confirmed =
+    window.confirm(
+      "Reject this repair estimate?"
+    );
+
+
+  if (!confirmed) {
 
     return;
 
   }
 
 
-  box.className =
-    "status pending";
+  const button =
+    document.getElementById(
+      "rejectBtn"
+    );
 
-  box.textContent =
-    "APPROVAL PENDING";
+
+  if (button) {
+
+    button.disabled = true;
+
+    button.textContent =
+      "Rejecting...";
+
+  }
+
+
+  try {
+
+    await updateDoc(
+      doc(
+        db,
+        "jobs",
+        jobId
+      ),
+      {
+        customerApproval: false,
+
+        customerApprovalAt:
+          serverTimestamp(),
+
+        status:
+          "CUSTOMER APPROVAL",
+
+        updatedAt:
+          serverTimestamp()
+      }
+    );
+
+
+    showSuccess(
+      "Estimate rejected."
+    );
+
+
+    await loadJob();
+
+
+  } catch (error) {
+
+    showError(
+      error.message ||
+      "Unable to reject estimate."
+    );
+
+
+    if (button) {
+
+      button.disabled = false;
+
+      button.textContent =
+        "Reject Estimate";
+
+    }
+
+  }
 
 }
 
 
-// =====================================================
-// APPROVE
-// =====================================================
+/* =========================================================
+   INFO ROW
+========================================================= */
 
-document.getElementById(
-  "approveBtn"
-).addEventListener(
-  "click",
-  async () => {
+function infoRow(
+  label,
+  value
+) {
 
-    if (!currentJob)
-      return;
+  return `
 
+    <div class="info-row">
 
-    if (
-      !confirm(
-        "Approve this repair estimate?"
-      )
-    ) {
+      <span class="info-label">
+        ${escapeHtml(
+          label
+        )}
+      </span>
 
-      return;
+      <span class="info-value">
+        ${escapeHtml(
+          value
+        )}
+      </span>
 
-    }
+    </div>
 
+  `;
 
-    try {
-
-      await updateDoc(
-        doc(
-          db,
-          "jobs",
-          currentJob.id
-        ),
-        {
-
-          customerApproval:
-            true,
-
-          customerApprovalAt:
-            serverTimestamp(),
-
-          status:
-            "REPAIR",
-
-          updatedAt:
-            serverTimestamp()
-
-        }
-      );
+}
 
 
-      currentJob.customerApproval =
-        true;
+/* =========================================================
+   DEVICE
+========================================================= */
+
+function getDeviceText(
+  job
+) {
+
+  const parts = [
+
+    job.deviceBrand,
+
+    job.deviceModel,
+
+    job.screenSize
+      ? `${job.screenSize}"`
+      : null
+
+  ].filter(Boolean);
 
 
-      currentJob.status =
-        "REPAIR";
+  if (
+    parts.length
+  ) {
 
-
-      renderApproval();
-
-
-      alert(
-        "Repair approved successfully."
-      );
-
-
-    } catch (error) {
-
-      console.error(error);
-
-      alert(
-        "Unable to save approval."
-      );
-
-    }
+    return parts.join(" ");
 
   }
-);
 
-
-// =====================================================
-// REJECT
-// =====================================================
-
-document.getElementById(
-  "rejectBtn"
-).addEventListener(
-  "click",
-  async () => {
-
-    if (!currentJob)
-      return;
-
-
-    if (
-      !confirm(
-        "Reject this repair estimate?"
-      )
-    ) {
-
-      return;
-
-    }
-
-
-    try {
-
-      await updateDoc(
-        doc(
-          db,
-          "jobs",
-          currentJob.id
-        ),
-        {
-
-          customerApproval:
-            false,
-
-          customerApprovalAt:
-            serverTimestamp(),
-
-          status:
-            "CUSTOMER APPROVAL",
-
-          updatedAt:
-            serverTimestamp()
-
-        }
-      );
-
-
-      currentJob.customerApproval =
-        false;
-
-
-      currentJob.status =
-        "CUSTOMER APPROVAL";
-
-
-      renderApproval();
-
-
-      alert(
-        "Estimate rejected."
-      );
-
-
-    } catch (error) {
-
-      console.error(error);
-
-      alert(
-        "Unable to save rejection."
-      );
-
-    }
-
-  }
-);
-
-
-// =====================================================
-// HELPERS
-// =====================================================
-
-function money(value) {
 
   return (
-    "₹" +
-    Number(
-      value || 0
-    ).toLocaleString(
-      "en-IN"
-    )
+    job.device ||
+    job.product ||
+    "Device"
   );
 
 }
 
 
-function showError(message) {
+/* =========================================================
+   STATUS
+========================================================= */
 
-  document.getElementById(
-    "loading"
-  ).textContent =
+function normalizeStatus(
+  status
+) {
+
+  return String(
+    status ||
+    "NEW"
+  )
+    .toUpperCase()
+    .trim();
+
+}
+
+
+function formatStatus(
+  status
+) {
+
+  return String(
+    status ||
+    ""
+  )
+    .toLowerCase()
+    .replace(
+      /\b\w/g,
+      letter =>
+        letter.toUpperCase()
+    );
+
+}
+
+
+function getStatusClass(
+  status
+) {
+
+  const value =
+    normalizeStatus(
+      status
+    );
+
+
+  if (
+    value === "CUSTOMER APPROVAL"
+  ) {
+
+    return "status-approval";
+
+  }
+
+
+  if (
+    value === "REPAIR"
+  ) {
+
+    return "status-approved";
+
+  }
+
+
+  if (
+    value === "CANCELLED"
+  ) {
+
+    return "status-rejected";
+
+  }
+
+
+  return "status-approval";
+
+}
+
+
+/* =========================================================
+   NUMBER
+========================================================= */
+
+function formatNumber(
+  value
+) {
+
+  return Number(
+    value || 0
+  ).toLocaleString(
+    "en-IN",
+    {
+      maximumFractionDigits: 2
+    }
+  );
+
+}
+
+
+/* =========================================================
+   MESSAGES
+========================================================= */
+
+function showError(
+  message
+) {
+
+  successBox.style.display =
+    "none";
+
+  errorBox.textContent =
     message;
+
+  errorBox.style.display =
+    "block";
+
+}
+
+
+function showSuccess(
+  message
+) {
+
+  errorBox.style.display =
+    "none";
+
+  successBox.textContent =
+    message;
+
+  successBox.style.display =
+    "block";
+
+}
+
+
+/* =========================================================
+   ESCAPE
+========================================================= */
+
+function escapeHtml(
+  value
+) {
+
+  return String(
+    value ?? ""
+  )
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
 
 }
