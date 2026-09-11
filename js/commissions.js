@@ -1,39 +1,69 @@
-import { auth, db } from "./firebase.js";
-
 import {
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
   collection,
   getDocs,
+  doc,
   getDoc,
   addDoc,
   updateDoc,
-  doc,
-  query,
-  orderBy,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+  auth,
+  db
+} from "./firebase.js";
 
-const commissionList =
-  document.getElementById("commissionList");
 
-const loading =
-  document.getElementById("loading");
+/* =====================================================
+   DOM
+===================================================== */
+
+const commissionContainer =
+  document.getElementById("commissionContainer");
 
 const searchInput =
   document.getElementById("searchInput");
 
-const ruleTypeFilter =
-  document.getElementById("ruleTypeFilter");
+const scopeFilter =
+  document.getElementById("scopeFilter");
+
+const logoutBtn =
+  document.getElementById("logoutBtn");
+
+const errorBox =
+  document.getElementById("errorBox");
+
+const successBox =
+  document.getElementById("successBox");
+
+const totalRules =
+  document.getElementById("totalRules");
+
+const activeRules =
+  document.getElementById("activeRules");
+
+const inactiveRules =
+  document.getElementById("inactiveRules");
+
+const overrideRules =
+  document.getElementById("overrideRules");
 
 const addCommissionBtn =
   document.getElementById("addCommissionBtn");
 
-const commissionModal =
-  document.getElementById("commissionModal");
+const modalBackdrop =
+  document.getElementById("modalBackdrop");
+
+const closeModalBtn =
+  document.getElementById("closeModalBtn");
+
+const cancelBtn =
+  document.getElementById("cancelBtn");
 
 const modalTitle =
   document.getElementById("modalTitle");
@@ -41,17 +71,17 @@ const modalTitle =
 const commissionForm =
   document.getElementById("commissionForm");
 
-const closeModalBtn =
-  document.getElementById("closeModalBtn");
-
 const editCommissionId =
   document.getElementById("editCommissionId");
+
+const saveBtn =
+  document.getElementById("saveBtn");
 
 const ruleName =
   document.getElementById("ruleName");
 
-const ruleType =
-  document.getElementById("ruleType");
+const scope =
+  document.getElementById("scope");
 
 const category =
   document.getElementById("category");
@@ -59,667 +89,43 @@ const category =
 const productId =
   document.getElementById("productId");
 
-const retailerId =
-  document.getElementById("retailerId");
-
 const commissionType =
   document.getElementById("commissionType");
 
 const commissionValue =
   document.getElementById("commissionValue");
 
-const warrantyHoldDays =
-  document.getElementById("warrantyHoldDays");
-
-const priority =
-  document.getElementById("priority");
-
 const active =
   document.getElementById("active");
 
+const moreNavBtn =
+  document.getElementById("moreNavBtn");
 
-let commissions = [];
-
-
-// --------------------------------------------------
-// AUTH
-// --------------------------------------------------
-
-onAuthStateChanged(auth, async user => {
-
-  if (!user) {
-
-    window.location.href =
-      "../index.html";
-
-    return;
-  }
+const morePanel =
+  document.getElementById("morePanel");
 
 
-  try {
+/* =====================================================
+   STATE
+===================================================== */
 
-    const userSnap =
-      await getDoc(
-        doc(db, "users", user.uid)
-      );
+let allRules = [];
+
+let selectedRuleId = null;
 
 
-    if (
-      !userSnap.exists() ||
-      userSnap.data().role !== "admin"
-    ) {
+/* =====================================================
+   AUTH
+===================================================== */
+
+onAuthStateChanged(
+  auth,
+  async user => {
+
+    if (!user) {
 
       window.location.href =
         "../index.html";
-
-      return;
-    }
-
-
-    await loadCommissions();
-
-
-  } catch (error) {
-
-    console.error(error);
-
-    loading.textContent =
-      "Unable to load commission rules.";
-
-  }
-
-});
-
-
-// --------------------------------------------------
-// LOAD
-// --------------------------------------------------
-
-async function loadCommissions() {
-
-  loading.style.display = "block";
-
-
-  try {
-
-    const q =
-      query(
-        collection(db, "commissions"),
-        orderBy("priority", "desc")
-      );
-
-
-    const snapshot =
-      await getDocs(q);
-
-
-    commissions =
-      snapshot.docs.map(item => ({
-
-        id: item.id,
-
-        ...item.data()
-
-      }));
-
-
-  } catch (error) {
-
-    console.warn(
-      "Priority query failed.",
-      error
-    );
-
-
-    const snapshot =
-      await getDocs(
-        collection(db, "commissions")
-      );
-
-
-    commissions =
-      snapshot.docs.map(item => ({
-
-        id: item.id,
-
-        ...item.data()
-
-      }));
-
-
-    commissions.sort(
-      (a, b) =>
-        Number(b.priority || 0) -
-        Number(a.priority || 0)
-    );
-
-  }
-
-
-  loading.style.display = "none";
-
-  updateSummary();
-
-  renderCommissions();
-
-}
-
-
-// --------------------------------------------------
-// SUMMARY
-// --------------------------------------------------
-
-function updateSummary() {
-
-  const activeItems =
-    commissions.filter(
-      item => item.active !== false
-    );
-
-
-  const percentage =
-    commissions.filter(
-      item =>
-        item.commissionType ===
-        "PERCENTAGE"
-    );
-
-
-  const fixed =
-    commissions.filter(
-      item =>
-        item.commissionType ===
-        "FIXED"
-    );
-
-
-  document.getElementById(
-    "totalRules"
-  ).textContent =
-    commissions.length;
-
-
-  document.getElementById(
-    "activeRules"
-  ).textContent =
-    activeItems.length;
-
-
-  document.getElementById(
-    "percentageRules"
-  ).textContent =
-    percentage.length;
-
-
-  document.getElementById(
-    "fixedRules"
-  ).textContent =
-    fixed.length;
-
-}
-
-
-// --------------------------------------------------
-// RENDER
-// --------------------------------------------------
-
-function renderCommissions() {
-
-  const search =
-    searchInput.value
-      .trim()
-      .toLowerCase();
-
-
-  const selectedType =
-    ruleTypeFilter.value;
-
-
-  const filtered =
-    commissions.filter(item => {
-
-      const text = [
-
-        item.ruleName,
-        item.ruleType,
-        item.category,
-        item.productId,
-        item.retailerId,
-        item.commissionType
-
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-
-      return (
-
-        (!search ||
-          text.includes(search))
-
-        &&
-
-        (!selectedType ||
-          item.ruleType === selectedType)
-
-      );
-
-    });
-
-
-  if (!filtered.length) {
-
-    commissionList.innerHTML =
-      `
-        <div class="empty-state">
-          No commission rules found.
-        </div>
-      `;
-
-    return;
-
-  }
-
-
-  commissionList.innerHTML =
-    filtered
-      .map(renderCommission)
-      .join("");
-
-
-  document
-    .querySelectorAll("[data-edit-commission]")
-    .forEach(button => {
-
-      button.onclick = () =>
-        openEdit(
-          button.dataset.editCommission
-        );
-
-    });
-
-
-  document
-    .querySelectorAll("[data-toggle-commission]")
-    .forEach(button => {
-
-      button.onclick = () =>
-        toggleRule(
-          button.dataset.toggleCommission
-        );
-
-    });
-
-}
-
-
-// --------------------------------------------------
-// CARD
-// --------------------------------------------------
-
-function renderCommission(item) {
-
-  const value =
-    item.commissionType ===
-    "PERCENTAGE"
-
-      ? `${formatMoney(item.commissionValue)}%`
-
-      : `₹${formatMoney(item.commissionValue)}`;
-
-
-  let target = "All Services";
-
-
-  if (
-    item.ruleType ===
-    "CATEGORY"
-  ) {
-
-    target =
-      `Category: ${item.category || "-"}`;
-
-  }
-
-
-  if (
-    item.ruleType ===
-    "PRODUCT"
-  ) {
-
-    target =
-      `Product: ${item.productId || "-"}`;
-
-  }
-
-
-  if (
-    item.ruleType ===
-    "RETAILER"
-  ) {
-
-    target =
-      `Retailer: ${item.retailerId || "-"}`;
-
-  }
-
-
-  return `
-
-    <article class="card">
-
-      <div class="card-header">
-
-        <div>
-
-          <strong>
-            ${escapeHtml(
-              item.ruleName || "-"
-            )}
-          </strong>
-
-          <h3>
-            ${escapeHtml(target)}
-          </h3>
-
-          <small>
-            Rule Type:
-            ${escapeHtml(
-              item.ruleType || "-"
-            )}
-          </small>
-
-        </div>
-
-
-        <span class="status-badge">
-
-          ${escapeHtml(value)}
-
-        </span>
-
-      </div>
-
-
-      <div class="card-details">
-
-        <div>
-
-          <small>Commission</small>
-
-          <strong>
-            ${escapeHtml(value)}
-          </strong>
-
-        </div>
-
-
-        <div>
-
-          <small>Warranty Hold</small>
-
-          <strong>
-            ${Number(
-              item.warrantyHoldDays || 0
-            )} Days
-          </strong>
-
-        </div>
-
-
-        <div>
-
-          <small>Priority</small>
-
-          <strong>
-            ${Number(
-              item.priority || 0
-            )}
-          </strong>
-
-        </div>
-
-
-        <div>
-
-          <small>Status</small>
-
-          <strong>
-            ${
-              item.active === false
-                ? "Inactive"
-                : "Active"
-            }
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <div class="card-actions">
-
-        <button
-          data-edit-commission="${item.id}"
-          class="primary-btn">
-          Edit
-        </button>
-
-
-        <button
-          data-toggle-commission="${item.id}">
-
-          ${
-            item.active === false
-              ? "Activate"
-              : "Deactivate"
-          }
-
-        </button>
-
-      </div>
-
-    </article>
-
-  `;
-
-}
-
-
-// --------------------------------------------------
-// ADD
-// --------------------------------------------------
-
-addCommissionBtn.onclick = () => {
-
-  resetForm();
-
-  modalTitle.textContent =
-    "Add Commission Rule";
-
-  commissionModal.classList.remove(
-    "hidden"
-  );
-
-};
-
-
-// --------------------------------------------------
-// EDIT
-// --------------------------------------------------
-
-function openEdit(id) {
-
-  const item =
-    commissions.find(
-      commission =>
-        commission.id === id
-    );
-
-
-  if (!item) return;
-
-
-  editCommissionId.value =
-    item.id;
-
-
-  ruleName.value =
-    item.ruleName || "";
-
-
-  ruleType.value =
-    item.ruleType ||
-    "DEFAULT";
-
-
-  category.value =
-    item.category || "";
-
-
-  productId.value =
-    item.productId || "";
-
-
-  retailerId.value =
-    item.retailerId || "";
-
-
-  commissionType.value =
-    item.commissionType ||
-    "PERCENTAGE";
-
-
-  commissionValue.value =
-    item.commissionValue || 0;
-
-
-  warrantyHoldDays.value =
-    item.warrantyHoldDays || 0;
-
-
-  priority.value =
-    item.priority || 0;
-
-
-  active.value =
-    String(
-      item.active !== false
-    );
-
-
-  modalTitle.textContent =
-    "Edit Commission Rule";
-
-
-  commissionModal.classList.remove(
-    "hidden"
-  );
-
-}
-
-
-// --------------------------------------------------
-// SAVE
-// --------------------------------------------------
-
-commissionForm.addEventListener(
-  "submit",
-  async event => {
-
-    event.preventDefault();
-
-
-    const id =
-      editCommissionId.value;
-
-
-    const data = {
-
-      ruleName:
-        ruleName.value.trim(),
-
-      ruleType:
-        ruleType.value,
-
-      category:
-        category.value,
-
-      productId:
-        productId.value.trim(),
-
-      retailerId:
-        retailerId.value.trim(),
-
-      commissionType:
-        commissionType.value,
-
-      commissionValue:
-        Number(
-          commissionValue.value || 0
-        ),
-
-      warrantyHoldDays:
-        Number(
-          warrantyHoldDays.value || 0
-        ),
-
-      priority:
-        Number(
-          priority.value || 0
-        ),
-
-      active:
-        active.value === "true",
-
-      updatedAt:
-        serverTimestamp()
-
-    };
-
-
-    // Basic validation
-
-    if (
-      data.ruleType ===
-      "CATEGORY" &&
-      !data.category
-    ) {
-
-      alert(
-        "Please select a Category."
-      );
-
-      return;
-
-    }
-
-
-    if (
-      data.ruleType ===
-      "PRODUCT" &&
-      !data.productId
-    ) {
-
-      alert(
-        "Please enter Product ID."
-      );
-
-      return;
-
-    }
-
-
-    if (
-      data.ruleType ===
-      "RETAILER" &&
-      !data.retailerId
-    ) {
-
-      alert(
-        "Please enter Retailer ID."
-      );
 
       return;
 
@@ -728,63 +134,54 @@ commissionForm.addEventListener(
 
     try {
 
-      if (id) {
-
-        await updateDoc(
+      const snapshot =
+        await getDoc(
           doc(
             db,
-            "commissions",
-            id
-          ),
-          data
+            "users",
+            user.uid
+          )
         );
 
 
-        alert(
-          "Commission rule updated."
-        );
+      if (!snapshot.exists()) {
 
+        await signOut(auth);
 
-      } else {
+        window.location.href =
+          "../index.html";
 
-        await addDoc(
-          collection(
-            db,
-            "commissions"
-          ),
-          {
-
-            ...data,
-
-            createdAt:
-              serverTimestamp(),
-
-            createdBy:
-              auth.currentUser.uid
-
-          }
-        );
-
-
-        alert(
-          "Commission rule created."
-        );
+        return;
 
       }
 
 
-      closeModal();
+      const profile =
+        snapshot.data();
 
-      await loadCommissions();
+
+      if (
+        profile.role !== "admin" ||
+        profile.active !== true
+      ) {
+
+        await signOut(auth);
+
+        window.location.href =
+          "../index.html";
+
+        return;
+
+      }
 
 
-    } catch (error) {
+      await loadRules();
 
-      console.error(error);
+    }
+    catch (error) {
 
-      alert(
-        "Unable to save commission rule.\n\n" +
-        error.message
+      showError(
+        getErrorMessage(error)
       );
 
     }
@@ -793,51 +190,1066 @@ commissionForm.addEventListener(
 );
 
 
-// --------------------------------------------------
-// TOGGLE
-// --------------------------------------------------
+/* =====================================================
+   LOAD RULES
+===================================================== */
 
-async function toggleRule(id) {
+async function loadRules() {
 
-  const item =
-    commissions.find(
-      commission =>
-        commission.id === id
-    );
+  commissionContainer.innerHTML = `
 
+    <div class="loading">
+      Loading commission rules...
+    </div>
 
-  if (!item) return;
+  `;
 
 
   try {
 
-    await updateDoc(
-      doc(
-        db,
-        "commissions",
-        id
-      ),
-      {
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "commissions"
+        )
+      );
 
-        active:
-          item.active === false,
 
-        updatedAt:
-          serverTimestamp()
+    allRules = [];
+
+
+    snapshot.forEach(
+      item => {
+
+        allRules.push({
+
+          id:
+            item.id,
+
+          ...item.data()
+
+        });
 
       }
     );
 
 
-    await loadCommissions();
+    allRules.sort(
+      (a, b) => {
+
+        const scopeOrder = {
+
+          PRODUCT: 1,
+          CATEGORY: 2,
+          DEFAULT: 3
+
+        };
 
 
-  } catch (error) {
+        const aOrder =
+          scopeOrder[
+            normalizeScope(
+              a.scope
+            )
+          ] || 99;
 
-    console.error(error);
 
-    alert(
-      "Unable to change rule status."
+        const bOrder =
+          scopeOrder[
+            normalizeScope(
+              b.scope
+            )
+          ] || 99;
+
+
+        if (
+          aOrder !==
+          bOrder
+        ) {
+
+          return aOrder -
+            bOrder;
+
+        }
+
+
+        return (
+          getTimestamp(
+            b.createdAt
+          ) -
+          getTimestamp(
+            a.createdAt
+          )
+        );
+
+      }
+    );
+
+
+    updateSummary();
+
+    renderRules();
+
+  }
+  catch (error) {
+
+    commissionContainer.innerHTML = `
+
+      <div class="empty">
+
+        <div class="empty-icon">
+          ⚠️
+        </div>
+
+        <div class="empty-title">
+          Commission Load Error
+        </div>
+
+        <div class="empty-text">
+          ${escapeHtml(
+            getErrorMessage(error)
+          )}
+        </div>
+
+      </div>
+
+    `;
+
+    throw error;
+
+  }
+
+}
+
+
+/* =====================================================
+   SUMMARY
+===================================================== */
+
+function updateSummary() {
+
+  const total =
+    allRules.length;
+
+
+  const activeCount =
+    allRules.filter(
+      rule =>
+        rule.active !== false
+    ).length;
+
+
+  const inactiveCount =
+    allRules.filter(
+      rule =>
+        rule.active === false
+    ).length;
+
+
+  const overrides =
+    allRules.filter(
+      rule => {
+
+        const current =
+          normalizeScope(
+            rule.scope
+          );
+
+        return (
+          current ===
+          "CATEGORY" ||
+          current ===
+          "PRODUCT"
+        );
+
+      }
+    ).length;
+
+
+  totalRules.textContent =
+    total;
+
+  activeRules.textContent =
+    activeCount;
+
+  inactiveRules.textContent =
+    inactiveCount;
+
+  overrideRules.textContent =
+    overrides;
+
+}
+
+
+/* =====================================================
+   FILTERS
+===================================================== */
+
+searchInput.addEventListener(
+  "input",
+  renderRules
+);
+
+
+scopeFilter.addEventListener(
+  "change",
+  renderRules
+);
+
+
+/* =====================================================
+   RENDER
+===================================================== */
+
+function renderRules() {
+
+  const search =
+    searchInput.value
+      .trim()
+      .toLowerCase();
+
+
+  const selectedScope =
+    normalizeScope(
+      scopeFilter.value
+    );
+
+
+  const filtered =
+    allRules.filter(
+      rule => {
+
+        const searchable = [
+
+          rule.id,
+          rule.name,
+          rule.ruleName,
+          rule.scope,
+          rule.category,
+          rule.productId,
+          rule.commissionType
+
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+
+        const searchMatch =
+          !search ||
+          searchable.includes(
+            search
+          );
+
+
+        const scopeMatch =
+          !selectedScope ||
+          normalizeScope(
+            rule.scope
+          ) === selectedScope;
+
+
+        return (
+          searchMatch &&
+          scopeMatch
+        );
+
+      }
+    );
+
+
+  if (
+    filtered.length === 0
+  ) {
+
+    commissionContainer.innerHTML = `
+
+      <div class="empty">
+
+        <div class="empty-icon">
+          ₹
+        </div>
+
+        <div class="empty-title">
+          No Commission Rules
+        </div>
+
+        <div class="empty-text">
+          No commission rules match your search.
+        </div>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  commissionContainer.innerHTML = `
+
+    <div class="commission-list">
+
+      ${filtered
+        .map(
+          renderRuleCard
+        )
+        .join("")}
+
+    </div>
+
+  `;
+
+
+  bindButtons();
+
+}
+
+
+/* =====================================================
+   CARD
+===================================================== */
+
+function renderRuleCard(rule) {
+
+  const isActive =
+    rule.active !== false;
+
+
+  const ruleScope =
+    normalizeScope(
+      rule.scope ||
+      "DEFAULT"
+    );
+
+
+  const name =
+    rule.name ||
+    rule.ruleName ||
+    "Commission Rule";
+
+
+  let target =
+    "All Services";
+
+
+  if (
+    ruleScope ===
+    "CATEGORY"
+  ) {
+
+    target =
+      rule.category ||
+      "Category not selected";
+
+  }
+
+
+  if (
+    ruleScope ===
+    "PRODUCT"
+  ) {
+
+    target =
+      rule.productName ||
+      rule.productId ||
+      "Product not selected";
+
+  }
+
+
+  const type =
+    normalizeType(
+      rule.commissionType ||
+      rule.type ||
+      "PERCENTAGE"
+    );
+
+
+  const value =
+    formatCommission(
+      rule
+    );
+
+
+  return `
+
+    <div class="commission-card">
+
+      <div class="commission-top">
+
+        <div>
+
+          <h3 class="commission-name">
+            ${escapeHtml(
+              name
+            )}
+          </h3>
+
+          <div class="commission-meta">
+
+            ${escapeHtml(
+              formatScope(
+                ruleScope
+              )
+            )}
+
+            •
+
+            ${escapeHtml(
+              target
+            )}
+
+          </div>
+
+        </div>
+
+
+        <span class="badge ${
+          isActive
+            ? "badge-active"
+            : "badge-inactive"
+        }">
+
+          ${
+            isActive
+              ? "ACTIVE"
+              : "INACTIVE"
+          }
+
+        </span>
+
+      </div>
+
+
+      <div class="commission-info">
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            💰
+          </span>
+
+          <span>
+            Commission:
+            <strong class="value-highlight">
+              ${escapeHtml(
+                value
+              )}
+            </strong>
+          </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            🎯
+          </span>
+
+          <span>
+            Rule Level:
+            <strong class="value-highlight">
+              ${escapeHtml(
+                formatScope(
+                  ruleScope
+                )
+              )}
+            </strong>
+          </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            ⚡
+          </span>
+
+          <span>
+            Status:
+            <strong class="value-highlight">
+              ${
+                isActive
+                  ? "Active"
+                  : "Inactive"
+              }
+            </strong>
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="divider"></div>
+
+
+      <div class="actions">
+
+        <button
+          type="button"
+          class="action edit-btn"
+          data-edit-rule="${escapeAttribute(
+            rule.id
+          )}"
+        >
+          Edit
+        </button>
+
+
+        <button
+          type="button"
+          class="action toggle-btn"
+          data-toggle-rule="${escapeAttribute(
+            rule.id
+          )}"
+        >
+          ${
+            isActive
+              ? "Deactivate"
+              : "Activate"
+          }
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+function bindButtons() {
+
+  document
+    .querySelectorAll(
+      "[data-edit-rule]"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            openEditModal(
+              button.dataset.editRule
+            );
+
+          }
+        );
+
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-toggle-rule]"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            toggleRule(
+              button.dataset.toggleRule
+            );
+
+          }
+        );
+
+      }
+    );
+
+}
+
+
+/* =====================================================
+   ADD MODAL
+===================================================== */
+
+addCommissionBtn.addEventListener(
+  "click",
+  openAddModal
+);
+
+
+function openAddModal() {
+
+  selectedRuleId =
+    null;
+
+
+  commissionForm.reset();
+
+
+  editCommissionId.value =
+    "";
+
+
+  scope.value =
+    "DEFAULT";
+
+
+  commissionType.value =
+    "PERCENTAGE";
+
+
+  commissionValue.value =
+    "0";
+
+
+  active.value =
+    "true";
+
+
+  modalTitle.textContent =
+    "Add Commission Rule";
+
+
+  saveBtn.textContent =
+    "Create Rule";
+
+
+  modalBackdrop.classList.add(
+    "show"
+  );
+
+}
+
+
+/* =====================================================
+   EDIT MODAL
+===================================================== */
+
+function openEditModal(ruleId) {
+
+  const rule =
+    allRules.find(
+      item =>
+        item.id === ruleId
+    );
+
+
+  if (!rule) {
+
+    showError(
+      "Commission rule not found."
+    );
+
+    return;
+
+  }
+
+
+  selectedRuleId =
+    ruleId;
+
+
+  editCommissionId.value =
+    ruleId;
+
+
+  ruleName.value =
+    rule.name ||
+    rule.ruleName ||
+    "";
+
+
+  scope.value =
+    normalizeScope(
+      rule.scope ||
+      "DEFAULT"
+    );
+
+
+  category.value =
+    normalizeCategory(
+      rule.category
+    );
+
+
+  productId.value =
+    rule.productId ||
+    "";
+
+
+  commissionType.value =
+    normalizeType(
+      rule.commissionType ||
+      rule.type ||
+      "PERCENTAGE"
+    );
+
+
+  commissionValue.value =
+    getNumber(
+      rule.commissionValue ??
+      rule.value
+    );
+
+
+  active.value =
+    rule.active === false
+      ? "false"
+      : "true";
+
+
+  modalTitle.textContent =
+    "Edit Commission Rule";
+
+
+  saveBtn.textContent =
+    "Save Changes";
+
+
+  modalBackdrop.classList.add(
+    "show"
+  );
+
+}
+
+
+/* =====================================================
+   SAVE
+===================================================== */
+
+commissionForm.addEventListener(
+  "submit",
+  async event => {
+
+    event.preventDefault();
+
+    await saveRule();
+
+  }
+);
+
+
+async function saveRule() {
+
+  const name =
+    ruleName.value.trim();
+
+
+  const selectedScope =
+    normalizeScope(
+      scope.value
+    );
+
+
+  const selectedCategory =
+    normalizeCategory(
+      category.value
+    );
+
+
+  const selectedProduct =
+    productId.value.trim();
+
+
+  const selectedType =
+    normalizeType(
+      commissionType.value
+    );
+
+
+  const value =
+    numberValue(
+      commissionValue.value
+    );
+
+
+  const isActive =
+    active.value ===
+    "true";
+
+
+  if (!name) {
+
+    showError(
+      "Rule name is required."
+    );
+
+    return;
+
+  }
+
+
+  if (value < 0) {
+
+    showError(
+      "Commission value cannot be negative."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    selectedType ===
+    "PERCENTAGE" &&
+    value > 100
+  ) {
+
+    showError(
+      "Percentage commission cannot exceed 100%."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    selectedScope ===
+    "CATEGORY" &&
+    !selectedCategory
+  ) {
+
+    showError(
+      "Please select a category."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    selectedScope ===
+    "PRODUCT" &&
+    !selectedProduct
+  ) {
+
+    showError(
+      "Please enter the Product ID."
+    );
+
+    return;
+
+  }
+
+
+  const data = {
+
+    name,
+
+    scope:
+      selectedScope,
+
+    category:
+      selectedScope ===
+      "CATEGORY"
+        ? selectedCategory
+        : "",
+
+    productId:
+      selectedScope ===
+      "PRODUCT"
+        ? selectedProduct
+        : "",
+
+    commissionType:
+      selectedType,
+
+    commissionValue:
+      value,
+
+    active:
+      isActive
+
+  };
+
+
+  saveBtn.disabled =
+    true;
+
+
+  saveBtn.textContent =
+    selectedRuleId
+      ? "Saving..."
+      : "Creating...";
+
+
+  try {
+
+    if (selectedRuleId) {
+
+      await updateDoc(
+
+        doc(
+          db,
+          "commissions",
+          selectedRuleId
+        ),
+
+        {
+          ...data,
+
+          updatedAt:
+            serverTimestamp()
+        }
+
+      );
+
+
+      closeModal();
+
+      await loadRules();
+
+      showSuccess(
+        "Commission rule updated successfully."
+      );
+
+    }
+    else {
+
+      await addDoc(
+
+        collection(
+          db,
+          "commissions"
+        ),
+
+        {
+          ...data,
+
+          createdAt:
+            serverTimestamp(),
+
+          updatedAt:
+            serverTimestamp()
+
+        }
+
+      );
+
+
+      closeModal();
+
+      await loadRules();
+
+      showSuccess(
+        "Commission rule created successfully."
+      );
+
+    }
+
+  }
+  catch (error) {
+
+    console.error(
+      "Commission save error:",
+      error
+    );
+
+
+    showError(
+      getErrorMessage(error)
+    );
+
+  }
+  finally {
+
+    saveBtn.disabled =
+      false;
+
+
+    saveBtn.textContent =
+      selectedRuleId
+        ? "Save Changes"
+        : "Create Rule";
+
+  }
+
+}
+
+
+/* =====================================================
+   TOGGLE
+===================================================== */
+
+async function toggleRule(ruleId) {
+
+  const rule =
+    allRules.find(
+      item =>
+        item.id === ruleId
+    );
+
+
+  if (!rule) {
+
+    showError(
+      "Commission rule not found."
+    );
+
+    return;
+
+  }
+
+
+  const newState =
+    rule.active === false;
+
+
+  try {
+
+    await updateDoc(
+
+      doc(
+        db,
+        "commissions",
+        ruleId
+      ),
+
+      {
+        active:
+          newState,
+
+        updatedAt:
+          serverTimestamp()
+
+      }
+
+    );
+
+
+    await loadRules();
+
+
+    showSuccess(
+      newState
+        ? "Commission rule activated."
+        : "Commission rule deactivated."
+    );
+
+  }
+  catch (error) {
+
+    console.error(
+      "Commission toggle error:",
+      error
+    );
+
+
+    showError(
+      getErrorMessage(error)
     );
 
   }
@@ -845,21 +1257,46 @@ async function toggleRule(id) {
 }
 
 
-// --------------------------------------------------
-// CLOSE
-// --------------------------------------------------
+/* =====================================================
+   CLOSE
+===================================================== */
 
-closeModalBtn.onclick =
-  closeModal;
+function closeModal() {
+
+  modalBackdrop.classList.remove(
+    "show"
+  );
 
 
-commissionModal.addEventListener(
+  selectedRuleId =
+    null;
+
+
+  editCommissionId.value =
+    "";
+
+}
+
+
+closeModalBtn.addEventListener(
+  "click",
+  closeModal
+);
+
+
+cancelBtn.addEventListener(
+  "click",
+  closeModal
+);
+
+
+modalBackdrop.addEventListener(
   "click",
   event => {
 
     if (
       event.target ===
-      commissionModal
+      modalBackdrop
     ) {
 
       closeModal();
@@ -870,109 +1307,390 @@ commissionModal.addEventListener(
 );
 
 
-function closeModal() {
+/* =====================================================
+   MORE MENU
+===================================================== */
 
-  commissionModal.classList.add(
-    "hidden"
+moreNavBtn.addEventListener(
+  "click",
+  event => {
+
+    event.stopPropagation();
+
+    const isVisible =
+      morePanel.style.display ===
+      "block";
+
+
+    morePanel.style.display =
+      isVisible
+        ? "none"
+        : "block";
+
+  }
+);
+
+
+document.addEventListener(
+  "click",
+  event => {
+
+    if (
+      morePanel.style.display ===
+      "block" &&
+      !morePanel.contains(
+        event.target
+      ) &&
+      event.target !==
+      moreNavBtn
+    ) {
+
+      morePanel.style.display =
+        "none";
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   SCOPE
+===================================================== */
+
+function normalizeScope(
+  value
+) {
+
+  return String(
+    value || "DEFAULT"
+  )
+    .trim()
+    .toUpperCase();
+
+}
+
+
+function formatScope(
+  scope
+) {
+
+  switch (
+    normalizeScope(scope)
+  ) {
+
+    case "PRODUCT":
+      return "Product Override";
+
+    case "CATEGORY":
+      return "Category Rule";
+
+    default:
+      return "Default Rule";
+
+  }
+
+}
+
+
+/* =====================================================
+   TYPE
+===================================================== */
+
+function normalizeType(
+  value
+) {
+
+  return String(
+    value || "PERCENTAGE"
+  )
+    .trim()
+    .toUpperCase();
+
+}
+
+
+function formatCommission(
+  rule
+) {
+
+  const type =
+    normalizeType(
+      rule.commissionType ||
+      rule.type
+    );
+
+
+  const value =
+    getNumber(
+      rule.commissionValue ??
+      rule.value
+    );
+
+
+  if (
+    type ===
+    "FIXED"
+  ) {
+
+    return `₹${formatMoney(
+      value
+    )}`;
+
+  }
+
+
+  return `${formatMoney(
+    value
+  )}%`;
+
+}
+
+
+/* =====================================================
+   CATEGORY
+===================================================== */
+
+function normalizeCategory(
+  value
+) {
+
+  return String(
+    value || ""
+  )
+    .trim()
+    .toUpperCase();
+
+}
+
+
+/* =====================================================
+   NUMBER
+===================================================== */
+
+function numberValue(
+  value
+) {
+
+  const number =
+    Number(value);
+
+
+  return Number.isFinite(
+    number
+  )
+    ? number
+    : 0;
+
+}
+
+
+function getNumber(
+  value
+) {
+
+  return numberValue(
+    value
   );
 
 }
 
 
-// --------------------------------------------------
-// RESET
-// --------------------------------------------------
+/* =====================================================
+   MONEY
+===================================================== */
 
-function resetForm() {
+function formatMoney(
+  value
+) {
 
-  commissionForm.reset();
-
-  editCommissionId.value = "";
-
-  ruleType.value =
-    "DEFAULT";
-
-  commissionType.value =
-    "PERCENTAGE";
-
-  commissionValue.value =
-    "0";
-
-  warrantyHoldDays.value =
-    "0";
-
-  priority.value =
-    "0";
-
-  active.value =
-    "true";
-
-}
-
-
-// --------------------------------------------------
-// FILTER
-// --------------------------------------------------
-
-searchInput.addEventListener(
-  "input",
-  renderCommissions
-);
-
-
-ruleTypeFilter.addEventListener(
-  "change",
-  renderCommissions
-);
-
-
-// --------------------------------------------------
-// MONEY
-// --------------------------------------------------
-
-function formatMoney(value) {
-
-  return Number(
-    value || 0
+  return getNumber(
+    value
   ).toLocaleString(
     "en-IN",
     {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      minimumFractionDigits:0,
+      maximumFractionDigits:2
     }
   );
 
 }
 
 
-// --------------------------------------------------
-// ESCAPE
-// --------------------------------------------------
+/* =====================================================
+   TIMESTAMP
+===================================================== */
 
-function escapeHtml(value) {
+function getTimestamp(
+  timestamp
+) {
+
+  if (!timestamp) {
+
+    return 0;
+
+  }
+
+
+  if (
+    typeof timestamp.toMillis ===
+    "function"
+  ) {
+
+    return timestamp.toMillis();
+
+  }
+
+
+  if (
+    typeof timestamp.seconds ===
+    "number"
+  ) {
+
+    return timestamp.seconds *
+      1000;
+
+  }
+
+
+  return 0;
+
+}
+
+
+/* =====================================================
+   ERROR
+===================================================== */
+
+function getErrorMessage(
+  error
+) {
+
+  if (
+    error?.code ===
+    "permission-denied"
+  ) {
+
+    return "Firestore permission denied. Admin Firebase Rules check કરો.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "unauthenticated"
+  ) {
+
+    return "Login session expired. Please login again.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "unavailable"
+  ) {
+
+    return "Firebase temporarily unavailable. Internet connection check કરો.";
+
+  }
+
+
+  return (
+    error?.message ||
+    "Unable to complete the operation."
+  );
+
+}
+
+
+/* =====================================================
+   MESSAGES
+===================================================== */
+
+function showError(
+  message
+) {
+
+  successBox.style.display =
+    "none";
+
+
+  errorBox.textContent =
+    message;
+
+
+  errorBox.style.display =
+    "block";
+
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+
+}
+
+
+function showSuccess(
+  message
+) {
+
+  errorBox.style.display =
+    "none";
+
+
+  successBox.textContent =
+    message;
+
+
+  successBox.style.display =
+    "block";
+
+}
+
+
+/* =====================================================
+   ESCAPE
+===================================================== */
+
+function escapeHtml(
+  value
+) {
 
   return String(
     value ?? ""
   )
-    .replace(
-      /&/g,
+    .replaceAll(
+      "&",
       "&amp;"
     )
-    .replace(
-      /</g,
+    .replaceAll(
+      "<",
       "&lt;"
     )
-    .replace(
-      />/g,
+    .replaceAll(
+      ">",
       "&gt;"
     )
-    .replace(
-      /"/g,
+    .replaceAll(
+      '"',
       "&quot;"
     )
-    .replace(
-      /'/g,
+    .replaceAll(
+      "'",
       "&#039;"
     );
+
+}
+
+
+function escapeAttribute(
+  value
+) {
+
+  return escapeHtml(
+    value
+  );
 
 }
