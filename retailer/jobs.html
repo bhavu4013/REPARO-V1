@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>My Jobs | REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+
+  <style>
+    .jobs-page {
+      max-width: 1100px;
+      margin: auto;
+      padding: 18px 14px 90px;
+    }
+
+    .jobs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .jobs-header h1 {
+      margin: 4px 0;
+      color: #111827;
+    }
+
+    .jobs-header p {
+      margin: 0;
+      color: #6B7280;
+      font-size: 13px;
+    }
+
+    .partner-badge {
+      background: #FFE32B;
+      color: #111827;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 15px;
+      box-shadow: 0 6px 20px rgba(17,24,39,.07);
+    }
+
+    .stat-label {
+      color: #6B7280;
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      color: #111827;
+      font-size: 23px;
+      font-weight: 800;
+    }
+
+    .filter-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 13px;
+      margin-bottom: 15px;
+      box-shadow: 0 6px 20px rgba(17,24,39,.06);
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: 1fr 170px;
+      gap: 9px;
+    }
+
+    .input,
+    .select {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 11px 12px;
+      background: #fff;
+      color: #111827;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: #08AEE0;
+    }
+
+    .job-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 6px 22px rgba(17,24,39,.07);
+    }
+
+    .job-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .job-number {
+      font-weight: 800;
+      font-size: 16px;
+      color: #111827;
+    }
+
+    .job-customer {
+      color: #6B7280;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .status {
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 9px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .status-new {
+      background: #FFF4CC;
+      color: #806500;
+    }
+
+    .status-assigned,
+    .status-in-progress,
+    .status-diagnosis {
+      background: #E8F4FF;
+      color: #05658A;
+    }
+
+    .status-customer-approval {
+      background: #FFF0F4;
+      color: #B42345;
+    }
+
+    .status-repair {
+      background: #E8F8F0;
+      color: #16734B;
+    }
+
+    .status-completed {
+      background: #E8F8F0;
+      color: #16734B;
+    }
+
+    .status-cancelled {
+      background: #F3F4F6;
+      color: #6B7280;
+    }
+
+    .job-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .info-box {
+      background: #F6F8FB;
+      border-radius: 13px;
+      padding: 10px;
+    }
+
+    .info-box.full {
+      grid-column: 1 / -1;
+    }
+
+    .info-box span {
+      display: block;
+      color: #6B7280;
+      font-size: 10px;
+      margin-bottom: 4px;
+    }
+
+    .info-box strong {
+      color: #111827;
+      font-size: 12px;
+      word-break: break-word;
+    }
+
+    .job-action {
+      width: 100%;
+      border: 0;
+      background: #08AEE0;
+      color: #fff;
+      border-radius: 12px;
+      padding: 11px;
+      margin-top: 13px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .progress-wrap {
+      margin-top: 16px;
+    }
+
+    .progress-title {
+      font-size: 11px;
+      color: #6B7280;
+      margin-bottom: 9px;
+      font-weight: 700;
+    }
+
+    .progress-line {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+    }
+
+    .progress-step {
+      height: 5px;
+      border-radius: 999px;
+      background: #E5E7EB;
+    }
+
+    .progress-step.active {
+      background: #08AEE0;
+    }
+
+    .progress-labels {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 3px;
+      margin-top: 5px;
+    }
+
+    .progress-labels span {
+      font-size: 8px;
+      color: #6B7280;
+      text-align: center;
+    }
+
+    .empty {
+      background: #fff;
+      border-radius: 18px;
+      padding: 35px 15px;
+      text-align: center;
+      color: #6B7280;
+      box-shadow: 0 6px 20px rgba(17,24,39,.06);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: #6B7280;
+    }
+
+    /* DETAIL MODAL */
+
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(17,24,39,.45);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 10px;
+      z-index: 9999;
+    }
+
+    .modal-bg.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 540px;
+      max-height: 92vh;
+      overflow-y: auto;
+      background: #fff;
+      border-radius: 22px;
+      padding: 18px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-head h2 {
+      margin: 0;
+      font-size: 19px;
+    }
+
+    .close {
+      border: 0;
+      background: #F3F4F6;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .detail-section {
+      margin-bottom: 16px;
+    }
+
+    .detail-section h3 {
+      margin: 0 0 9px;
+      font-size: 14px;
+      color: #111827;
+    }
+
+    .estimate-box {
+      background: #FFF4CC;
+      border-radius: 15px;
+      padding: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .estimate-box span {
+      color: #705600;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .estimate-box strong {
+      color: #111827;
+      font-size: 20px;
+    }
+
+    .privacy-note {
+      background: #F6F8FB;
+      border-radius: 13px;
+      padding: 11px;
+      color: #6B7280;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    @media (min-width: 700px) {
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .job-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .modal-bg {
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="jobs-page">
+
+  <header class="jobs-header">
+
+    <div>
+      <div class="eyebrow">
+        REPARO V1 • PARTNER
+      </div>
+
+      <h1>My Jobs</h1>
+
+      <p>
+        Track your customer's service progress
+      </p>
+    </div>
+
+    <div class="partner-badge">
+      SERVICE PARTNER
+    </div>
+
+  </header>
+
+
+  <!-- SUMMARY -->
+
+  <section class="stats-grid">
+
+    <div class="stat-card">
+      <div class="stat-label">TOTAL JOBS</div>
+      <div class="stat-value" id="totalJobs">0</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">ACTIVE</div>
+      <div class="stat-value" id="activeJobs">0</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">APPROVAL</div>
+      <div class="stat-value" id="approvalJobs">0</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">COMPLETED</div>
+      <div class="stat-value" id="completedJobs">0</div>
+    </div>
+
+  </section>
+
+
+  <!-- FILTER -->
+
+  <section class="filter-card">
+
+    <div class="filter-row">
+
+      <input
+        id="searchInput"
+        class="input"
+        type="search"
+        placeholder="Search job, customer, mobile, device..."
+      >
+
+      <select
+        id="statusFilter"
+        class="select">
+
+        <option value="ALL">
+          All Status
+        </option>
+
+        <option value="ASSIGNED">
+          Assigned
+        </option>
+
+        <option value="IN PROGRESS">
+          In Progress
+        </option>
+
+        <option value="DIAGNOSIS">
+          Diagnosis
+        </option>
+
+        <option value="CUSTOMER APPROVAL">
+          Customer Approval
+        </option>
+
+        <option value="REPAIR">
+          Repair
+        </option>
+
+        <option value="COMPLETED">
+          Completed
+        </option>
+
+      </select>
+
+    </div>
+
+  </section>
+
+
+  <!-- JOB LIST -->
+
+  <section id="jobList">
+
+    <div class="loading">
+      Loading jobs...
+    </div>
+
+  </section>
+
+</main>
+
+
+<!-- DETAIL MODAL -->
+
+<div
+  id="jobModal"
+  class="modal-bg">
+
+  <div class="modal">
+
+    <div class="modal-head">
+
+      <h2 id="modalJobTitle">
+        Job Details
+      </h2>
+
+      <button
+        class="close"
+        onclick="closeJob()">
+        ×
+      </button>
+
+    </div>
+
+    <div id="modalContent"></div>
+
+  </div>
+
+</div>
+
+
+<script
+  type="module"
+  src="../js/retailer-jobs.js">
+</script>
+
+</body>
+</html>
