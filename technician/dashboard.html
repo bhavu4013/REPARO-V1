@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Technician Dashboard | REPARO</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: #f7f8fc;
+      color: #172033;
+      font-family: Arial, sans-serif;
+      padding-bottom: 85px;
+    }
+
+    .page {
+      max-width: 650px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .welcome {
+      font-size: 12px;
+      color: #7b8494;
+      margin-bottom: 4px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .logout-btn {
+      border: 0;
+      background: #fff0f3;
+      color: #d82f58;
+      padding: 9px 12px;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .hero {
+      background: #fff;
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 5px 18px rgba(20,30,60,.06);
+    }
+
+    .hero-title {
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .hero-text {
+      margin-top: 6px;
+      color: #7b8494;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat {
+      background: #fff;
+      border-radius: 17px;
+      padding: 15px;
+      box-shadow: 0 5px 18px rgba(20,30,60,.06);
+    }
+
+    .stat-label {
+      color: #7b8494;
+      font-size: 11px;
+    }
+
+    .stat-value {
+      margin-top: 6px;
+      font-size: 23px;
+      font-weight: 900;
+      color: #d82f58;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 13px;
+      box-shadow: 0 5px 18px rgba(20,30,60,.06);
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .job {
+      padding: 13px 0;
+      border-bottom: 1px solid #edf0f4;
+    }
+
+    .job:last-child {
+      border-bottom: 0;
+    }
+
+    .job-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .job-id {
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .job-device {
+      margin-top: 5px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .job-service {
+      margin-top: 4px;
+      color: #7b8494;
+      font-size: 11px;
+    }
+
+    .status {
+      padding: 6px 9px;
+      border-radius: 20px;
+      font-size: 9px;
+      font-weight: 900;
+      white-space: nowrap;
+      background: #e9f1ff;
+      color: #2863c7;
+    }
+
+    .status-diagnosis {
+      background: #f0eaff;
+      color: #6842c8;
+    }
+
+    .status-approval {
+      background: #fff3d8;
+      color: #9a6800;
+    }
+
+    .status-repair {
+      background: #ffe9ef;
+      color: #d82f58;
+    }
+
+    .status-completed {
+      background: #e8f8ef;
+      color: #187a48;
+    }
+
+    .open-btn {
+      width: 100%;
+      margin-top: 10px;
+      border: 0;
+      background: #fff0f3;
+      color: #d82f58;
+      border-radius: 11px;
+      padding: 10px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .empty {
+      color: #7b8494;
+      text-align: center;
+      padding: 18px 5px;
+      font-size: 12px;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 68px;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      box-shadow: 0 -4px 18px rgba(20,30,60,.08);
+      z-index: 20;
+    }
+
+    .nav-inner {
+      width: 100%;
+      max-width: 650px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .nav-btn {
+      border: 0;
+      background: transparent;
+      color: #7b8494;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .nav-btn.active {
+      color: #d82f58;
+    }
+
+    .nav-icon {
+      display: block;
+      font-size: 20px;
+      margin-bottom: 3px;
+    }
+
+    .loading {
+      text-align: center;
+      color: #7b8494;
+      padding: 20px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="page">
+
+    <header class="topbar">
+
+      <div>
+        <div class="welcome">
+          Technician Panel
+        </div>
+
+        <h1
+          id="technicianName"
+          class="title"
+        >
+          Dashboard
+        </h1>
+      </div>
+
+      <button
+        id="logoutBtn"
+        class="logout-btn"
+        type="button"
+      >
+        Logout
+      </button>
+
+    </header>
+
+
+    <section class="hero">
+
+      <div class="hero-title">
+        Welcome to REPARO
+      </div>
+
+      <div class="hero-text">
+        Manage your assigned service jobs,
+        diagnosis, repair and completion from here.
+      </div>
+
+    </section>
+
+
+    <section class="stats">
+
+      <div class="stat">
+
+        <div class="stat-label">
+          Total Jobs
+        </div>
+
+        <div
+          id="totalJobs"
+          class="stat-value"
+        >
+          0
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-label">
+          Active Jobs
+        </div>
+
+        <div
+          id="activeJobs"
+          class="stat-value"
+        >
+          0
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-label">
+          Completed
+        </div>
+
+        <div
+          id="completedJobs"
+          class="stat-value"
+        >
+          0
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-label">
+          Pending Approval
+        </div>
+
+        <div
+          id="approvalJobs"
+          class="stat-value"
+        >
+          0
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <section class="card">
+
+      <h2 class="section-title">
+        Recent Jobs
+      </h2>
+
+      <div id="jobsContainer">
+
+        <div class="loading">
+          Loading jobs...
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <nav class="bottom-nav">
+
+    <div class="nav-inner">
+
+      <button
+        class="nav-btn active"
+        type="button"
+        id="homeNav"
+      >
+        <span class="nav-icon">⌂</span>
+        Home
+      </button>
+
+
+      <button
+        class="nav-btn"
+        type="button"
+        id="jobsNav"
+      >
+        <span class="nav-icon">▣</span>
+        Jobs
+      </button>
+
+
+      <button
+        class="nav-btn"
+        type="button"
+        id="earningsNav"
+      >
+        <span class="nav-icon">₹</span>
+        Earnings
+      </button>
+
+    </div>
+
+  </nav>
+
+
+  <script
+    type="module"
+    src="../js/technician-dashboard.js"
+  ></script>
+
+</body>
+</html>
