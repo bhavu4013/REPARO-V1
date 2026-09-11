@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice | REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+</head>
+
+<body>
+
+<main class="page-container">
+
+  <header class="page-header">
+    <div>
+      <div class="eyebrow">REPARO V1</div>
+      <h1>Invoice</h1>
+      <p>Customer billing & warranty</p>
+    </div>
+
+    <span id="invoiceStatus" class="status-badge">
+      -
+    </span>
+  </header>
+
+
+  <div id="loading">
+    Loading invoice...
+  </div>
+
+
+  <div id="invoiceContent" class="hidden">
+
+    <!-- CUSTOMER -->
+
+    <section class="card">
+
+      <div class="section-title">
+        <div>
+          <div class="eyebrow">CUSTOMER</div>
+          <h2 id="customerName">-</h2>
+          <p id="customerMobile">-</p>
+        </div>
+      </div>
+
+      <div class="card-info-grid">
+
+        <div>
+          <span>Address</span>
+          <strong id="customerAddress">-</strong>
+        </div>
+
+        <div>
+          <span>Invoice ID</span>
+          <strong id="invoiceId">-</strong>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- JOB -->
+
+    <section class="card">
+
+      <div class="section-title">
+        <div>
+          <div class="eyebrow">SERVICE JOB</div>
+          <h2 id="jobId">-</h2>
+        </div>
+      </div>
+
+      <div class="card-info-grid">
+
+        <div>
+          <span>Service</span>
+          <strong id="serviceType">-</strong>
+        </div>
+
+        <div>
+          <span>Device</span>
+          <strong id="device">-</strong>
+        </div>
+
+        <div>
+          <span>Serial Number</span>
+          <strong id="serialNumber">-</strong>
+        </div>
+
+        <div>
+          <span>Retailer</span>
+          <strong id="retailerId">-</strong>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- BILL -->
+
+    <section class="card">
+
+      <div class="section-title">
+        <div>
+          <div class="eyebrow">CUSTOMER BILL</div>
+          <h2>Invoice Summary</h2>
+        </div>
+      </div>
+
+
+      <div class="card-info-grid">
+
+        <div>
+          <span>Service / Labour</span>
+          <strong id="labourAmount">₹0</strong>
+        </div>
+
+        <div>
+          <span>Parts / Material</span>
+          <strong id="partsAmount">₹0</strong>
+        </div>
+
+        <div>
+          <span>Visit / Installation</span>
+          <strong id="visitAmount">₹0</strong>
+        </div>
+
+        <div>
+          <span>Discount</span>
+          <strong id="discountAmount">₹0</strong>
+        </div>
+
+      </div>
+
+
+      <div class="estimate-box">
+
+        <span>
+          TOTAL PAYABLE
+        </span>
+
+        <strong id="totalAmount">
+          ₹0
+        </strong>
+
+      </div>
+
+    </section>
+
+
+    <!-- PAYMENT -->
+
+    <section class="card">
+
+      <div class="section-title">
+        <div>
+          <div class="eyebrow">PAYMENT</div>
+          <h2>Payment Status</h2>
+        </div>
+      </div>
+
+
+      <div class="form-field">
+
+        <label>Payment Status</label>
+
+        <select
+          id="paymentStatus"
+          class="form-input">
+
+          <option value="PENDING">
+            PENDING
+          </option>
+
+          <option value="PAID">
+            PAID
+          </option>
+
+          <option value="PARTIAL">
+            PARTIAL
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div class="form-field">
+
+        <label>Payment Method</label>
+
+        <select
+          id="paymentMethod"
+          class="form-input">
+
+          <option value="">
+            Select Method
+          </option>
+
+          <option value="CASH">Cash</option>
+          <option value="UPI">UPI</option>
+          <option value="CARD">Card</option>
+          <option value="BANK">Bank Transfer</option>
+
+        </select>
+
+      </div>
+
+
+      <button
+        id="savePaymentBtn"
+        class="primary-btn">
+        Save Payment
+      </button>
+
+    </section>
+
+
+    <!-- WARRANTY -->
+
+    <section class="card">
+
+      <div class="section-title">
+
+        <div>
+          <div class="eyebrow">WARRANTY</div>
+          <h2>Service Warranty</h2>
+        </div>
+
+      </div>
+
+
+      <div class="form-field">
+
+        <label>
+          Warranty Period
+        </label>
+
+        <select
+          id="warrantyDays"
+          class="form-input">
+
+          <option value="0">
+            No Warranty
+          </option>
+
+          <option value="7">
+            7 Days
+          </option>
+
+          <option value="15">
+            15 Days
+          </option>
+
+          <option value="30" selected>
+            30 Days
+          </option>
+
+          <option value="60">
+            60 Days
+          </option>
+
+          <option value="90">
+            90 Days
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div class="card-info-grid">
+
+        <div>
+          <span>Warranty Start</span>
+          <strong id="warrantyStart">-</strong>
+        </div>
+
+        <div>
+          <span>Warranty End</span>
+          <strong id="warrantyEnd">-</strong>
+        </div>
+
+        <div>
+          <span>Commission Status</span>
+          <strong id="commissionStatus">
+            WARRANTY HOLD
+          </strong>
+        </div>
+
+      </div>
+
+
+      <button
+        id="saveWarrantyBtn"
+        class="primary-btn">
+        Save Warranty
+      </button>
+
+    </section>
+
+
+    <!-- SAVE INVOICE -->
+
+    <section class="card">
+
+      <button
+        id="saveInvoiceBtn"
+        class="primary-btn">
+        Save / Generate Invoice
+      </button>
+
+    </section>
+
+  </div>
+
+</main>
+
+
+<script
+  type="module"
+  src="../js/invoice.js">
+</script>
+
+</body>
+</html>
