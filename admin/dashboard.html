@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1.0"
+>
+
+<title>REPARO — Admin Dashboard</title>
+
+<link
+  rel="stylesheet"
+  href="../css/reparo.css"
+>
+
+<style>
+
+.dashboard-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  margin-bottom:20px;
+}
+
+.quick-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+
+.quick-card{
+  border:0;
+  background:#fff;
+  border-radius:20px;
+  padding:18px;
+  text-align:left;
+  box-shadow:var(--reparo-shadow);
+  cursor:pointer;
+}
+
+.quick-icon{
+  font-size:24px;
+  margin-bottom:10px;
+}
+
+.quick-title{
+  font-weight:900;
+}
+
+.quick-text{
+  margin-top:5px;
+  color:var(--reparo-muted);
+  font-size:12px;
+}
+
+.job-item{
+  background:#fff;
+  border-radius:18px;
+  padding:16px;
+  margin-bottom:10px;
+  box-shadow:var(--reparo-shadow);
+}
+
+.job-top{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.job-id{
+  color:var(--reparo-muted);
+  font-size:12px;
+  margin-top:6px;
+}
+
+.job-status{
+  display:inline-block;
+  padding:6px 9px;
+  border-radius:10px;
+  font-size:11px;
+  font-weight:800;
+  background:#E0F7FC;
+  color:#087C99;
+}
+
+.empty{
+  background:#fff;
+  border-radius:18px;
+  padding:25px;
+  text-align:center;
+  color:var(--reparo-muted);
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- HEADER -->
+
+<header class="topbar">
+
+  <div class="brand">
+
+    <div class="brand-icon">
+      R
+    </div>
+
+    <div>
+      REPARO
+    </div>
+
+  </div>
+
+
+  <button
+    id="logoutBtn"
+    class="btn"
+    style="
+      padding:9px 13px;
+      background:#F3F4F6;
+    "
+  >
+    Logout
+  </button>
+
+</header>
+
+
+
+<main class="container">
+
+
+<!-- HERO -->
+
+<section class="hero">
+
+  <h2 id="welcome">
+    Admin Dashboard
+  </h2>
+
+  <p>
+    Manage your REPARO service network.
+  </p>
+
+</section>
+
+
+
+<!-- STATS -->
+
+<section class="dashboard-grid">
+
+
+  <div class="card">
+
+    <div class="label">
+      Retailers
+    </div>
+
+    <div
+      id="retailerCount"
+      class="stat-number"
+    >
+      0
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <div class="label">
+      Technicians
+    </div>
+
+    <div
+      id="technicianCount"
+      class="stat-number"
+    >
+      0
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <div class="label">
+      Customers
+    </div>
+
+    <div
+      id="customerCount"
+      class="stat-number"
+    >
+      0
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <div class="label">
+      Active Jobs
+    </div>
+
+    <div
+      id="jobCount"
+      class="stat-number"
+    >
+      0
+    </div>
+
+  </div>
+
+</section>
+
+
+
+<!-- QUICK ACTIONS -->
+
+<div class="section-title">
+  Quick Actions
+</div>
+
+
+<section class="quick-grid">
+
+
+  <button
+    id="retailersBtn"
+    class="quick-card"
+  >
+
+    <div class="quick-icon">
+      🏪
+    </div>
+
+    <div class="quick-title">
+      Retailers
+    </div>
+
+    <div class="quick-text">
+      Manage service partners
+    </div>
+
+  </button>
+
+
+
+  <button
+    id="techniciansBtn"
+    class="quick-card"
+  >
+
+    <div class="quick-icon">
+      🔧
+    </div>
+
+    <div class="quick-title">
+      Technicians
+    </div>
+
+    <div class="quick-text">
+      Manage technicians
+    </div>
+
+  </button>
+
+
+
+  <button
+    id="customersBtn"
+    class="quick-card"
+  >
+
+    <div class="quick-icon">
+      👥
+    </div>
+
+    <div class="quick-title">
+      Customers
+    </div>
+
+    <div class="quick-text">
+      Customer database
+    </div>
+
+  </button>
+
+
+
+  <button
+    id="jobsBtn"
+    class="quick-card"
+  >
+
+    <div class="quick-icon">
+      🛠️
+    </div>
+
+    <div class="quick-title">
+      Service Jobs
+    </div>
+
+    <div class="quick-text">
+      Track repair work
+    </div>
+
+  </button>
+
+
+
+  <button
+    id="productsBtn"
+    class="quick-card"
+  >
+
+    <div class="quick-icon">
+      📦
+    </div>
+
+    <div class="quick-title">
+      Products
+    </div>
+
+    <div class="quick-text">
+      Parts & accessories
+    </div>
+
+  </button>
+
+
+
+  <button
+    id="paymentsBtn"
+    class="quick-card"
+  >
+
+    <div class="quick-icon">
+      ₹
+    </div>
+
+    <div class="quick-title">
+      Payments
+    </div>
+
+    <div class="quick-text">
+      Wallet & settlements
+    </div>
+
+  </button>
+
+</section>
+
+
+
+<!-- RECENT JOBS -->
+
+<div class="section-title">
+  Recent Service Jobs
+</div>
+
+
+<section id="jobsList">
+
+  <div class="empty">
+    Loading jobs...
+  </div>
+
+</section>
+
+
+</main>
+
+
+
+<!-- BOTTOM NAV -->
+
+<nav class="bottom-nav">
+
+  <button
+    id="homeBtn"
+    class="active"
+  >
+    ⌂<br>
+    Home
+  </button>
+
+
+  <button id="leadNav">
+    ＋<br>
+    Leads
+  </button>
+
+
+  <button id="jobNav">
+    🔧<br>
+    Jobs
+  </button>
+
+
+  <button id="earningNav">
+    ₹<br>
+    Earnings
+  </button>
+
+
+  <button id="moreNav">
+    ☰<br>
+    More
+  </button>
+
+</nav>
+
+
+
+<script type="module">
+
+import {
+  db,
+  auth
+} from "../js/firebase.js";
+
+
+import {
+  logout,
+  getUserProfile
+} from "../js/auth.js";
+
+
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+
+import {
+  collection,
+  getDocs,
+  query,
+  limit
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+
+/* =========================
+   AUTH CHECK
+========================= */
+
+onAuthStateChanged(
+  auth,
+  async user => {
+
+    if(!user){
+
+      window.location.href =
+        "../index.html";
+
+      return;
+    }
+
+
+    try{
+
+      const profile =
+        await getUserProfile(
+          user.uid
+        );
+
+
+      if(
+        profile.role !== "admin" ||
+        profile.active !== true
+      ){
+
+        window.location.href =
+          "../index.html";
+
+        return;
+      }
+
+
+      document.getElementById(
+        "welcome"
+      ).textContent =
+        "Hello, " +
+        (profile.name || "Admin");
+
+
+      await loadDashboard();
+
+
+    }catch(error){
+
+      console.error(error);
+
+      window.location.href =
+        "../index.html";
+
+    }
+
+  }
+);
+
+
+
+/* =========================
+   DASHBOARD DATA
+========================= */
+
+async function loadDashboard(){
+
+  try{
+
+    const [
+      retailers,
+      technicians,
+      customers,
+      jobs
+    ] = await Promise.all([
+
+      getDocs(
+        query(
+          collection(db,"retailers"),
+          limit(500)
+        )
+      ),
+
+      getDocs(
+        query(
+          collection(db,"users"),
+          limit(500)
+        )
+      ),
+
+      getDocs(
+        query(
+          collection(db,"customers"),
+          limit(500)
+        )
+      ),
+
+      getDocs(
+        query(
+          collection(db,"jobs"),
+          limit(100)
+        )
+      )
+
+    ]);
+
+
+    document.getElementById(
+      "retailerCount"
+    ).textContent =
+      retailers.size;
+
+
+    const technicianCount =
+      technicians.docs.filter(
+        item =>
+          item.data().role ===
+          "technician"
+      ).length;
+
+
+    document.getElementById(
+      "technicianCount"
+    ).textContent =
+      technicianCount;
+
+
+    document.getElementById(
+      "customerCount"
+    ).textContent =
+      customers.size;
+
+
+    const jobData =
+      jobs.docs.map(
+        item => ({
+          id:item.id,
+          ...item.data()
+        })
+      );
+
+
+    const activeJobs =
+      jobData.filter(
+        job =>
+          ![
+            "completed",
+            "cancelled"
+          ].includes(
+            String(
+              job.status || ""
+            ).toLowerCase()
+          )
+      );
+
+
+    document.getElementById(
+      "jobCount"
+    ).textContent =
+      activeJobs.length;
+
+
+    renderJobs(jobData);
+
+
+  }catch(error){
+
+    console.error(
+      "Dashboard error:",
+      error
+    );
+
+
+    document.getElementById(
+      "jobsList"
+    ).innerHTML = `
+
+      <div class="empty">
+
+        Dashboard data load
+        કરવામાં સમસ્યા આવી.
+
+      </div>
+
+    `;
+
+  }
+
+}
+
+
+
+/* =========================
+   JOB LIST
+========================= */
+
+function renderJobs(jobs){
+
+  const list =
+    document.getElementById(
+      "jobsList"
+    );
+
+
+  if(!jobs.length){
+
+    list.innerHTML = `
+
+      <div class="empty">
+
+        હજુ કોઈ service job નથી.
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+
+  list.innerHTML = "";
+
+
+  jobs
+    .slice(0,10)
+    .forEach(job => {
+
+      const div =
+        document.createElement(
+          "div"
+        );
+
+
+      div.className =
+        "job-item";
+
+
+      div.innerHTML = `
+
+        <div class="job-top">
+
+          <strong>
+
+            ${escapeHtml(
+              job.customerName ||
+              "Customer"
+            )}
+
+          </strong>
+
+
+          <span class="job-status">
+
+            ${escapeHtml(
+              String(
+                job.status ||
+                "Pending"
+              )
+            )}
+
+          </span>
+
+        </div>
+
+
+        <div class="job-id">
+
+          Job ID:
+          ${escapeHtml(job.id)}
+
+        </div>
+
+      `;
+
+
+      list.appendChild(div);
+
+    });
+
+}
+
+
+
+/* =========================
+   NAVIGATION
+========================= */
+
+document
+  .getElementById("retailersBtn")
+  .addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "./retailers.html";
+
+    }
+  );
+
+
+document
+  .getElementById("techniciansBtn")
+  .addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "./technicians.html";
+
+    }
+  );
+
+
+document
+  .getElementById("customersBtn")
+  .addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "./customers.html";
+
+    }
+  );
+
+
+document
+  .getElementById("jobsBtn")
+  .addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "./jobs.html";
+
+    }
+  );
+
+
+document
+  .getElementById("productsBtn")
+  .addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "./products.html";
+
+    }
+  );
+
+
+document
+  .getElementById("paymentsBtn")
+  .addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "./payments.html";
+
+    }
+  );
+
+
+/* Bottom navigation */
+
+document
+  .getElementById("homeBtn")
+  .addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "./dashboard.html";
+
+    }
+  );
+
+
+document
+  .getElementById("leadNav")
+  .addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "./leads.html";
+
+    }
+  );
+
+
+document
+  .getElementById("jobNav")
+  .addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "./jobs.html";
+
+    }
+  );
+
+
+document
+  .getElementById("earningNav")
+  .addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "./payments.html";
+
+    }
+  );
+
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+document
+  .getElementById("logoutBtn")
+  .addEventListener(
+    "click",
+    async () => {
+
+      await logout();
+
+      window.location.href =
+        "../index.html";
+
+    }
+  );
+
+
+
+/* =========================
+   SAFE HTML
+========================= */
+
+function escapeHtml(value){
+
+  return String(value)
+
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
+
+}
+
+</script>
+
+</body>
+</html>
