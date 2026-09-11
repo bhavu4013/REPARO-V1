@@ -1,0 +1,312 @@
+:root {
+
+  --reparo-pink: #F9547C;
+  --reparo-yellow: #FFE32B;
+  --reparo-blue: #08AEE0;
+
+  --reparo-navy: #111827;
+  --reparo-text: #374151;
+  --reparo-muted: #6B7280;
+
+  --reparo-bg: #F6F8FB;
+  --reparo-white: #FFFFFF;
+
+  --reparo-border: #E5E7EB;
+
+  --reparo-radius: 20px;
+  --reparo-radius-small: 14px;
+
+  --reparo-shadow:
+    0 5px 20px rgba(0,0,0,.055);
+}
+
+
+/* =========================
+   RESET
+========================= */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  background: var(--reparo-bg);
+  color: var(--reparo-navy);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+
+/* =========================
+   COMMON
+========================= */
+
+.hidden {
+  display: none !important;
+}
+
+.container {
+  width: 100%;
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px 16px 90px;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.topbar {
+  background: var(--reparo-white);
+
+  padding: 16px 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  box-shadow:
+    0 2px 12px rgba(0,0,0,.06);
+
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+
+  border-radius: 12px;
+
+  background: var(--reparo-yellow);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 900;
+}
+
+
+/* =========================
+   HERO
+========================= */
+
+.hero {
+  border-radius: 24px;
+
+  padding: 25px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--reparo-yellow),
+      #FFF3A0
+    );
+
+  margin-bottom: 18px;
+}
+
+.hero h1,
+.hero h2 {
+  margin: 0 0 8px;
+}
+
+.hero p {
+  margin: 0;
+  color: var(--reparo-text);
+}
+
+
+/* =========================
+   CARDS
+========================= */
+
+.card {
+  background: var(--reparo-white);
+
+  border-radius: var(--reparo-radius);
+
+  padding: 18px;
+
+  box-shadow: var(--reparo-shadow);
+}
+
+.stat-number {
+  font-size: 27px;
+  font-weight: 900;
+  margin-top: 8px;
+}
+
+.label {
+  color: var(--reparo-muted);
+  font-size: 13px;
+}
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+.btn {
+  border: 0;
+
+  border-radius: 15px;
+
+  padding: 14px 16px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--reparo-blue);
+  color: white;
+}
+
+.btn-pink {
+  background: var(--reparo-pink);
+  color: white;
+}
+
+.btn-yellow {
+  background: var(--reparo-yellow);
+  color: var(--reparo-navy);
+}
+
+
+/* =========================
+   INPUT
+========================= */
+
+.input {
+  width: 100%;
+
+  padding: 14px 15px;
+
+  border:
+    1px solid var(--reparo-border);
+
+  border-radius:
+    var(--reparo-radius-small);
+
+  background: #FAFCFF;
+
+  outline: none;
+}
+
+.input:focus {
+  border-color:
+    var(--reparo-blue);
+}
+
+
+/* =========================
+   BADGE
+========================= */
+
+.badge {
+  display: inline-block;
+
+  padding: 6px 9px;
+
+  border-radius: 10px;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  background: #E0F7FC;
+
+  color: #087C99;
+}
+
+.badge-danger {
+  background: #FEE2E2;
+  color: #B91C1C;
+}
+
+
+/* =========================
+   BOTTOM NAVIGATION
+========================= */
+
+.bottom-nav {
+  position: fixed;
+
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  height: 65px;
+
+  background:
+    var(--reparo-white);
+
+  display: flex;
+
+  justify-content:
+    space-around;
+
+  align-items: center;
+
+  box-shadow:
+    0 -3px 15px rgba(0,0,0,.08);
+
+  z-index: 20;
+}
+
+.bottom-nav button {
+  border: 0;
+
+  background: none;
+
+  font-size: 12px;
+
+  color:
+    var(--reparo-muted);
+}
+
+.bottom-nav button.active {
+  color:
+    var(--reparo-blue);
+
+  font-weight: 900;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (min-width: 700px) {
+
+  .container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+}
