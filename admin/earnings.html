@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Earnings & Commission | REPARO V1</title>
+  <link rel="stylesheet" href="../css/reparo.css">
+
+  <style>
+    /* Module-only styles. Existing REPARO theme remains unchanged. */
+
+    .earnings-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 14px 90px;
+    }
+
+    .earnings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .earnings-header h1 {
+      margin: 4px 0;
+    }
+
+    .earnings-header p {
+      margin: 0;
+      color: #6B7280;
+      font-size: 14px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .summary-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 15px;
+      box-shadow: 0 6px 20px rgba(17,24,39,.07);
+    }
+
+    .summary-label {
+      color: #6B7280;
+      font-size: 12px;
+      margin-bottom: 7px;
+    }
+
+    .summary-value {
+      color: #111827;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .summary-value.small {
+      font-size: 18px;
+    }
+
+    .filter-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 20px rgba(17,24,39,.06);
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: 1fr 180px;
+      gap: 10px;
+    }
+
+    .module-input,
+    .module-select {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 11px 12px;
+      background: #fff;
+      color: #111827;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .module-input:focus,
+    .module-select:focus {
+      border-color: #08AEE0;
+    }
+
+    .section-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 6px 22px rgba(17,24,39,.07);
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .record {
+      border: 1px solid #EEF0F4;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .record:last-child {
+      margin-bottom: 0;
+    }
+
+    .record-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .record-title {
+      font-weight: 800;
+      color: #111827;
+      font-size: 15px;
+    }
+
+    .record-sub {
+      color: #6B7280;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .record-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .record-item {
+      background: #F6F8FB;
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .record-item span {
+      display: block;
+      color: #6B7280;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .record-item strong {
+      color: #111827;
+      font-size: 14px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .status-pending,
+    .status-hold {
+      background: #FFF4CC;
+      color: #8A6800;
+    }
+
+    .status-approved {
+      background: #E8F4FF;
+      color: #05658A;
+    }
+
+    .status-payable,
+    .status-released {
+      background: #E8F8F0;
+      color: #16734B;
+    }
+
+    .status-paid {
+      background: #E9E7FF;
+      color: #5145A5;
+    }
+
+    .status-cancelled {
+      background: #FFE8EC;
+      color: #B42345;
+    }
+
+    .record-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .action-btn {
+      border: 0;
+      border-radius: 11px;
+      padding: 9px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .action-primary {
+      background: #08AEE0;
+      color: #fff;
+    }
+
+    .action-success {
+      background: #F9547C;
+      color: #fff;
+    }
+
+    .action-yellow {
+      background: #FFE32B;
+      color: #111827;
+    }
+
+    .action-light {
+      background: #F3F4F6;
+      color: #111827;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 35px 15px;
+      color: #6B7280;
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 30px;
+      color: #6B7280;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(17,24,39,.45);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 9999;
+      padding: 10px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 520px;
+      background: #fff;
+      border-radius: 22px;
+      padding: 18px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal h2 {
+      margin: 0 0 5px;
+    }
+
+    .modal p {
+      color: #6B7280;
+      font-size: 13px;
+    }
+
+    .form-row {
+      margin-top: 12px;
+    }
+
+    .form-row label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      border: 0;
+      border-radius: 12px;
+      padding: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      background: #F3F4F6;
+      color: #111827;
+    }
+
+    .btn-save {
+      background: #F9547C;
+      color: #fff;
+    }
+
+    @media (min-width: 700px) {
+      .summary-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .record-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .modal-backdrop {
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="earnings-page">
+
+  <header class="earnings-header">
+    <div>
+      <div class="eyebrow">REPARO V1 • ADMIN</div>
+      <h1>Earnings & Commission</h1>
+      <p>Technician payments and retailer commission settlement</p>
+    </div>
+  </header>
+
+
+  <!-- SUMMARY -->
+
+  <section class="summary-grid">
+
+    <div class="summary-card">
+      <div class="summary-label">Technician Pending</div>
+      <div class="summary-value" id="technicianPending">₹0</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Technician Payable</div>
+      <div class="summary-value" id="technicianPayable">₹0</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Retailer Hold</div>
+      <div class="summary-value" id="retailerHold">₹0</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Retailer Released</div>
+      <div class="summary-value" id="retailerReleased">₹0</div>
+    </div>
+
+  </section>
+
+
+  <!-- FILTER -->
+
+  <section class="filter-card">
+
+    <div class="filter-row">
+
+      <input
+        id="searchInput"
+        class="module-input"
+        type="search"
+        placeholder="Search job, technician, retailer..."
+      >
+
+      <select
+        id="statusFilter"
+        class="module-select">
+
+        <option value="ALL">All Status</option>
+
+        <option value="PENDING">Pending</option>
+
+        <option value="APPROVED">Approved</option>
+
+        <option value="PAYABLE">Payable</option>
+
+        <option value="PAID">Paid</option>
+
+        <option value="WARRANTY HOLD">Warranty Hold</option>
+
+        <option value="RELEASED">Released</option>
+
+        <option value="CANCELLED">Cancelled</option>
+
+      </select>
+
+    </div>
+
+  </section>
+
+
+  <!-- TECHNICIAN -->
+
+  <section class="section-card">
+
+    <div class="section-heading">
+      <h2>Technician Earnings</h2>
+      <span id="technicianCount">0</span>
+    </div>
+
+    <div id="technicianList">
+      <div class="loading-state">
+        Loading technician earnings...
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- RETAILER -->
+
+  <section class="section-card">
+
+    <div class="section-heading">
+      <h2>Retailer Commission</h2>
+      <span id="retailerCount">0</span>
+    </div>
+
+    <div id="retailerList">
+      <div class="loading-state">
+        Loading retailer commission...
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+
+<!-- PAYMENT MODAL -->
+
+<div
+  id="paymentModal"
+  class="modal-backdrop">
+
+  <div class="modal">
+
+    <h2>Mark Technician Payment</h2>
+
+    <p id="paymentDescription">
+      Payment details
+    </p>
+
+    <div class="form-row">
+      <label>Payment Method</label>
+
+      <select
+        id="paymentMethod"
+        class="module-select">
+
+        <option value="UPI">UPI</option>
+        <option value="BANK">Bank Transfer</option>
+        <option value="CASH">Cash</option>
+
+      </select>
+    </div>
+
+    <div class="form-row">
+
+      <label>Transaction Reference</label>
+
+      <input
+        id="transactionReference"
+        class="module-input"
+        placeholder="UPI / transaction reference"
+      >
+
+    </div>
+
+    <div class="form-row">
+
+      <label>Notes</label>
+
+      <input
+        id="paymentNotes"
+        class="module-input"
+        placeholder="Optional notes"
+      >
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button
+        class="btn-cancel"
+        id="closePaymentBtn">
+        Cancel
+      </button>
+
+      <button
+        class="btn-save"
+        id="confirmPaymentBtn">
+        Confirm Paid
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script
+  type="module"
+  src="../js/earnings.js">
+</script>
+
+</body>
+</html>
