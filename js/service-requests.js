@@ -19,6 +19,10 @@ import {
 } from "./firebase.js";
 
 
+/* =====================================================
+   DOM
+===================================================== */
+
 const requestContainer =
   document.getElementById("requestContainer");
 
@@ -52,10 +56,10 @@ const successBox =
 const modalBg =
   document.getElementById("modalBg");
 
-const closeModal =
+const closeModalBtn =
   document.getElementById("closeModal");
 
-const cancelModal =
+const cancelModalBtn =
   document.getElementById("cancelModal");
 
 const requestForm =
@@ -94,11 +98,28 @@ const serviceType =
 const problem =
   document.getElementById("problem");
 
+const moreNavBtn =
+  document.getElementById("moreNavBtn");
+
+const morePanel =
+  document.getElementById("morePanel");
+
+const moreOverlay =
+  document.getElementById("moreOverlay");
+
+
+/* =====================================================
+   STATE
+===================================================== */
 
 let allRequests = [];
 
 let adminUser = null;
 
+
+/* =====================================================
+   AUTH
+===================================================== */
 
 onAuthStateChanged(
   auth,
@@ -116,7 +137,7 @@ onAuthStateChanged(
 
     try {
 
-      const userSnap =
+      const userSnapshot =
         await getDoc(
           doc(
             db,
@@ -126,7 +147,7 @@ onAuthStateChanged(
         );
 
 
-      if (!userSnap.exists()) {
+      if (!userSnapshot.exists()) {
 
         await signOut(auth);
 
@@ -139,7 +160,7 @@ onAuthStateChanged(
 
 
       const profile =
-        userSnap.data();
+        userSnapshot.data();
 
 
       if (
@@ -166,9 +187,8 @@ onAuthStateChanged(
     }
     catch (error) {
 
-      showError(
-        error.message ||
-        "Authorization failed."
+      showLoadError(
+        error
       );
 
     }
@@ -177,18 +197,22 @@ onAuthStateChanged(
 );
 
 
+/* =====================================================
+   LOAD REQUESTS
+===================================================== */
+
 async function loadRequests() {
 
-  requestContainer.innerHTML = `
-
-    <div class="loading">
-      Loading service requests...
-    </div>
-
-  `;
+  showLoading();
 
 
   try {
+
+    /*
+      Firestore request.
+      Admin has permission through the current
+      Firestore rules.
+    */
 
     const snapshot =
       await getDocs(
@@ -218,19 +242,7 @@ async function loadRequests() {
     );
 
 
-    allRequests.sort(
-      (a, b) => {
-
-        const aTime =
-          a.createdAt?.seconds || 0;
-
-        const bTime =
-          b.createdAt?.seconds || 0;
-
-        return bTime - aTime;
-
-      }
-    );
+    sortRequests();
 
 
     updateSummary();
@@ -240,33 +252,87 @@ async function loadRequests() {
   }
   catch (error) {
 
-    requestContainer.innerHTML = `
-
-      <div class="empty">
-
-        <div class="empty-icon">
-          ⚠️
-        </div>
-
-        <div class="empty-title">
-          Unable to Load
-        </div>
-
-        <div class="empty-text">
-          ${escapeHtml(
-            error.message ||
-            "Service requests could not be loaded."
-          )}
-        </div>
-
-      </div>
-
-    `;
+    showLoadError(
+      error
+    );
 
   }
 
 }
 
+
+/* =====================================================
+   SORT
+===================================================== */
+
+function sortRequests() {
+
+  allRequests.sort(
+    (a, b) => {
+
+      const aTime =
+        getTimestamp(
+          a.createdAt
+        );
+
+      const bTime =
+        getTimestamp(
+          b.createdAt
+        );
+
+      return bTime - aTime;
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   TIMESTAMP
+===================================================== */
+
+function getTimestamp(
+  timestamp
+) {
+
+  if (!timestamp) {
+
+    return 0;
+
+  }
+
+
+  if (
+    typeof timestamp.toMillis ===
+    "function"
+  ) {
+
+    return timestamp.toMillis();
+
+  }
+
+
+  if (
+    typeof timestamp.seconds ===
+    "number"
+  ) {
+
+    return (
+      timestamp.seconds * 1000
+    );
+
+  }
+
+
+  return 0;
+
+}
+
+
+/* =====================================================
+   SUMMARY
+===================================================== */
 
 function updateSummary() {
 
@@ -294,16 +360,24 @@ function updateSummary() {
 }
 
 
+/* =====================================================
+   STATUS
+===================================================== */
+
 function normalizeStatus(
   status
 ) {
 
   return String(
     status || "NEW"
-  ).toUpperCase();
+  ).trim().toUpperCase();
 
 }
 
+
+/* =====================================================
+   FILTER EVENTS
+===================================================== */
 
 searchInput.addEventListener(
   "input",
@@ -316,6 +390,10 @@ statusFilter.addEventListener(
   renderRequests
 );
 
+
+/* =====================================================
+   RENDER
+===================================================== */
 
 function renderRequests() {
 
@@ -333,7 +411,7 @@ function renderRequests() {
     allRequests.filter(
       request => {
 
-        const text = [
+        const searchable = [
 
           request.id,
 
@@ -346,6 +424,8 @@ function renderRequests() {
           request.mobile,
 
           request.retailerName,
+
+          request.retailerId,
 
           request.device,
 
@@ -365,14 +445,17 @@ function renderRequests() {
 
         const matchesSearch =
           !search ||
-          text.includes(search);
+          searchable.includes(
+            search
+          );
 
 
         const matchesStatus =
           !selectedStatus ||
           normalizeStatus(
             request.status
-          ) === selectedStatus;
+          ) ===
+          selectedStatus;
 
 
         return (
@@ -418,7 +501,9 @@ function renderRequests() {
     <div class="request-list">
 
       ${filtered
-        .map(renderRequest)
+        .map(
+          renderRequest
+        )
         .join("")}
 
     </div>
@@ -426,47 +511,14 @@ function renderRequests() {
   `;
 
 
-  document
-    .querySelectorAll("[data-view]")
-    .forEach(
-      button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            openEdit(
-              button.dataset.view
-            );
-
-          }
-        );
-
-      }
-    );
-
-
-  document
-    .querySelectorAll("[data-job]")
-    .forEach(
-      button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            convertToJob(
-              button.dataset.job
-            );
-
-          }
-        );
-
-      }
-    );
+  bindRequestButtons();
 
 }
 
+
+/* =====================================================
+   REQUEST CARD
+===================================================== */
 
 function renderRequest(
   request
@@ -484,6 +536,49 @@ function renderRequest(
     );
 
 
+  const requestNumber =
+    request.requestId ||
+    request.id;
+
+
+  const customer =
+    request.customerName ||
+    "Customer";
+
+
+  const mobile =
+    request.customerMobile ||
+    request.mobile ||
+    "-";
+
+
+  const deviceText =
+    getDevice(
+      request
+    );
+
+
+  const retailer =
+    request.retailerName ||
+    request.retailerId ||
+    "-";
+
+
+  const service =
+    request.serviceType ||
+    "Service";
+
+
+  const problemText =
+    request.problem ||
+    "No problem description";
+
+
+  const canCreateJob =
+    status !== "CONVERTED TO JOB" &&
+    status !== "CANCELLED";
+
+
   return `
 
     <div class="request-card">
@@ -493,21 +588,15 @@ function renderRequest(
         <div>
 
           <h3 class="request-id">
-
             ${escapeHtml(
-              request.requestId ||
-              request.id
+              requestNumber
             )}
-
           </h3>
 
           <div class="customer">
-
             ${escapeHtml(
-              request.customerName ||
-              "Customer"
+              customer
             )}
-
           </div>
 
         </div>
@@ -516,11 +605,11 @@ function renderRequest(
         <span
           class="status ${statusClass}"
         >
-
           ${escapeHtml(
-            formatStatus(status)
+            formatStatus(
+              status
+            )
           )}
-
         </span>
 
       </div>
@@ -536,9 +625,7 @@ function renderRequest(
 
           <span>
             ${escapeHtml(
-              request.customerMobile ||
-              request.mobile ||
-              "-"
+              mobile
             )}
           </span>
 
@@ -553,7 +640,7 @@ function renderRequest(
 
           <span>
             ${escapeHtml(
-              getDevice(request)
+              deviceText
             )}
           </span>
 
@@ -568,8 +655,7 @@ function renderRequest(
 
           <span>
             ${escapeHtml(
-              request.serviceType ||
-              "Service"
+              service
             )}
           </span>
 
@@ -584,9 +670,7 @@ function renderRequest(
 
           <span>
             ${escapeHtml(
-              request.retailerName ||
-              request.retailerId ||
-              "-"
+              retailer
             )}
           </span>
 
@@ -601,8 +685,7 @@ function renderRequest(
 
           <span>
             ${escapeHtml(
-              request.problem ||
-              "No problem description"
+              problemText
             )}
           </span>
 
@@ -619,21 +702,24 @@ function renderRequest(
         <button
           class="action view"
           type="button"
-          data-view="${request.id}"
+          data-view-request="${escapeAttribute(
+            request.id
+          )}"
         >
           View / Edit
         </button>
 
 
         ${
-          status !== "CONVERTED TO JOB" &&
-          status !== "CANCELLED"
+          canCreateJob
             ? `
 
               <button
                 class="action job"
                 type="button"
-                data-job="${request.id}"
+                data-create-job="${escapeAttribute(
+                  request.id
+                )}"
               >
                 Create Job
               </button>
@@ -650,6 +736,103 @@ function renderRequest(
 
 }
 
+
+/* =====================================================
+   BUTTON BINDING
+===================================================== */
+
+function bindRequestButtons() {
+
+  document
+    .querySelectorAll(
+      "[data-view-request]"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            openEdit(
+              button.dataset.viewRequest
+            );
+
+          }
+        );
+
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-create-job]"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            convertToJob(
+              button.dataset.createJob
+            );
+
+          }
+        );
+
+      }
+    );
+
+}
+
+
+/* =====================================================
+   DEVICE
+===================================================== */
+
+function getDevice(
+  request
+) {
+
+  const parts = [
+
+    request.device,
+
+    request.deviceBrand,
+
+    request.deviceModel
+
+  ]
+  .filter(
+    value =>
+      value !== null &&
+      value !== undefined &&
+      String(value).trim() !== ""
+  );
+
+
+  if (
+    parts.length > 0
+  ) {
+
+    return parts.join(
+      " • "
+    );
+
+  }
+
+
+  return "Device not added";
+
+}
+
+
+/* =====================================================
+   STATUS CLASS
+===================================================== */
 
 function getStatusClass(
   status
@@ -683,6 +866,10 @@ function getStatusClass(
 }
 
 
+/* =====================================================
+   STATUS DISPLAY
+===================================================== */
+
 function formatStatus(
   status
 ) {
@@ -696,29 +883,6 @@ function formatStatus(
       letter =>
         letter.toUpperCase()
     );
-
-}
-
-
-function getDevice(
-  request
-) {
-
-  const parts = [
-
-    request.device,
-
-    request.deviceBrand,
-
-    request.deviceModel
-
-  ]
-  .filter(Boolean);
-
-
-  return parts.length
-    ? parts.join(" • ")
-    : "Device not added";
 
 }
 
@@ -737,19 +901,26 @@ function openNew() {
 
   hideMessages();
 
+
   requestForm.reset();
 
-  editRequestId.value = "";
+
+  editRequestId.value =
+    "";
+
 
   modalTitle.textContent =
     "New Service Request";
 
+
   saveBtn.textContent =
     "Create Request";
+
 
   modalBg.classList.add(
     "show"
   );
+
 
   customerName.focus();
 
@@ -763,6 +934,9 @@ function openNew() {
 function openEdit(
   id
 ) {
+
+  hideMessages();
+
 
   const request =
     allRequests.find(
@@ -787,7 +961,8 @@ function openEdit(
 
 
   customerName.value =
-    request.customerName || "";
+    request.customerName ||
+    "";
 
 
   customerMobile.value =
@@ -803,15 +978,18 @@ function openEdit(
 
 
   device.value =
-    request.device || "";
+    request.device ||
+    "";
 
 
   deviceBrand.value =
-    request.deviceBrand || "";
+    request.deviceBrand ||
+    "";
 
 
   deviceModel.value =
-    request.deviceModel || "";
+    request.deviceModel ||
+    "";
 
 
   serviceType.value =
@@ -820,11 +998,13 @@ function openEdit(
 
 
   problem.value =
-    request.problem || "";
+    request.problem ||
+    "";
 
 
   modalTitle.textContent =
     "Edit Service Request";
+
 
   saveBtn.textContent =
     "Save Changes";
@@ -849,6 +1029,17 @@ requestForm.addEventListener(
 
 
     hideMessages();
+
+
+    if (!adminUser) {
+
+      showError(
+        "Admin session મળી નથી."
+      );
+
+      return;
+
+    }
 
 
     const editId =
@@ -901,6 +1092,35 @@ requestForm.addEventListener(
 
     try {
 
+      const data = {
+
+        customerName:
+          name,
+
+        customerMobile:
+          mobile,
+
+        customerAddress:
+          customerAddress.value.trim(),
+
+        device:
+          device.value.trim(),
+
+        deviceBrand:
+          deviceBrand.value.trim(),
+
+        deviceModel:
+          deviceModel.value.trim(),
+
+        serviceType:
+          serviceType.value,
+
+        problem:
+          problem.value.trim()
+
+      };
+
+
       if (editId) {
 
         await updateDoc(
@@ -913,29 +1133,7 @@ requestForm.addEventListener(
 
           {
 
-            customerName:
-              name,
-
-            customerMobile:
-              mobile,
-
-            customerAddress:
-              customerAddress.value.trim(),
-
-            device:
-              device.value.trim(),
-
-            deviceBrand:
-              deviceBrand.value.trim(),
-
-            deviceModel:
-              deviceModel.value.trim(),
-
-            serviceType:
-              serviceType.value,
-
-            problem:
-              problem.value.trim(),
+            ...data,
 
             updatedAt:
               serverTimestamp()
@@ -947,7 +1145,9 @@ requestForm.addEventListener(
 
         closeRequestModal();
 
+
         await loadRequests();
+
 
         showSuccess(
           "Service request updated successfully."
@@ -956,33 +1156,9 @@ requestForm.addEventListener(
       }
       else {
 
-        await createRequest({
-
-          customerName:
-            name,
-
-          customerMobile:
-            mobile,
-
-          customerAddress:
-            customerAddress.value.trim(),
-
-          device:
-            device.value.trim(),
-
-          deviceBrand:
-            deviceBrand.value.trim(),
-
-          deviceModel:
-            deviceModel.value.trim(),
-
-          serviceType:
-            serviceType.value,
-
-          problem:
-            problem.value.trim()
-
-        });
+        await createRequest(
+          data
+        );
 
       }
 
@@ -990,8 +1166,9 @@ requestForm.addEventListener(
     catch (error) {
 
       showError(
-        error.message ||
-        "Request operation failed."
+        getErrorMessage(
+          error
+        )
       );
 
     }
@@ -1070,7 +1247,9 @@ async function createRequest(
 
   closeRequestModal();
 
+
   await loadRequests();
+
 
   showSuccess(
     "Service request created successfully."
@@ -1118,11 +1297,13 @@ async function convertToJob(
   }
 
 
-  if (
-    !confirm(
+  const confirmed =
+    window.confirm(
       "Create a service job from this request?"
-    )
-  ) {
+    );
+
+
+  if (!confirmed) {
 
     return;
 
@@ -1157,10 +1338,12 @@ async function convertToJob(
 
           customerMobile:
             request.customerMobile ||
+            request.mobile ||
             "",
 
           customerAddress:
             request.customerAddress ||
+            request.address ||
             "",
 
           retailerId:
@@ -1249,8 +1432,9 @@ async function convertToJob(
   catch (error) {
 
     showError(
-      error.message ||
-      "Unable to create job."
+      getErrorMessage(
+        error
+      )
     );
 
   }
@@ -1268,7 +1452,9 @@ function closeRequestModal() {
     "show"
   );
 
+
   requestForm.reset();
+
 
   editRequestId.value =
     "";
@@ -1276,13 +1462,13 @@ function closeRequestModal() {
 }
 
 
-closeModal.addEventListener(
+closeModalBtn.addEventListener(
   "click",
   closeRequestModal
 );
 
 
-cancelModal.addEventListener(
+cancelModalBtn.addEventListener(
   "click",
   closeRequestModal
 );
@@ -1306,6 +1492,69 @@ modalBg.addEventListener(
 
 
 /* =====================================================
+   MORE MENU
+===================================================== */
+
+moreNavBtn.addEventListener(
+  "click",
+  event => {
+
+    event.stopPropagation();
+
+    toggleMore();
+
+  }
+);
+
+
+moreOverlay.addEventListener(
+  "click",
+  closeMore
+);
+
+
+function toggleMore() {
+
+  const isOpen =
+    morePanel.classList.contains(
+      "show"
+    );
+
+
+  if (isOpen) {
+
+    closeMore();
+
+  }
+  else {
+
+    morePanel.classList.add(
+      "show"
+    );
+
+    moreOverlay.classList.add(
+      "show"
+    );
+
+  }
+
+}
+
+
+function closeMore() {
+
+  morePanel.classList.remove(
+    "show"
+  );
+
+  moreOverlay.classList.remove(
+    "show"
+  );
+
+}
+
+
+/* =====================================================
    LOGOUT
 ===================================================== */
 
@@ -1315,7 +1564,10 @@ logoutBtn.addEventListener(
 
     try {
 
-      await signOut(auth);
+      await signOut(
+        auth
+      );
+
 
       window.location.href =
         "../index.html";
@@ -1324,8 +1576,9 @@ logoutBtn.addEventListener(
     catch (error) {
 
       showError(
-        error.message ||
-        "Logout failed."
+        getErrorMessage(
+          error
+        )
       );
 
     }
@@ -1335,7 +1588,178 @@ logoutBtn.addEventListener(
 
 
 /* =====================================================
-   HELPERS
+   LOADING STATE
+===================================================== */
+
+function showLoading() {
+
+  requestContainer.innerHTML = `
+
+    <div class="loading">
+      Loading service requests...
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   LOAD ERROR
+===================================================== */
+
+function showLoadError(
+  error
+) {
+
+  console.error(
+    "REPARO Service Requests Load Error:",
+    error
+  );
+
+
+  requestContainer.innerHTML = `
+
+    <div class="empty">
+
+      <div class="empty-icon">
+        ⚠️
+      </div>
+
+      <div class="empty-title">
+        Unable to Load Requests
+      </div>
+
+      <div class="empty-text">
+        ${escapeHtml(
+          getErrorMessage(
+            error
+          )
+        )}
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   ERROR MESSAGE
+===================================================== */
+
+function getErrorMessage(
+  error
+) {
+
+  if (
+    error?.code ===
+    "permission-denied"
+  ) {
+
+    return "Firestore permission denied. Firebase Rules માં Admin access check કરો.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "unauthenticated"
+  ) {
+
+    return "Your login session has expired. Please login again.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "unavailable"
+  ) {
+
+    return "Firebase temporarily unavailable. Internet connection check કરો.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "failed-precondition"
+  ) {
+
+    return "Firestore operation failed. Database configuration check કરો.";
+
+  }
+
+
+  return (
+    error?.message ||
+    "Unable to complete the operation."
+  );
+
+}
+
+
+/* =====================================================
+   MESSAGES
+===================================================== */
+
+function hideMessages() {
+
+  errorBox.style.display =
+    "none";
+
+  successBox.style.display =
+    "none";
+
+  errorBox.textContent =
+    "";
+
+  successBox.textContent =
+    "";
+
+}
+
+
+function showError(
+  message
+) {
+
+  successBox.style.display =
+    "none";
+
+
+  errorBox.textContent =
+    message;
+
+
+  errorBox.style.display =
+    "block";
+
+}
+
+
+function showSuccess(
+  message
+) {
+
+  errorBox.style.display =
+    "none";
+
+
+  successBox.textContent =
+    message;
+
+
+  successBox.style.display =
+    "block";
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
 ===================================================== */
 
 function escapeHtml(
@@ -1374,44 +1798,16 @@ function escapeHtml(
 }
 
 
-function hideMessages() {
+/* =====================================================
+   ESCAPE ATTRIBUTE
+===================================================== */
 
-  errorBox.style.display =
-    "none";
-
-  successBox.style.display =
-    "none";
-
-}
-
-
-function showError(
-  message
+function escapeAttribute(
+  value
 ) {
 
-  successBox.style.display =
-    "none";
-
-  errorBox.textContent =
-    message;
-
-  errorBox.style.display =
-    "block";
-
-}
-
-
-function showSuccess(
-  message
-) {
-
-  errorBox.style.display =
-    "none";
-
-  successBox.textContent =
-    message;
-
-  successBox.style.display =
-    "block";
+  return escapeHtml(
+    value
+  );
 
 }
