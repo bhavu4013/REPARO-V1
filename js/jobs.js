@@ -70,6 +70,12 @@ const modalContent =
 const saveJobBtn =
   document.getElementById("saveJobBtn");
 
+const moreNavBtn =
+  document.getElementById("moreNavBtn");
+
+const morePanel =
+  document.getElementById("morePanel");
+
 
 /* =====================================================
    STATE
@@ -98,7 +104,6 @@ onAuthStateChanged(
         "../index.html";
 
       return;
-
     }
 
 
@@ -126,7 +131,6 @@ onAuthStateChanged(
           "../index.html";
 
         return;
-
       }
 
 
@@ -145,7 +149,6 @@ onAuthStateChanged(
           "../index.html";
 
         return;
-
       }
 
 
@@ -228,12 +231,6 @@ async function loadTechnicians() {
     }
   );
 
-
-  /*
-    Fallback:
-    If technicians master collection is empty,
-    use users collection.
-  */
 
   if (
     technicians.length === 0
@@ -418,14 +415,11 @@ function updateSummary() {
   totalJobs.textContent =
     total;
 
-
   newJobs.textContent =
     newCount;
 
-
   activeJobs.textContent =
     activeCount;
-
 
   completedJobs.textContent =
     completedCount;
@@ -575,7 +569,6 @@ function renderJobs() {
     `;
 
     return;
-
   }
 
 
@@ -791,7 +784,7 @@ function renderJobCard(job) {
         <button
           type="button"
           class="job-action view-btn"
-          data-view-job="${job.id}"
+          data-view-job="${escapeAttribute(job.id)}"
         >
           View / Edit
         </button>
@@ -800,7 +793,7 @@ function renderJobCard(job) {
         <button
           type="button"
           class="job-action assign-btn"
-          data-assign-job="${job.id}"
+          data-assign-job="${escapeAttribute(job.id)}"
         >
           Assign Technician
         </button>
@@ -997,9 +990,7 @@ function openJobModal(jobId) {
    STATUS OPTIONS
 ===================================================== */
 
-function statusOptions(
-  current
-) {
+function statusOptions(current) {
 
   const statuses = [
 
@@ -1061,9 +1052,7 @@ saveJobBtn.addEventListener(
 async function saveJob() {
 
   if (!selectedJobId) {
-
     return;
-
   }
 
 
@@ -1082,7 +1071,6 @@ async function saveJob() {
     );
 
     return;
-
   }
 
 
@@ -1106,7 +1094,6 @@ async function saveJob() {
 
   saveJobBtn.disabled =
     true;
-
 
   saveJobBtn.textContent =
     "Saving...";
@@ -1152,8 +1139,8 @@ async function saveJob() {
 
 
     /*
-      When technician is assigned,
-      synchronize the linked Service Request.
+      Synchronize linked Service Request
+      when technician is assigned.
     */
 
     if (
@@ -1214,9 +1201,7 @@ async function saveJob() {
 
     closeModal();
 
-
     await loadJobs();
-
 
     showSuccess(
       "Job updated successfully."
@@ -1295,17 +1280,51 @@ modalBackdrop.addEventListener(
 
 
 /* =====================================================
+   MORE MENU
+===================================================== */
+
+moreNavBtn.addEventListener(
+  "click",
+  event => {
+
+    event.stopPropagation();
+
+    morePanel.classList.toggle(
+      "show"
+    );
+
+  }
+);
+
+
+document.addEventListener(
+  "click",
+  event => {
+
+    if (
+      morePanel.classList.contains("show") &&
+      !morePanel.contains(event.target) &&
+      event.target !== moreNavBtn
+    ) {
+
+      morePanel.classList.remove(
+        "show"
+      );
+
+    }
+
+  }
+);
+
+
+/* =====================================================
    TECHNICIAN FINDER
 ===================================================== */
 
-function getTechnician(
-  uid
-) {
+function getTechnician(uid) {
 
   if (!uid) {
-
     return null;
-
   }
 
 
@@ -1360,9 +1379,7 @@ function getDeviceText(job) {
    STATUS CLASS
 ===================================================== */
 
-function getStatusClass(
-  status
-) {
+function getStatusClass(status) {
 
   switch (
     String(
@@ -1406,9 +1423,7 @@ function getStatusClass(
    FORMAT STATUS
 ===================================================== */
 
-function formatStatus(
-  status
-) {
+function formatStatus(status) {
 
   return String(
     status ||
@@ -1430,9 +1445,7 @@ function formatStatus(
    MESSAGES
 ===================================================== */
 
-function showError(
-  message
-) {
+function showError(message) {
 
   successBox.style.display =
     "none";
@@ -1454,9 +1467,7 @@ function showError(
 }
 
 
-function showSuccess(
-  message
-) {
+function showSuccess(message) {
 
   errorBox.style.display =
     "none";
@@ -1508,9 +1519,7 @@ logoutBtn.addEventListener(
    ESCAPE HTML
 ===================================================== */
 
-function escapeHtml(
-  value
-) {
+function escapeHtml(value) {
 
   return String(
     value ?? ""
@@ -1548,9 +1557,7 @@ function escapeHtml(
    ESCAPE ATTRIBUTE
 ===================================================== */
 
-function escapeAttribute(
-  value
-) {
+function escapeAttribute(value) {
 
   return escapeHtml(
     value
