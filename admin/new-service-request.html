@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REPARO - New Service Request</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f7f8fc;
+      color: #172033;
+      min-height: 100vh;
+      padding-bottom: 85px;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .page {
+      max-width: 760px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: #ff3b6b;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+    }
+
+    .brand-title {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .brand-subtitle {
+      color: #7c8495;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      border: 0;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 4px 14px rgba(20,30,55,.08);
+      font-size: 20px;
+    }
+
+    .message {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      font-weight: 600;
+    }
+
+    .error {
+      background: #fff0f0;
+      color: #c62828;
+    }
+
+    .success {
+      background: #edfff4;
+      color: #168348;
+    }
+
+    .form-card {
+      background: white;
+      border-radius: 20px;
+      padding: 17px;
+      box-shadow: 0 5px 18px rgba(20,30,55,.07);
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 13px;
+    }
+
+    .section {
+      margin-bottom: 22px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #596276;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #e0e5ed;
+      border-radius: 12px;
+      padding: 12px;
+      background: #fbfcfe;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #ff3b6b;
+      background: white;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .mobile-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .check-btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 0 14px;
+      background: #edf6ff;
+      color: #1479bf;
+      font-weight: 800;
+    }
+
+    .customer-status {
+      display: none;
+      margin-top: 9px;
+      border-radius: 13px;
+      padding: 12px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .status-new {
+      background: #edfff4;
+      color: #168348;
+    }
+
+    .status-existing {
+      background: #edf6ff;
+      color: #1479bf;
+    }
+
+    .status-protected {
+      background: #fff5e1;
+      color: #9a6500;
+    }
+
+    .status-error {
+      background: #fff0f0;
+      color: #c62828;
+    }
+
+    .readonly-field {
+      background: #f1f3f7;
+    }
+
+    .customer-id-box {
+      display: none;
+      background: #f4f7fb;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 11px;
+      color: #687184;
+      margin-top: 10px;
+      word-break: break-all;
+    }
+
+    .submit-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 13px;
+      padding: 14px;
+      background: #ff3b6b;
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .submit-btn:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 68px;
+      background: rgba(255,255,255,.97);
+      border-top: 1px solid #e9ecf2;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .nav-item {
+      border: 0;
+      background: transparent;
+      color: #7b8495;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      min-width: 65px;
+    }
+
+    .nav-item span:first-child {
+      font-size: 19px;
+    }
+
+    .nav-item.active {
+      color: #ff3b6b;
+      font-weight: 800;
+    }
+
+    @media (min-width: 600px) {
+      .form-card {
+        padding: 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="page">
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logo">R</div>
+        <div>
+          <div class="brand-title">New Service Request</div>
+          <div class="brand-subtitle">Retailer Service Desk</div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="back-btn"
+        id="backBtn"
+      >
+        ←
+      </button>
+    </header>
+
+    <div class="message error" id="errorBox"></div>
+    <div class="message success" id="successBox"></div>
+
+    <form id="requestForm" class="form-card">
+
+      <!-- CUSTOMER -->
+
+      <section class="section">
+
+        <div class="section-title">
+          Customer
+        </div>
+
+        <div class="form-grid">
+
+          <div class="field">
+
+            <label>Mobile Number *</label>
+
+            <div class="mobile-row">
+
+              <input
+                type="tel"
+                id="customerMobile"
+                placeholder="10 digit mobile number"
+                maxlength="10"
+                required
+              >
+
+              <button
+                type="button"
+                class="check-btn"
+                id="checkCustomerBtn"
+              >
+                Check
+              </button>
+
+            </div>
+
+            <div
+              class="customer-status"
+              id="customerStatus"
+            ></div>
+
+          </div>
+
+
+          <div class="field">
+
+            <label>Customer Name *</label>
+
+            <input
+              type="text"
+              id="customerName"
+              required
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label>Address</label>
+
+            <textarea
+              id="customerAddress"
+              placeholder="Customer address"
+            ></textarea>
+
+          </div>
+
+          <div
+            class="customer-id-box"
+            id="customerIdBox"
+          ></div>
+
+          <input
+            type="hidden"
+            id="customerId"
+          >
+
+        </div>
+
+      </section>
+
+
+      <!-- DEVICE -->
+
+      <section class="section">
+
+        <div class="section-title">
+          Device Details
+        </div>
+
+        <div class="form-grid">
+
+          <div class="field">
+
+            <label>Brand *</label>
+
+            <input
+              type="text"
+              id="deviceBrand"
+              placeholder="Samsung, LG, Sony..."
+              required
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label>Model</label>
+
+            <input
+              type="text"
+              id="deviceModel"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label>Screen Size</label>
+
+            <input
+              type="text"
+              id="screenSize"
+              placeholder="Example: 43"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label>Serial Number</label>
+
+            <input
+              type="text"
+              id="serialNumber"
+            >
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- SERVICE -->
+
+      <section class="section">
+
+        <div class="section-title">
+          Service Details
+        </div>
+
+        <div class="form-grid">
+
+          <div class="field">
+
+            <label>Service Type *</label>
+
+            <select id="serviceType" required>
+
+              <option value="">
+                Select Service Type
+              </option>
+
+              <option value="TV Repair">
+                TV Repair
+              </option>
+
+              <option value="TV Installation">
+                TV Installation
+              </option>
+
+              <option value="TV Demo">
+                TV Demo
+              </option>
+
+              <option value="Wall Mount Installation">
+                Wall Mount Installation
+              </option>
+
+              <option value="DTH Service">
+                DTH Service
+              </option>
+
+              <option value="Accessory Installation">
+                Accessory Installation
+              </option>
+
+              <option value="Other">
+                Other
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="field">
+
+            <label>Problem / Requirement *</label>
+
+            <textarea
+              id="problem"
+              placeholder="Describe customer problem or service requirement..."
+              required
+            ></textarea>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <button
+        type="submit"
+        class="submit-btn"
+        id="submitBtn"
+      >
+        Create Service Request
+      </button>
+
+    </form>
+
+  </main>
+
+
+  <nav class="bottom-nav">
+
+    <button
+      type="button"
+      class="nav-item"
+      data-page="dashboard.html"
+    >
+      <span>⌂</span>
+      <span>Home</span>
+    </button>
+
+    <button
+      type="button"
+      class="nav-item active"
+    >
+      <span>📝</span>
+      <span>Request</span>
+    </button>
+
+    <button
+      type="button"
+      class="nav-item"
+      data-page="customers.html"
+    >
+      <span>👥</span>
+      <span>Customers</span>
+    </button>
+
+    <button
+      type="button"
+      class="nav-item"
+      data-page="jobs.html"
+    >
+      <span>🔧</span>
+      <span>Jobs</span>
+    </button>
+
+  </nav>
+
+
+  <script
+    type="module"
+    src="../js/new-service-request.js"
+  ></script>
+
+</body>
+</html>
