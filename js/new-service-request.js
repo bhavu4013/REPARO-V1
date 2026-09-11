@@ -1,592 +1,397 @@
-import { auth, db } from "../js/firebase.js";
-
 import {
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
   collection,
-  getDocs,
-  getDoc,
-  addDoc,
   doc,
+  getDoc,
+  setDoc,
+  addDoc,
+  getDocs,
+  query,
+  where,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+  auth,
+  db
+} from "./firebase.js";
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const requestForm =
+  document.getElementById("requestForm");
+
+const customerMobile =
+  document.getElementById("customerMobile");
+
+const customerName =
+  document.getElementById("customerName");
+
+const customerAddress =
+  document.getElementById("customerAddress");
+
+const customerId =
+  document.getElementById("customerId");
+
+const customerIdBox =
+  document.getElementById("customerIdBox");
+
+const customerStatus =
+  document.getElementById("customerStatus");
+
+const checkCustomerBtn =
+  document.getElementById("checkCustomerBtn");
+
+const deviceBrand =
+  document.getElementById("deviceBrand");
+
+const deviceModel =
+  document.getElementById("deviceModel");
+
+const screenSize =
+  document.getElementById("screenSize");
+
+const serialNumber =
+  document.getElementById("serialNumber");
+
+const serviceType =
+  document.getElementById("serviceType");
+
+const problem =
+  document.getElementById("problem");
+
+const submitBtn =
+  document.getElementById("submitBtn");
+
+const errorBox =
+  document.getElementById("errorBox");
+
+const successBox =
+  document.getElementById("successBox");
+
+const backBtn =
+  document.getElementById("backBtn");
+
+
+/* =========================================================
+   STATE
+========================================================= */
 
 let currentUser = null;
 let retailerProfile = null;
-
-let customers = [];
-let selectedCustomer = null;
-
-let creatingNewCustomer = false;
+let checkedCustomer = null;
+let customerCheckCompleted = false;
 
 
-// =====================================================
-// ELEMENTS
-// =====================================================
+/* =========================================================
+   AUTH
+========================================================= */
 
-const loading =
-  document.getElementById("loading");
+onAuthStateChanged(auth, async (user) => {
 
-const form =
-  document.getElementById("requestForm");
+  if (!user) {
 
-const customerSearch =
-  document.getElementById("customerSearch");
+    window.location.href =
+      "../index.html";
 
-const customerResults =
-  document.getElementById("customerResults");
+    return;
+  }
 
-const selectedCustomerBox =
-  document.getElementById("selectedCustomer");
+  try {
 
-const protectionWarning =
-  document.getElementById("protectionWarning");
+    const userRef =
+      doc(db, "users", user.uid);
 
-const newCustomerBox =
-  document.getElementById("newCustomerBox");
+    const snapshot =
+      await getDoc(userRef);
 
+    if (!snapshot.exists()) {
 
-// =====================================================
-// AUTH
-// =====================================================
+      await signOut(auth);
 
-onAuthStateChanged(
-  auth,
-  async user => {
-
-    if (!user) {
-
-      location.href =
+      window.location.href =
         "../index.html";
 
       return;
-
     }
 
-
-    try {
-
-      const profileSnap =
-        await getDoc(
-          doc(
-            db,
-            "users",
-            user.uid
-          )
-        );
-
-
-      if (
-        !profileSnap.exists()
-      ) {
-
-        showError(
-          "Retailer profile not found."
-        );
-
-        return;
-
-      }
-
-
-      retailerProfile =
-        profileSnap.data();
-
-
-      if (
-        retailerProfile.role !==
-        "retailer"
-      ) {
-
-        showError(
-          "Retailer access required."
-        );
-
-        return;
-
-      }
-
-
-      currentUser =
-        user;
-
-
-      await loadCustomers();
-
-
-      loading.style.display =
-        "none";
-
-      form.style.display =
-        "block";
-
-
-      // Customer ID passed from protected customer page
-      const params =
-        new URLSearchParams(
-          location.search
-        );
-
-      const customerId =
-        params.get(
-          "customerId"
-        );
-
-
-      if (customerId) {
-
-        const customer =
-          customers.find(
-            item =>
-              item.id ===
-              customerId
-          );
-
-
-        if (customer) {
-
-          selectCustomer(
-            customer
-          );
-
-        }
-
-      }
-
-    } catch (error) {
-
-      console.error(error);
-
-      showError(
-        "Unable to load service request form."
-      );
-
-    }
-
-  }
-);
-
-
-// =====================================================
-// LOAD PROTECTED CUSTOMERS
-// =====================================================
-
-async function loadCustomers() {
-
-  const snap =
-    await getDocs(
-      collection(
-        db,
-        "customers"
-      )
-    );
-
-
-  customers = [];
-
-
-  snap.forEach(item => {
-
-    const data =
-      item.data();
-
-
-    /*
-      IMPORTANT:
-
-      Retailer only gets useful UI visibility
-      for customers whose originalRetailerId
-      matches current retailer.
-
-      Firestore rules remain the real security layer.
-    */
+    const profile =
+      snapshot.data();
 
     if (
-      data.originalRetailerId ===
-      currentUser.uid
+      profile.role !== "retailer" ||
+      profile.active !== true
     ) {
 
-      customers.push({
+      await signOut(auth);
 
-        id:
-          item.id,
+      window.location.href =
+        "../index.html";
 
-        ...data
+      return;
+    }
 
-      });
+    currentUser = user;
+
+    await loadRetailerProfile();
+
+  } catch (error) {
+
+    showError(
+      error.message ||
+      "Authorization error."
+    );
+
+  }
+
+});
+
+
+/* =========================================================
+   RETAILER PROFILE
+========================================================= */
+
+async function loadRetailerProfile() {
+
+  try {
+
+    const retailerRef =
+      doc(
+        db,
+        "retailers",
+        currentUser.uid
+      );
+
+    const snapshot =
+      await getDoc(retailerRef);
+
+    if (snapshot.exists()) {
+
+      retailerProfile =
+        snapshot.data();
+
+    } else {
+
+      const userRef =
+        doc(
+          db,
+          "users",
+          currentUser.uid
+        );
+
+      const userSnapshot =
+        await getDoc(userRef);
+
+      retailerProfile =
+        userSnapshot.exists()
+          ? userSnapshot.data()
+          : {};
 
     }
 
-  });
+  } catch (error) {
 
+    showError(
+      error.message ||
+      "Retailer profile could not be loaded."
+    );
 
-  customers.sort(
-    (a,b) =>
-      String(
-        a.name || ""
-      ).localeCompare(
-        String(
-          b.name || ""
-        )
-      )
-  );
-
-
-  renderCustomerResults(
-    customers
-  );
+  }
 
 }
 
 
-// =====================================================
-// CUSTOMER SEARCH
-// =====================================================
+/* =========================================================
+   CHECK CUSTOMER
+========================================================= */
 
-customerSearch.addEventListener(
+checkCustomerBtn.addEventListener(
+  "click",
+  checkCustomer
+);
+
+
+customerMobile.addEventListener(
   "input",
   () => {
 
-    const text =
-      customerSearch.value
-        .trim()
-        .toLowerCase();
+    customerCheckCompleted =
+      false;
 
+    checkedCustomer =
+      null;
 
-    if (!text) {
+    customerId.value =
+      "";
 
-      renderCustomerResults(
-        customers
-      );
+    customerIdBox.style.display =
+      "none";
 
-      return;
-
-    }
-
-
-    const filtered =
-      customers.filter(
-        customer => {
-
-          const value = [
-
-            customer.name,
-            customer.mobile,
-            customer.email,
-            customer.city,
-            customer.id
-
-          ]
-            .join(" ")
-            .toLowerCase();
-
-
-          return value.includes(
-            text
-          );
-
-        }
-      );
-
-
-    renderCustomerResults(
-      filtered
-    );
+    customerStatus.style.display =
+      "none";
 
   }
 );
 
 
-// =====================================================
-// RENDER CUSTOMERS
-// =====================================================
+async function checkCustomer() {
 
-function renderCustomerResults(list) {
+  clearMessages();
 
-  if (!list.length) {
+  const mobile =
+    normalizeMobile(
+      customerMobile.value
+    );
 
-    customerResults.innerHTML =
-      `
-        <div style="
-          padding:12px;
-          color:#6b7280;
-          font-size:10px;
-        ">
-          No protected customer found.
-        </div>
-      `;
+  if (mobile.length !== 10) {
+
+    showError(
+      "Please enter a valid 10 digit mobile number."
+    );
 
     return;
 
   }
 
 
-  customerResults.innerHTML =
-    list
-      .map(
-        customer => {
+  checkCustomerBtn.disabled =
+    true;
 
-          const selected =
-            selectedCustomer?.id ===
-            customer.id;
+  checkCustomerBtn.textContent =
+    "Checking...";
 
 
-          return `
-            <div
-              class="
-                customer-option
-                ${selected ? "selected" : ""}
-              "
-              data-id="${escapeHtml(
-                customer.id
-              )}">
+  try {
 
-              <strong>
-                ${escapeHtml(
-                  customer.name ||
-                  "Unnamed Customer"
-                )}
-              </strong>
+    /*
+      First check customer_index.
 
-              <span>
-                ${escapeHtml(
-                  customer.mobile ||
-                  "No mobile"
-                )}
-                ${
-                  customer.city
-                    ? " • " +
-                      escapeHtml(
-                        customer.city
-                      )
-                    : ""
-                }
-              </span>
+      This collection contains only:
+      mobile
+      customerId
+      protected
 
-            </div>
-          `;
+      It does NOT expose originalRetailerId.
+    */
 
-        }
-      )
-      .join("");
+    const indexRef =
+      doc(
+        db,
+        "customer_index",
+        mobile
+      );
+
+    const indexSnapshot =
+      await getDoc(indexRef);
 
 
-  document
-    .querySelectorAll(
-      ".customer-option"
-    )
-    .forEach(
-      element => {
+    if (indexSnapshot.exists()) {
 
-        element.addEventListener(
-          "click",
-          () => {
+      const indexData =
+        indexSnapshot.data();
+
+      const existingCustomerId =
+        indexData.customerId;
+
+
+      /*
+        If index exists, load customer.
+
+        The Firestore rules will only allow the retailer
+        to read it if it belongs to this retailer.
+      */
+
+      if (existingCustomerId) {
+
+        try {
+
+          const customerRef =
+            doc(
+              db,
+              "customers",
+              existingCustomerId
+            );
+
+          const customerSnapshot =
+            await getDoc(customerRef);
+
+
+          if (customerSnapshot.exists()) {
 
             const customer =
-              customers.find(
-                item =>
-                  item.id ===
-                  element.dataset.id
-              );
+              {
+                id: customerSnapshot.id,
+                ...customerSnapshot.data()
+              };
 
 
-            if (customer) {
+            /*
+              Same retailer:
+              customer can be reused.
+            */
 
-              selectCustomer(
+            if (
+              customer.originalRetailerId
+              === currentUser.uid
+            ) {
+
+              checkedCustomer =
+                customer;
+
+              customerCheckCompleted =
+                true;
+
+              fillExistingCustomer(
                 customer
               );
+
+              showCustomerStatus(
+                "existing",
+                "✓ Existing protected customer found. You can create a new service request for this customer."
+              );
+
+              return;
 
             }
 
           }
-        );
+
+        } catch (readError) {
+
+          /*
+            If customer document cannot be read,
+            it is most likely protected by another retailer.
+          */
+
+        }
 
       }
-    );
-
-}
 
 
-// =====================================================
-// SELECT CUSTOMER
-// =====================================================
+      /*
+        Existing index but customer is not readable
+        by this retailer = protected elsewhere.
+      */
 
-function selectCustomer(
-  customer
-) {
-
-  selectedCustomer =
-    customer;
-
-  creatingNewCustomer =
-    false;
-
-
-  newCustomerBox.classList.remove(
-    "show"
-  );
-
-
-  protectionWarning.classList.remove(
-    "show"
-  );
-
-
-  selectedCustomerBox.classList.add(
-    "show"
-  );
-
-
-  document.getElementById(
-    "selectedCustomerName"
-  ).textContent =
-    customer.name ||
-    "Customer";
-
-
-  document.getElementById(
-    "selectedCustomerInfo"
-  ).textContent =
-    [
-      customer.mobile,
-      customer.city
-    ]
-      .filter(Boolean)
-      .join(" • ") ||
-    "Protected customer";
-
-
-  customerSearch.value =
-    customer.name ||
-    customer.mobile ||
-    "";
-
-
-  renderCustomerResults(
-    [customer]
-  );
-
-}
-
-
-// =====================================================
-// NEW CUSTOMER TOGGLE
-// =====================================================
-
-document.getElementById(
-  "newCustomerBtn"
-).addEventListener(
-  "click",
-  () => {
-
-    creatingNewCustomer =
-      !creatingNewCustomer;
-
-
-    if (
-      creatingNewCustomer
-    ) {
-
-      selectedCustomer =
+      checkedCustomer =
         null;
 
+      customerCheckCompleted =
+        false;
 
-      selectedCustomerBox.classList.remove(
-        "show"
-      );
-
-
-      protectionWarning.classList.remove(
-        "show"
-      );
-
-
-      customerResults.innerHTML =
+      customerId.value =
         "";
 
-
-      newCustomerBox.classList.add(
-        "show"
-      );
-
-
-      document.getElementById(
-        "newCustomerBtn"
-      ).textContent =
-        "− Use Protected Customer";
-
-    } else {
-
-      newCustomerBox.classList.remove(
-        "show"
-      );
-
-
-      renderCustomerResults(
-        customers
-      );
-
-
-      document.getElementById(
-        "newCustomerBtn"
-      ).textContent =
-        "+ Create New Customer";
-
-    }
-
-  }
-);
-
-
-// =====================================================
-// CREATE REQUEST
-// =====================================================
-
-form.addEventListener(
-  "submit",
-  async event => {
-
-    event.preventDefault();
-
-
-    const submitBtn =
-      document.getElementById(
-        "submitBtn"
-      );
-
-
-    const deviceType =
-      value("deviceType");
-
-    const deviceBrand =
-      value("deviceBrand");
-
-    const deviceModel =
-      value("deviceModel");
-
-    const serialNumber =
-      value("serialNumber");
-
-    const screenSize =
-      value("screenSize");
-
-    const serviceType =
-      value("serviceType");
-
-    const problem =
-      value("problem");
-
-    const retailerNote =
-      value("retailerNote");
-
-
-    if (!deviceType) {
-
-      alert(
-        "Please select device type."
+      showCustomerStatus(
+        "protected",
+        "⚠️ This customer is already registered in REPARO. The customer relationship is protected. Please contact Admin for verification or transfer."
       );
 
       return;
@@ -594,9 +399,300 @@ form.addEventListener(
     }
 
 
-    if (!serviceType) {
+    /*
+      No index found.
+      Check customers collection for legacy records
+      where mobile may already exist.
 
-      alert(
+      This is useful while migrating older data.
+    */
+
+    const customersQuery =
+      query(
+        collection(db, "customers"),
+        where("mobile", "==", mobile)
+      );
+
+    const customersSnapshot =
+      await getDocs(customersQuery);
+
+
+    if (!customersSnapshot.empty) {
+
+      const customerDoc =
+        customersSnapshot.docs[0];
+
+      const customer =
+        {
+          id: customerDoc.id,
+          ...customerDoc.data()
+        };
+
+
+      if (
+        customer.originalRetailerId
+        === currentUser.uid
+      ) {
+
+        checkedCustomer =
+          customer;
+
+        customerCheckCompleted =
+          true;
+
+        fillExistingCustomer(
+          customer
+        );
+
+        showCustomerStatus(
+          "existing",
+          "✓ Existing protected customer found."
+        );
+
+        return;
+
+      }
+
+
+      showCustomerStatus(
+        "protected",
+        "⚠️ This customer is already protected. Please contact Admin before creating another customer record."
+      );
+
+      return;
+
+    }
+
+
+    /*
+      Completely new customer.
+    */
+
+    checkedCustomer =
+      null;
+
+    customerCheckCompleted =
+      true;
+
+    customerId.value =
+      "";
+
+    customerIdBox.style.display =
+      "none";
+
+    showCustomerStatus(
+      "new",
+      "✓ New customer. After creation, this customer will be protected under your retailer account."
+    );
+
+
+  } catch (error) {
+
+    showError(
+      error.message ||
+      "Customer check failed."
+    );
+
+  } finally {
+
+    checkCustomerBtn.disabled =
+      false;
+
+    checkCustomerBtn.textContent =
+      "Check";
+
+  }
+
+}
+
+
+/* =========================================================
+   FILL EXISTING CUSTOMER
+========================================================= */
+
+function fillExistingCustomer(customer) {
+
+  customerId.value =
+    customer.id;
+
+  customerIdBox.textContent =
+    `Customer ID: ${customer.id}`;
+
+  customerIdBox.style.display =
+    "block";
+
+
+  customerName.value =
+    customer.name ||
+    customer.customerName ||
+    "";
+
+  customerAddress.value =
+    customer.address ||
+    "";
+
+  deviceBrand.value =
+    customer.deviceBrand ||
+    "";
+
+  deviceModel.value =
+    customer.deviceModel ||
+    "";
+
+  screenSize.value =
+    customer.screenSize ||
+    "";
+
+  serialNumber.value =
+    customer.serialNumber ||
+    "";
+
+}
+
+
+/* =========================================================
+   CUSTOMER STATUS UI
+========================================================= */
+
+function showCustomerStatus(
+  type,
+  message
+) {
+
+  customerStatus.className =
+    "customer-status";
+
+  if (type === "new") {
+
+    customerStatus.classList.add(
+      "status-new"
+    );
+
+  }
+
+  if (type === "existing") {
+
+    customerStatus.classList.add(
+      "status-existing"
+    );
+
+  }
+
+  if (type === "protected") {
+
+    customerStatus.classList.add(
+      "status-protected"
+    );
+
+  }
+
+  if (type === "error") {
+
+    customerStatus.classList.add(
+      "status-error"
+    );
+
+  }
+
+  customerStatus.textContent =
+    message;
+
+  customerStatus.style.display =
+    "block";
+
+}
+
+
+/* =========================================================
+   SUBMIT REQUEST
+========================================================= */
+
+requestForm.addEventListener(
+  "submit",
+  async (event) => {
+
+    event.preventDefault();
+
+    clearMessages();
+
+
+    const mobile =
+      normalizeMobile(
+        customerMobile.value
+      );
+
+    const name =
+      customerName.value.trim();
+
+    const address =
+      customerAddress.value.trim();
+
+    const brand =
+      deviceBrand.value.trim();
+
+    const model =
+      deviceModel.value.trim();
+
+    const size =
+      screenSize.value.trim();
+
+    const serial =
+      serialNumber.value.trim();
+
+    const type =
+      serviceType.value;
+
+    const issue =
+      problem.value.trim();
+
+
+    if (mobile.length !== 10) {
+
+      showError(
+        "Please enter a valid 10 digit mobile number."
+      );
+
+      return;
+
+    }
+
+
+    if (!customerCheckCompleted) {
+
+      showError(
+        "Please check the customer mobile number first."
+      );
+
+      return;
+
+    }
+
+
+    if (!name) {
+
+      showError(
+        "Customer name is required."
+      );
+
+      return;
+
+    }
+
+
+    if (!brand) {
+
+      showError(
+        "Device brand is required."
+      );
+
+      return;
+
+    }
+
+
+    if (!type) {
+
+      showError(
         "Please select service type."
       );
 
@@ -605,10 +701,10 @@ form.addEventListener(
     }
 
 
-    if (!problem) {
+    if (!issue) {
 
-      alert(
-        "Please enter customer complaint."
+      showError(
+        "Please enter the problem or requirement."
       );
 
       return;
@@ -620,153 +716,180 @@ form.addEventListener(
       true;
 
     submitBtn.textContent =
-      "Creating Request...";
+      "Creating...";
 
 
     try {
 
-      let customer =
-        selectedCustomer;
+      let finalCustomerId =
+        customerId.value.trim();
 
 
-      // =================================================
-      // NEW CUSTOMER
-      // =================================================
+      /* ===================================================
+         EXISTING CUSTOMER
+      =================================================== */
 
-      if (
-        creatingNewCustomer
-      ) {
+      if (finalCustomerId) {
 
-        const name =
-          document.getElementById(
-            "newCustomerName"
-          )
-            .value
-            .trim();
+        const existingCustomerRef =
+          doc(
+            db,
+            "customers",
+            finalCustomerId
+          );
 
-
-        const mobile =
-          document.getElementById(
-            "newCustomerMobile"
-          )
-            .value
-            .replace(
-              /\D/g,
-              ""
-            );
+        const existingSnapshot =
+          await getDoc(
+            existingCustomerRef
+          );
 
 
-        const address =
-          document.getElementById(
-            "newCustomerAddress"
-          )
-            .value
-            .trim();
-
-
-        if (!name || !mobile) {
+        if (!existingSnapshot.exists()) {
 
           throw new Error(
-            "New customer name and mobile are required."
+            "Existing customer record could not be found."
           );
 
         }
 
 
+        const existingData =
+          existingSnapshot.data();
+
+
+        /*
+          Final security check before creating request.
+        */
+
         if (
-          mobile.length !== 10
+          existingData.originalRetailerId
+          !== currentUser.uid
         ) {
 
           throw new Error(
-            "Please enter a valid 10 digit mobile number."
+            "This customer is protected and cannot be used by this retailer."
+          );
+
+        }
+
+      }
+
+
+      /* ===================================================
+         NEW CUSTOMER
+      =================================================== */
+
+      else {
+
+        /*
+          Re-check index immediately before creation.
+          This prevents creating a duplicate if another
+          record was created after the first check.
+        */
+
+        const indexRef =
+          doc(
+            db,
+            "customer_index",
+            mobile
+          );
+
+        const indexSnapshot =
+          await getDoc(indexRef);
+
+
+        if (indexSnapshot.exists()) {
+
+          throw new Error(
+            "This mobile number has just been registered. Please check the customer again."
           );
 
         }
 
 
         /*
-          Duplicate protection check.
-
-          We search the customers collection that
-          the current retailer can access.
-
-          If mobile already belongs to a protected
-          customer of another retailer, it must NOT
-          be reassigned here.
+          Create customer ID first.
         */
 
-        const allCustomerSnap =
-          await getDocs(
-            collection(
-              db,
-              "customers"
-            )
+        const newCustomerRef =
+          doc(
+            collection(db, "customers")
           );
 
-
-        let duplicate =
-          null;
-
-
-        allCustomerSnap.forEach(
-          item => {
-
-            const data =
-              item.data();
+        finalCustomerId =
+          newCustomerRef.id;
 
 
-            if (
-              String(
-                data.mobile || ""
-              ).replace(
-                /\D/g,
-                ""
-              ) === mobile
-            ) {
+        const retailerName =
+          retailerProfile?.businessName ||
+          retailerProfile?.shopName ||
+          retailerProfile?.name ||
+          "";
 
-              duplicate = {
-                id: item.id,
-                ...data
-              };
 
-            }
+        const customerData = {
 
-          }
+          name,
+
+          customerName: name,
+
+          mobile,
+
+          customerMobile: mobile,
+
+          address,
+
+          deviceBrand: brand,
+
+          deviceModel: model,
+
+          screenSize: size,
+
+          serialNumber: serial,
+
+          originalRetailerId:
+            currentUser.uid,
+
+          originalRetailerName:
+            retailerName,
+
+          protected: true,
+
+          createdBy:
+            currentUser.uid,
+
+          createdAt:
+            serverTimestamp(),
+
+          updatedAt:
+            serverTimestamp()
+
+        };
+
+
+        await setDoc(
+          newCustomerRef,
+          customerData
         );
 
 
-        if (duplicate) {
+        /*
+          Create duplicate index.
 
-          if (
-            duplicate.originalRetailerId !==
-            currentUser.uid
-          ) {
+          IMPORTANT:
+          No originalRetailerId is stored here.
+        */
 
-            throw new Error(
-              "This customer is already protected by another retailer. Admin transfer is required."
-            );
-
-          }
-
-
-          customer =
-            duplicate;
-
-        } else {
-
-          const customerData = {
-
-            name,
+        await setDoc(
+          indexRef,
+          {
 
             mobile,
 
-            address,
+            customerId:
+              finalCustomerId,
 
-            originalRetailerId:
-              currentUser.uid,
-
-            active:
-              true,
+            protected: true,
 
             createdAt:
               serverTimestamp(),
@@ -774,127 +897,15 @@ form.addEventListener(
             updatedAt:
               serverTimestamp()
 
-          };
-
-
-          const customerRef =
-            await addDoc(
-              collection(
-                db,
-                "customers"
-              ),
-              customerData
-            );
-
-
-          customer = {
-
-            id:
-              customerRef.id,
-
-            ...customerData
-
-          };
-
-        }
-
-      }
-
-
-      // =================================================
-      // PROTECTED CUSTOMER REQUIRED
-      // =================================================
-
-      if (!customer) {
-
-        throw new Error(
-          "Please select a protected customer or create a new customer."
+          }
         );
 
       }
 
 
-      if (
-        customer.originalRetailerId !==
-        currentUser.uid
-      ) {
-
-        throw new Error(
-          "This customer is protected by another retailer. Admin transfer is required."
-        );
-
-      }
-
-
-      // =================================================
-      // REQUEST ID
-      // =================================================
-
-      const requestId =
-        await generateRequestId();
-
-
-      // =================================================
-      // SERVICE REQUEST
-      // =================================================
-
-      const requestData = {
-
-        requestId,
-
-        retailerId:
-          currentUser.uid,
-
-        retailerName:
-          retailerProfile.name ||
-          retailerProfile.businessName ||
-          "",
-
-        customerId:
-          customer.id,
-
-        customerName:
-          customer.name ||
-          "",
-
-        customerMobile:
-          customer.mobile ||
-          "",
-
-        customerAddress:
-          customer.address ||
-          "",
-
-        deviceType,
-
-        deviceBrand,
-
-        deviceModel,
-
-        serialNumber,
-
-        screenSize,
-
-        serviceType,
-
-        problem,
-
-        retailerNote,
-
-        status:
-          "NEW",
-
-        source:
-          "RETAILER",
-
-        createdAt:
-          serverTimestamp(),
-
-        updatedAt:
-          serverTimestamp()
-
-      };
-
+      /* ===================================================
+         CREATE SERVICE REQUEST
+      =================================================== */
 
       const requestRef =
         await addDoc(
@@ -902,34 +913,102 @@ form.addEventListener(
             db,
             "service_requests"
           ),
-          requestData
+          {
+
+            customerId:
+              finalCustomerId,
+
+            retailerId:
+              currentUser.uid,
+
+            customerName:
+              name,
+
+            customerMobile:
+              mobile,
+
+            address,
+
+            deviceBrand:
+              brand,
+
+            deviceModel:
+              model,
+
+            screenSize:
+              size,
+
+            serialNumber:
+              serial,
+
+            serviceType:
+              type,
+
+            problem:
+              issue,
+
+            status:
+              "NEW",
+
+            createdBy:
+              currentUser.uid,
+
+            createdAt:
+              serverTimestamp(),
+
+            updatedAt:
+              serverTimestamp()
+
+          }
         );
 
 
-      // =================================================
-      // SUCCESS
-      // =================================================
-
-      alert(
-        `Service Request created successfully.\n\nRequest ID: ${requestId}`
+      showSuccess(
+        `Service Request created successfully. Request ID: ${requestRef.id}`
       );
 
 
-      location.href =
-        `./jobs.html?requestId=${encodeURIComponent(
-          requestRef.id
-        )}`;
+      /*
+        Reset form after successful creation.
+      */
+
+      requestForm.reset();
+
+      customerId.value =
+        "";
+
+      customerCheckCompleted =
+        false;
+
+      checkedCustomer =
+        null;
+
+      customerIdBox.style.display =
+        "none";
+
+      customerStatus.style.display =
+        "none";
+
+
+      /*
+        Give user time to see success message,
+        then return to Service Requests.
+      */
+
+      setTimeout(() => {
+
+        window.location.href =
+          "dashboard.html";
+
+      }, 1800);
 
 
     } catch (error) {
 
-      console.error(error);
-
-      alert(
+      showError(
         error.message ||
-        "Unable to create service request."
+        "Service Request creation failed."
       );
-
 
     } finally {
 
@@ -945,103 +1024,101 @@ form.addEventListener(
 );
 
 
-// =====================================================
-// REQUEST ID
-// =====================================================
+/* =========================================================
+   BACK
+========================================================= */
 
-async function generateRequestId() {
+backBtn.addEventListener(
+  "click",
+  () => {
 
-  const now =
-    new Date();
+    window.history.back();
 
-
-  const date =
-    now
-      .toISOString()
-      .slice(
-        0,
-        10
-      )
-      .replaceAll(
-        "-",
-        ""
-      );
+  }
+);
 
 
-  const random =
-    Math.floor(
-      1000 +
-      Math.random() *
-      9000
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+document
+  .querySelectorAll(
+    ".bottom-nav [data-page]"
+  )
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        const page =
+          button.dataset.page;
+
+        if (page) {
+
+          window.location.href =
+            page;
+
+        }
+
+      }
     );
 
-
-  return `REQ-${date}-${random}`;
-
-}
+  });
 
 
-// =====================================================
-// VALUE HELPER
-// =====================================================
+/* =========================================================
+   MOBILE NORMALIZATION
+========================================================= */
 
-function value(id) {
+function normalizeMobile(value) {
 
-  return document.getElementById(
-    id
-  )
-    .value
-    .trim();
+  return String(value || "")
+    .replace(/\D/g, "")
+    .slice(-10);
 
 }
 
 
-// =====================================================
-// ESCAPE
-// =====================================================
+/* =========================================================
+   MESSAGES
+========================================================= */
 
-function escapeHtml(value) {
+function clearMessages() {
 
-  return String(
-    value ?? ""
-  )
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
+  errorBox.style.display =
+    "none";
+
+  successBox.style.display =
+    "none";
 
 }
 
-
-// =====================================================
-// ERROR
-// =====================================================
 
 function showError(message) {
 
-  loading.textContent =
+  successBox.style.display =
+    "none";
+
+  errorBox.textContent =
     message;
 
-  loading.style.display =
+  errorBox.style.display =
     "block";
 
-  form.style.display =
+}
+
+
+function showSuccess(message) {
+
+  errorBox.style.display =
     "none";
+
+  successBox.textContent =
+    message;
+
+  successBox.style.display =
+    "block";
 
 }
