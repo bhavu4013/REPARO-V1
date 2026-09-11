@@ -3,372 +3,1183 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Products - REPARO V1</title>
 
-  <link rel="stylesheet" href="../css/reparo.css">
+  <title>REPARO V1 - Products</title>
+
+  <style>
+    :root {
+      --pink: #f9547c;
+      --yellow: #ffe32b;
+      --blue: #08aee0;
+      --navy: #172033;
+      --muted: #6b7280;
+      --bg: #f6f7fb;
+      --border: #e5e7eb;
+      --green: #16a34a;
+      --red: #dc2626;
+      --orange: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--navy);
+      font-family: Arial, Helvetica, sans-serif;
+      min-height: 100vh;
+      padding-bottom: 86px;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    /* HEADER */
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #eeeeee;
+      padding: 16px 18px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 23px;
+      font-weight: 900;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: var(--yellow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .logout {
+      border: 0;
+      background: #f1f3f6;
+      color: var(--navy);
+      border-radius: 22px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    /* MAIN */
+
+    main {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 22px 16px;
+    }
+
+    .heading-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .add-btn {
+      border: 0;
+      background: var(--pink);
+      color: #fff;
+      border-radius: 15px;
+      padding: 12px 15px;
+      font-size: 14px;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: 0 8px 18px rgba(249, 84, 124, .2);
+    }
+
+    /* MESSAGES */
+
+    .message {
+      display: none;
+      border-radius: 15px;
+      padding: 13px 15px;
+      margin-bottom: 15px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    /* SUMMARY */
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .summary-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 15px 12px;
+      box-shadow: 0 5px 18px rgba(15, 23, 42, .05);
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .summary-value {
+      font-size: 25px;
+      font-weight: 900;
+    }
+
+    .summary-card.active .summary-value {
+      color: var(--green);
+    }
+
+    .summary-card.low .summary-value {
+      color: var(--orange);
+    }
+
+    .summary-card.out .summary-value {
+      color: var(--red);
+    }
+
+    /* FILTER CARD */
+
+    .filter-card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 5px 20px rgba(15, 23, 42, .055);
+    }
+
+    .filter-title {
+      margin: 0;
+      font-size: 21px;
+      font-weight: 900;
+    }
+
+    .filter-subtitle {
+      margin: 6px 0 15px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 180px;
+      gap: 9px;
+    }
+
+    .filters input,
+    .filters select {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #fafbfc;
+      border-radius: 14px;
+      padding: 13px 14px;
+      outline: none;
+      color: var(--navy);
+      font-size: 14px;
+    }
+
+    .filters input:focus,
+    .filters select:focus {
+      border-color: var(--pink);
+      background: #fff;
+    }
+
+    /* PRODUCT LIST */
+
+    .product-list {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .product-card {
+      background: #fff;
+      border-radius: 22px;
+      padding: 17px;
+      box-shadow: 0 5px 19px rgba(15, 23, 42, .055);
+    }
+
+    .product-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .product-name {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    .product-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .badge-active {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-inactive {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .product-info {
+      display: grid;
+      gap: 9px;
+      margin-top: 15px;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .info-icon {
+      width: 21px;
+      flex: 0 0 21px;
+      text-align: center;
+    }
+
+    .price-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .price-box {
+      background: #f8fafc;
+      border-radius: 13px;
+      padding: 10px;
+    }
+
+    .price-label {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .price-value {
+      margin-top: 3px;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .stock-normal {
+      color: var(--green);
+    }
+
+    .stock-low {
+      color: var(--orange);
+    }
+
+    .stock-out {
+      color: var(--red);
+    }
+
+    .divider {
+      height: 1px;
+      background: #eeeeee;
+      margin: 15px 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+    }
+
+    .action {
+      flex: 1;
+      border: 0;
+      border-radius: 13px;
+      padding: 11px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .edit-btn {
+      background: #dff5fc;
+      color: #08779a;
+    }
+
+    .toggle-btn {
+      background: #fff2a8;
+      color: #5d5100;
+    }
+
+    .empty {
+      background: #fff;
+      border-radius: 23px;
+      padding: 40px 20px;
+      text-align: center;
+      box-shadow: 0 5px 18px rgba(15, 23, 42, .04);
+    }
+
+    .empty-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .empty-title {
+      font-size: 20px;
+      font-weight: 900;
+      margin-bottom: 7px;
+    }
+
+    .empty-text {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .loading {
+      background: #fff;
+      border-radius: 22px;
+      padding: 38px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    /* MODAL */
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .55);
+      z-index: 100;
+      padding: 15px;
+      overflow-y: auto;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 580px;
+      background: #fff;
+      border-radius: 27px;
+      padding: 20px;
+      box-shadow: 0 25px 70px rgba(0,0,0,.25);
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .modal-head h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .close-btn {
+      width: 39px;
+      height: 39px;
+      border: 0;
+      border-radius: 50%;
+      background: #f1f3f6;
+      font-size: 23px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-field label {
+      display: block;
+      margin: 0 0 6px 3px;
+      color: #4b5563;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .form-field input,
+    .form-field select {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #fafbfc;
+      border-radius: 14px;
+      padding: 13px;
+      outline: none;
+      color: var(--navy);
+      font-size: 14px;
+    }
+
+    .form-field input:focus,
+    .form-field select:focus {
+      border-color: var(--pink);
+      background: #fff;
+    }
+
+    .form-section {
+      font-size: 14px;
+      font-weight: 900;
+      margin-top: 5px;
+      padding-bottom: 3px;
+      color: var(--pink);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 9px;
+      margin-top: 18px;
+    }
+
+    .modal-action {
+      flex: 1;
+      border: 0;
+      border-radius: 14px;
+      padding: 13px;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .cancel-btn {
+      background: #f1f3f6;
+      color: #374151;
+    }
+
+    .save-btn {
+      background: var(--pink);
+      color: #fff;
+    }
+
+    /* NAV */
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 76px;
+      background: #fff;
+      border-top: 1px solid #e8e8e8;
+      display: flex;
+      z-index: 30;
+    }
+
+    .nav-item {
+      flex: 1;
+      text-decoration: none;
+      color: #6b7280;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .nav-item.active {
+      color: var(--pink);
+    }
+
+    .nav-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    @media (max-width: 650px) {
+
+      .summary {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .heading-row {
+        align-items: flex-start;
+      }
+
+      .add-btn {
+        padding: 11px 12px;
+      }
+
+      .price-row {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<main class="page-container">
+  <header class="topbar">
 
-  <div class="page-header">
-    <div>
-      <h1>Products</h1>
-      <p>Products, parts & inventory</p>
+    <div class="brand-row">
+
+      <div class="brand">
+
+        <div class="brand-logo">R</div>
+
+        <span>REPARO</span>
+
+      </div>
+
+      <button
+        id="logoutBtn"
+        class="logout"
+        type="button"
+      >
+        Logout
+      </button>
+
     </div>
 
-    <button id="addProductBtn" class="primary-btn">
-      + Add Product
-    </button>
-  </div>
+  </header>
 
 
-  <!-- SUMMARY -->
+  <main>
 
-  <section class="summary-grid">
+    <div class="heading-row">
 
-    <div class="summary-card">
-      <span>Total Products</span>
-      <strong id="totalProducts">0</strong>
+      <div>
+
+        <h1>Products</h1>
+
+        <p class="subtitle">
+          Products, parts & inventory
+        </p>
+
+      </div>
+
+      <button
+        id="addProductBtn"
+        class="add-btn"
+        type="button"
+      >
+        + Add Product
+      </button>
+
     </div>
 
-    <div class="summary-card">
-      <span>Active</span>
-      <strong id="activeProducts">0</strong>
-    </div>
 
-    <div class="summary-card">
-      <span>Low Stock</span>
-      <strong id="lowStockProducts">0</strong>
-    </div>
+    <div
+      id="errorBox"
+      class="message error"
+    ></div>
 
-    <div class="summary-card">
-      <span>Out of Stock</span>
-      <strong id="outStockProducts">0</strong>
-    </div>
+    <div
+      id="successBox"
+      class="message success"
+    ></div>
 
-  </section>
 
+    <section class="summary">
 
-  <!-- FILTER -->
+      <div class="summary-card">
 
-  <section class="filter-bar">
+        <div class="summary-label">
+          Total Products
+        </div>
 
-    <input
-      type="search"
-      id="searchInput"
-      placeholder="Search product, brand, SKU..."
-    >
+        <div
+          id="totalProducts"
+          class="summary-value"
+        >
+          0
+        </div>
 
-    <select id="categoryFilter">
+      </div>
 
-      <option value="">All Categories</option>
 
-      <option value="TV Repair Part">
-        TV Repair Part
-      </option>
+      <div class="summary-card active">
 
-      <option value="TV Installation">
-        TV Installation
-      </option>
-
-      <option value="DTH">
-        DTH
-      </option>
-
-      <option value="HDMI">
-        HDMI
-      </option>
-
-      <option value="Remote">
-        Remote
-      </option>
-
-      <option value="Wall Mount">
-        Wall Mount
-      </option>
-
-      <option value="Table Stand">
-        Table Stand
-      </option>
-
-      <option value="FTTH">
-        FTTH
-      </option>
-
-      <option value="Other">
-        Other
-      </option>
-
-    </select>
-
-  </section>
-
-
-  <div id="loading">
-    Loading products...
-  </div>
-
-  <section id="productList"></section>
-
-</main>
-
-
-<!-- PRODUCT MODAL -->
-
-<div id="productModal" class="modal hidden">
-
-  <div class="modal-content">
-
-    <h2 id="modalTitle">
-      Add Product
-    </h2>
-
-
-    <form id="productForm">
-
-      <input
-        type="hidden"
-        id="editProductId"
-      >
-
-
-      <label>Product Name *</label>
-
-      <input
-        type="text"
-        id="productName"
-        required
-      >
-
-
-      <label>Category *</label>
-
-      <select id="productCategory" required>
-
-        <option value="TV Repair Part">
-          TV Repair Part
-        </option>
-
-        <option value="TV Installation">
-          TV Installation
-        </option>
-
-        <option value="DTH">
-          DTH
-        </option>
-
-        <option value="HDMI">
-          HDMI
-        </option>
-
-        <option value="Remote">
-          Remote
-        </option>
-
-        <option value="Wall Mount">
-          Wall Mount
-        </option>
-
-        <option value="Table Stand">
-          Table Stand
-        </option>
-
-        <option value="FTTH">
-          FTTH
-        </option>
-
-        <option value="Other">
-          Other
-        </option>
-
-      </select>
-
-
-      <label>Brand</label>
-
-      <input
-        type="text"
-        id="brand"
-      >
-
-
-      <label>Model</label>
-
-      <input
-        type="text"
-        id="model"
-      >
-
-
-      <label>SKU</label>
-
-      <input
-        type="text"
-        id="sku"
-      >
-
-
-      <label>Purchase Cost ₹ *</label>
-
-      <input
-        type="number"
-        id="purchaseCost"
-        min="0"
-        step="0.01"
-        required
-      >
-
-
-      <label>Selling Price ₹ *</label>
-
-      <input
-        type="number"
-        id="sellingPrice"
-        min="0"
-        step="0.01"
-        required
-      >
-
-
-      <label>Margin Type</label>
-
-      <select id="marginType">
-
-        <option value="PERCENTAGE">
-          Percentage
-        </option>
-
-        <option value="FIXED">
-          Fixed ₹
-        </option>
-
-      </select>
-
-
-      <label>Margin Value</label>
-
-      <input
-        type="number"
-        id="marginValue"
-        min="0"
-        step="0.01"
-        value="0"
-      >
-
-
-      <label>Retailer Share ₹</label>
-
-      <input
-        type="number"
-        id="retailerShare"
-        min="0"
-        step="0.01"
-        value="0"
-      >
-
-
-      <label>Warranty</label>
-
-      <input
-        type="text"
-        id="warranty"
-        placeholder="e.g. 30 Days"
-      >
-
-
-      <label>Current Stock</label>
-
-      <input
-        type="number"
-        id="currentStock"
-        min="0"
-        step="1"
-        value="0"
-      >
-
-
-      <label>Minimum Stock</label>
-
-      <input
-        type="number"
-        id="minStock"
-        min="0"
-        step="1"
-        value="1"
-      >
-
-
-      <label>Supplier</label>
-
-      <input
-        type="text"
-        id="supplier"
-      >
-
-
-      <label>Product Ownership</label>
-
-      <select id="ownership">
-
-        <option value="REPARO">
-          REPARO Stock
-        </option>
-
-        <option value="RETAILER">
-          Retailer Stock
-        </option>
-
-        <option value="DIRECT_PURCHASE">
-          Direct Purchase
-        </option>
-
-      </select>
-
-
-      <label>Active</label>
-
-      <select id="active">
-
-        <option value="true">
+        <div class="summary-label">
           Active
-        </option>
+        </div>
 
-        <option value="false">
-          Inactive
-        </option>
+        <div
+          id="activeProducts"
+          class="summary-value"
+        >
+          0
+        </div>
 
-      </select>
+      </div>
 
 
-      <div class="modal-actions">
+      <div class="summary-card low">
+
+        <div class="summary-label">
+          Low Stock
+        </div>
+
+        <div
+          id="lowStock"
+          class="summary-value"
+        >
+          0
+        </div>
+
+      </div>
+
+
+      <div class="summary-card out">
+
+        <div class="summary-label">
+          Out of Stock
+        </div>
+
+        <div
+          id="outOfStock"
+          class="summary-value"
+        >
+          0
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <section class="filter-card">
+
+      <h2 class="filter-title">
+        Product Management
+      </h2>
+
+      <p class="filter-subtitle">
+        Manage products, parts, pricing and stock
+      </p>
+
+
+      <div class="filters">
+
+        <input
+          id="searchInput"
+          type="search"
+          placeholder="Search product, brand, SKU..."
+        >
+
+
+        <select id="categoryFilter">
+
+          <option value="">
+            All Categories
+          </option>
+
+          <option value="TV">
+            TV
+          </option>
+
+          <option value="DTH">
+            DTH
+          </option>
+
+          <option value="ACCESSORIES">
+            Accessories
+          </option>
+
+          <option value="PARTS">
+            Repair Parts
+          </option>
+
+          <option value="INSTALLATION">
+            Installation
+          </option>
+
+          <option value="OTHER">
+            Other
+          </option>
+
+        </select>
+
+      </div>
+
+    </section>
+
+
+    <section id="productContainer">
+
+      <div class="loading">
+        Loading products...
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <nav class="bottom-nav">
+
+    <a
+      class="nav-item"
+      href="./dashboard.html"
+    >
+      <span class="nav-icon">⌂</span>
+      <span>Home</span>
+    </a>
+
+
+    <a
+      class="nav-item"
+      href="./jobs.html"
+    >
+      <span class="nav-icon">🔧</span>
+      <span>Jobs</span>
+    </a>
+
+
+    <a
+      class="nav-item active"
+      href="./products.html"
+    >
+      <span class="nav-icon">▣</span>
+      <span>Products</span>
+    </a>
+
+
+    <a
+      class="nav-item"
+      href="./retailers.html"
+    >
+      <span class="nav-icon">🏪</span>
+      <span>Retailers</span>
+    </a>
+
+
+    <a
+      class="nav-item"
+      href="./customers.html"
+    >
+      <span class="nav-icon">●</span>
+      <span>Customers</span>
+    </a>
+
+  </nav>
+
+
+  <!-- PRODUCT MODAL -->
+
+  <div
+    id="modalBackdrop"
+    class="modal-backdrop"
+  >
+
+    <div class="modal">
+
+      <div class="modal-head">
+
+        <h2 id="modalTitle">
+          Add Product
+        </h2>
 
         <button
+          id="closeModalBtn"
+          class="close-btn"
           type="button"
-          id="closeModalBtn">
-          Cancel
-        </button>
-
-        <button
-          type="submit"
-          class="primary-btn">
-          Save Product
+        >
+          ×
         </button>
 
       </div>
 
-    </form>
+
+      <form id="productForm">
+
+        <input
+          type="hidden"
+          id="editProductId"
+        >
+
+
+        <div class="form-grid">
+
+
+          <div class="form-field">
+
+            <label>
+              Product Name *
+            </label>
+
+            <input
+              id="productName"
+              type="text"
+              required
+              placeholder="e.g. HDMI Cable"
+            >
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Category *
+            </label>
+
+            <select
+              id="productCategory"
+              required
+            >
+
+              <option value="">
+                Select Category
+              </option>
+
+              <option value="TV">
+                TV
+              </option>
+
+              <option value="DTH">
+                DTH
+              </option>
+
+              <option value="ACCESSORIES">
+                Accessories
+              </option>
+
+              <option value="PARTS">
+                Repair Parts
+              </option>
+
+              <option value="INSTALLATION">
+                Installation
+              </option>
+
+              <option value="OTHER">
+                Other
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Brand
+            </label>
+
+            <input
+              id="brand"
+              type="text"
+              placeholder="Brand"
+            >
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Model
+            </label>
+
+            <input
+              id="model"
+              type="text"
+              placeholder="Model number"
+            >
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              SKU
+            </label>
+
+            <input
+              id="sku"
+              type="text"
+              placeholder="Product SKU"
+            >
+
+          </div>
+
+
+          <div class="form-section">
+            Pricing
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Purchase Cost *
+            </label>
+
+            <input
+              id="purchaseCost"
+              type="number"
+              min="0"
+              step="0.01"
+              required
+              placeholder="0"
+            >
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Selling Price *
+            </label>
+
+            <input
+              id="sellingPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              required
+              placeholder="0"
+            >
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Margin Type
+            </label>
+
+            <select id="marginType">
+
+              <option value="PERCENTAGE">
+                Percentage
+              </option>
+
+              <option value="FIXED">
+                Fixed ₹
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Margin Value
+            </label>
+
+            <input
+              id="marginValue"
+              type="number"
+              min="0"
+              step="0.01"
+              value="0"
+            >
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Retailer Share
+            </label>
+
+            <input
+              id="retailerShare"
+              type="number"
+              min="0"
+              step="0.01"
+              value="0"
+            >
+
+          </div>
+
+
+          <div class="form-section">
+            Inventory
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Current Stock
+            </label>
+
+            <input
+              id="currentStock"
+              type="number"
+              min="0"
+              step="1"
+              value="0"
+            >
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Minimum Stock
+            </label>
+
+            <input
+              id="minStock"
+              type="number"
+              min="0"
+              step="1"
+              value="2"
+            >
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Supplier
+            </label>
+
+            <input
+              id="supplier"
+              type="text"
+              placeholder="Supplier name"
+            >
+
+          </div>
+
+
+          <div class="form-field">
+
+            <label>
+              Warranty Days
+            </label>
+
+            <input
+              id="warrantyDays"
+              type="number"
+              min="0"
+              step="1"
+              value="0"
+            >
+
+          </div>
+
+
+        </div>
+
+
+        <div class="modal-actions">
+
+          <button
+            id="cancelBtn"
+            type="button"
+            class="modal-action cancel-btn"
+          >
+            Cancel
+          </button>
+
+
+          <button
+            id="saveBtn"
+            type="submit"
+            class="modal-action save-btn"
+          >
+            Create Product
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
 
   </div>
 
-</div>
 
-
-<script
-  type="module"
-  src="../js/products.js">
-</script>
+  <script
+    type="module"
+    src="../js/products.js"
+  ></script>
 
 </body>
 </html>
