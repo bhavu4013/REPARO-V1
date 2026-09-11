@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products - REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+</head>
+
+<body>
+
+<main class="page-container">
+
+  <div class="page-header">
+    <div>
+      <h1>Products</h1>
+      <p>Products, parts & inventory</p>
+    </div>
+
+    <button id="addProductBtn" class="primary-btn">
+      + Add Product
+    </button>
+  </div>
+
+
+  <!-- SUMMARY -->
+
+  <section class="summary-grid">
+
+    <div class="summary-card">
+      <span>Total Products</span>
+      <strong id="totalProducts">0</strong>
+    </div>
+
+    <div class="summary-card">
+      <span>Active</span>
+      <strong id="activeProducts">0</strong>
+    </div>
+
+    <div class="summary-card">
+      <span>Low Stock</span>
+      <strong id="lowStockProducts">0</strong>
+    </div>
+
+    <div class="summary-card">
+      <span>Out of Stock</span>
+      <strong id="outStockProducts">0</strong>
+    </div>
+
+  </section>
+
+
+  <!-- FILTER -->
+
+  <section class="filter-bar">
+
+    <input
+      type="search"
+      id="searchInput"
+      placeholder="Search product, brand, SKU..."
+    >
+
+    <select id="categoryFilter">
+
+      <option value="">All Categories</option>
+
+      <option value="TV Repair Part">
+        TV Repair Part
+      </option>
+
+      <option value="TV Installation">
+        TV Installation
+      </option>
+
+      <option value="DTH">
+        DTH
+      </option>
+
+      <option value="HDMI">
+        HDMI
+      </option>
+
+      <option value="Remote">
+        Remote
+      </option>
+
+      <option value="Wall Mount">
+        Wall Mount
+      </option>
+
+      <option value="Table Stand">
+        Table Stand
+      </option>
+
+      <option value="FTTH">
+        FTTH
+      </option>
+
+      <option value="Other">
+        Other
+      </option>
+
+    </select>
+
+  </section>
+
+
+  <div id="loading">
+    Loading products...
+  </div>
+
+  <section id="productList"></section>
+
+</main>
+
+
+<!-- PRODUCT MODAL -->
+
+<div id="productModal" class="modal hidden">
+
+  <div class="modal-content">
+
+    <h2 id="modalTitle">
+      Add Product
+    </h2>
+
+
+    <form id="productForm">
+
+      <input
+        type="hidden"
+        id="editProductId"
+      >
+
+
+      <label>Product Name *</label>
+
+      <input
+        type="text"
+        id="productName"
+        required
+      >
+
+
+      <label>Category *</label>
+
+      <select id="productCategory" required>
+
+        <option value="TV Repair Part">
+          TV Repair Part
+        </option>
+
+        <option value="TV Installation">
+          TV Installation
+        </option>
+
+        <option value="DTH">
+          DTH
+        </option>
+
+        <option value="HDMI">
+          HDMI
+        </option>
+
+        <option value="Remote">
+          Remote
+        </option>
+
+        <option value="Wall Mount">
+          Wall Mount
+        </option>
+
+        <option value="Table Stand">
+          Table Stand
+        </option>
+
+        <option value="FTTH">
+          FTTH
+        </option>
+
+        <option value="Other">
+          Other
+        </option>
+
+      </select>
+
+
+      <label>Brand</label>
+
+      <input
+        type="text"
+        id="brand"
+      >
+
+
+      <label>Model</label>
+
+      <input
+        type="text"
+        id="model"
+      >
+
+
+      <label>SKU</label>
+
+      <input
+        type="text"
+        id="sku"
+      >
+
+
+      <label>Purchase Cost ₹ *</label>
+
+      <input
+        type="number"
+        id="purchaseCost"
+        min="0"
+        step="0.01"
+        required
+      >
+
+
+      <label>Selling Price ₹ *</label>
+
+      <input
+        type="number"
+        id="sellingPrice"
+        min="0"
+        step="0.01"
+        required
+      >
+
+
+      <label>Margin Type</label>
+
+      <select id="marginType">
+
+        <option value="PERCENTAGE">
+          Percentage
+        </option>
+
+        <option value="FIXED">
+          Fixed ₹
+        </option>
+
+      </select>
+
+
+      <label>Margin Value</label>
+
+      <input
+        type="number"
+        id="marginValue"
+        min="0"
+        step="0.01"
+        value="0"
+      >
+
+
+      <label>Retailer Share ₹</label>
+
+      <input
+        type="number"
+        id="retailerShare"
+        min="0"
+        step="0.01"
+        value="0"
+      >
+
+
+      <label>Warranty</label>
+
+      <input
+        type="text"
+        id="warranty"
+        placeholder="e.g. 30 Days"
+      >
+
+
+      <label>Current Stock</label>
+
+      <input
+        type="number"
+        id="currentStock"
+        min="0"
+        step="1"
+        value="0"
+      >
+
+
+      <label>Minimum Stock</label>
+
+      <input
+        type="number"
+        id="minStock"
+        min="0"
+        step="1"
+        value="1"
+      >
+
+
+      <label>Supplier</label>
+
+      <input
+        type="text"
+        id="supplier"
+      >
+
+
+      <label>Product Ownership</label>
+
+      <select id="ownership">
+
+        <option value="REPARO">
+          REPARO Stock
+        </option>
+
+        <option value="RETAILER">
+          Retailer Stock
+        </option>
+
+        <option value="DIRECT_PURCHASE">
+          Direct Purchase
+        </option>
+
+      </select>
+
+
+      <label>Active</label>
+
+      <select id="active">
+
+        <option value="true">
+          Active
+        </option>
+
+        <option value="false">
+          Inactive
+        </option>
+
+      </select>
+
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          id="closeModalBtn">
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="primary-btn">
+          Save Product
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<script
+  type="module"
+  src="../js/products.js">
+</script>
+
+</body>
+</html>
