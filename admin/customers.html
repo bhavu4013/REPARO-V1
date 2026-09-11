@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>REPARO - My Customers</title>
+
+  <title>REPARO - Customers</title>
 
   <style>
     * {
@@ -17,11 +18,13 @@
       background: #f7f8fc;
       color: #172033;
       min-height: 100vh;
-      padding-bottom: 82px;
+      padding-bottom: 90px;
     }
 
     button,
-    input {
+    input,
+    select,
+    textarea {
       font: inherit;
     }
 
@@ -59,6 +62,7 @@
       align-items: center;
       justify-content: center;
       font-weight: 800;
+      font-size: 17px;
     }
 
     .brand-title {
@@ -67,21 +71,26 @@
     }
 
     .brand-subtitle {
-      color: #7c8495;
       font-size: 12px;
-      margin-top: 3px;
+      color: #7c8495;
+      margin-top: 2px;
     }
 
-    .logout-btn {
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      border: 0;
       width: 40px;
       height: 40px;
-      border: 0;
       border-radius: 12px;
       background: white;
-      box-shadow: 0 4px 14px rgba(20,30,55,.08);
+      box-shadow: 0 4px 14px rgba(20, 30, 55, 0.08);
     }
 
-    .summary {
+    .summary-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 10px;
@@ -92,7 +101,7 @@
       background: white;
       border-radius: 17px;
       padding: 15px;
-      box-shadow: 0 5px 18px rgba(20,30,55,.07);
+      box-shadow: 0 5px 18px rgba(20, 30, 55, 0.07);
     }
 
     .summary-label {
@@ -102,13 +111,17 @@
     }
 
     .summary-value {
-      margin-top: 5px;
       font-size: 24px;
       font-weight: 800;
+      margin-top: 5px;
     }
 
     .summary-card.protected .summary-value {
-      color: #1479bf;
+      color: #1683d8;
+    }
+
+    .summary-card.unprotected .summary-value {
+      color: #f59e0b;
     }
 
     .search-card {
@@ -116,40 +129,32 @@
       border-radius: 17px;
       padding: 13px;
       margin-bottom: 14px;
-      box-shadow: 0 5px 18px rgba(20,30,55,.07);
+      box-shadow: 0 5px 18px rgba(20, 30, 55, 0.07);
     }
 
-    .search-input {
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 9px;
+    }
+
+    .search-input,
+    .filter-select {
       width: 100%;
-      border: 1px solid #e0e5ed;
+      border: 1px solid #e3e7ef;
       border-radius: 12px;
       padding: 12px 13px;
       outline: none;
       background: #fbfcfe;
     }
 
-    .search-input:focus {
+    .search-input:focus,
+    .filter-select:focus,
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
       border-color: #ff3b6b;
       background: white;
-    }
-
-    .message {
-      display: none;
-      padding: 12px 14px;
-      border-radius: 12px;
-      margin-bottom: 12px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .error {
-      background: #fff0f0;
-      color: #c62828;
-    }
-
-    .success {
-      background: #edfff4;
-      color: #168348;
     }
 
     .customer-list {
@@ -161,14 +166,14 @@
       background: white;
       border-radius: 18px;
       padding: 15px;
-      box-shadow: 0 5px 18px rgba(20,30,55,.07);
+      box-shadow: 0 5px 18px rgba(20, 30, 55, 0.07);
     }
 
     .customer-head {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
       gap: 10px;
+      align-items: flex-start;
     }
 
     .customer-name {
@@ -182,14 +187,23 @@
       margin-top: 4px;
     }
 
-    .protected-badge {
-      background: #e8f5ff;
-      color: #1178bf;
+    .protected-badge,
+    .normal-badge {
       font-size: 11px;
-      font-weight: 800;
+      font-weight: 700;
       padding: 6px 9px;
       border-radius: 20px;
       white-space: nowrap;
+    }
+
+    .protected-badge {
+      background: #e8f5ff;
+      color: #1178bf;
+    }
+
+    .normal-badge {
+      background: #fff5df;
+      color: #b87500;
     }
 
     .customer-info {
@@ -201,32 +215,40 @@
     .info-row {
       display: flex;
       gap: 8px;
-      color: #536074;
       font-size: 13px;
+      color: #4e586b;
     }
 
     .info-icon {
       width: 20px;
     }
 
+    .retailer-box {
+      margin-top: 12px;
+      background: #f4f7fb;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 12px;
+      color: #536074;
+    }
+
+    .retailer-box strong {
+      color: #172033;
+    }
+
     .customer-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-top: 14px;
+      margin-top: 13px;
     }
 
     .action-btn {
       border: 0;
       border-radius: 11px;
-      padding: 11px 8px;
+      padding: 10px;
+      font-weight: 700;
       font-size: 12px;
-      font-weight: 800;
-    }
-
-    .request-btn {
-      background: #ff3b6b;
-      color: white;
     }
 
     .view-btn {
@@ -234,13 +256,17 @@
       color: #1479bf;
     }
 
-    .empty,
-    .loading {
+    .edit-btn {
+      background: #fff0f4;
+      color: #df315b;
+    }
+
+    .empty {
       background: white;
       border-radius: 18px;
       padding: 35px 20px;
       text-align: center;
-      box-shadow: 0 5px 18px rgba(20,30,55,.07);
+      box-shadow: 0 5px 18px rgba(20, 30, 55, 0.07);
     }
 
     .empty-icon {
@@ -257,21 +283,220 @@
       color: #7c8495;
       font-size: 13px;
       margin-top: 5px;
+    }
+
+    .loading {
+      background: white;
+      padding: 30px;
+      text-align: center;
+      border-radius: 18px;
+      color: #7b8495;
+    }
+
+    .message {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .error-box {
+      background: #fff0f0;
+      color: #c62828;
+    }
+
+    .success-box {
+      background: #edfff4;
+      color: #168348;
+    }
+
+    /* MODAL */
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 20, 35, 0.55);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 760px;
+      max-height: 92vh;
+      overflow-y: auto;
+      background: white;
+      border-radius: 24px 24px 0 0;
+      padding: 18px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 17px;
+    }
+
+    .modal-title {
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .close-btn {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 11px;
+      background: #f1f3f7;
+      font-size: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .form-field label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #596276;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      border: 1px solid #e0e5ed;
+      border-radius: 12px;
+      padding: 12px;
+      outline: none;
+      background: #fbfcfe;
+    }
+
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .protected-panel {
+      background: #eef8ff;
+      border: 1px solid #d8efff;
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .protected-title {
+      color: #1178bf;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .protected-text {
+      color: #5d7182;
+      font-size: 12px;
+      margin-top: 4px;
       line-height: 1.45;
     }
 
+    .warning-panel {
+      display: none;
+      background: #fff7e6;
+      border: 1px solid #ffe0a1;
+      color: #946200;
+      border-radius: 13px;
+      padding: 11px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 18px;
+    }
+
+    .modal-btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px;
+      font-weight: 800;
+    }
+
+    .cancel-btn {
+      background: #f0f2f6;
+      color: #566074;
+    }
+
+    .save-btn {
+      background: #ff3b6b;
+      color: white;
+    }
+
+    .save-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* MORE PANEL */
+
+    .more-panel {
+      position: fixed;
+      right: 15px;
+      bottom: 78px;
+      width: 190px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 35px rgba(15, 25, 45, 0.18);
+      padding: 7px;
+      display: none;
+      z-index: 900;
+    }
+
+    .more-panel.show {
+      display: block;
+    }
+
+    .more-panel button {
+      width: 100%;
+      border: 0;
+      background: white;
+      padding: 12px;
+      text-align: left;
+      border-radius: 10px;
+    }
+
+    .more-panel button:hover {
+      background: #f5f7fa;
+    }
+
+    /* BOTTOM NAV */
+
     .bottom-nav {
       position: fixed;
+      bottom: 0;
       left: 0;
       right: 0;
-      bottom: 0;
       height: 68px;
-      background: rgba(255,255,255,.97);
+      background: rgba(255,255,255,0.97);
       border-top: 1px solid #e9ecf2;
       display: flex;
       justify-content: space-around;
       align-items: center;
-      z-index: 100;
+      z-index: 800;
     }
 
     .nav-item {
@@ -295,100 +520,18 @@
       font-weight: 800;
     }
 
-    /* CUSTOMER VIEW MODAL */
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(13,20,35,.55);
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      z-index: 500;
-    }
-
-    .modal-backdrop.show {
-      display: flex;
-    }
-
-    .modal {
-      width: 100%;
-      max-width: 760px;
-      max-height: 88vh;
-      overflow-y: auto;
-      background: white;
-      border-radius: 23px 23px 0 0;
-      padding: 18px;
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    .modal-title {
-      font-size: 18px;
-      font-weight: 800;
-    }
-
-    .close-btn {
-      width: 36px;
-      height: 36px;
-      border: 0;
-      border-radius: 11px;
-      background: #f1f3f7;
-      font-size: 20px;
-    }
-
-    .detail-list {
-      display: grid;
-      gap: 9px;
-    }
-
-    .detail-row {
-      background: #f5f7fa;
-      border-radius: 12px;
-      padding: 11px;
-    }
-
-    .detail-label {
-      color: #7b8495;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .detail-value {
-      color: #172033;
-      font-size: 13px;
-      font-weight: 700;
-      margin-top: 3px;
-      word-break: break-word;
-    }
-
-    .modal-request-btn {
-      width: 100%;
-      border: 0;
-      border-radius: 13px;
-      padding: 13px;
-      background: #ff3b6b;
-      color: white;
-      font-weight: 800;
-      margin-top: 15px;
-    }
-
     @media (min-width: 600px) {
-      .summary {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
       .modal-backdrop {
         align-items: center;
       }
 
       .modal {
         border-radius: 22px;
+        max-height: 88vh;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(4, 1fr);
       }
     }
   </style>
@@ -399,128 +542,84 @@
   <main class="page">
 
     <header class="topbar">
-
       <div class="brand">
-
         <div class="brand-logo">R</div>
-
         <div>
-          <div class="brand-title">My Customers</div>
-          <div class="brand-subtitle">
-            Protected Customer Relationship
-          </div>
+          <div class="brand-title">Customers</div>
+          <div class="brand-subtitle">Protected Customer Network</div>
         </div>
-
       </div>
 
-      <button
-        type="button"
-        class="logout-btn"
-        id="logoutBtn"
-      >
-        ↪
-      </button>
-
+      <div class="top-actions">
+        <button type="button" class="icon-btn" id="logoutBtn" title="Logout">↪</button>
+      </div>
     </header>
 
+    <section class="summary-grid">
 
-    <section class="summary">
+      <div class="summary-card">
+        <div class="summary-label">Total Customers</div>
+        <div class="summary-value" id="totalCustomers">0</div>
+      </div>
 
       <div class="summary-card protected">
-        <div class="summary-label">
-          Protected Customers
-        </div>
-
-        <div
-          class="summary-value"
-          id="totalCustomers"
-        >
-          0
-        </div>
+        <div class="summary-label">Protected</div>
+        <div class="summary-value" id="protectedCustomers">0</div>
       </div>
 
-
-      <div class="summary-card">
-        <div class="summary-label">
-          With Serial
-        </div>
-
-        <div
-          class="summary-value"
-          id="serialCustomers"
-        >
-          0
-        </div>
+      <div class="summary-card unprotected">
+        <div class="summary-label">Unprotected</div>
+        <div class="summary-value" id="unprotectedCustomers">0</div>
       </div>
 
-
       <div class="summary-card">
-        <div class="summary-label">
-          TV Customers
-        </div>
-
-        <div
-          class="summary-value"
-          id="tvCustomers"
-        >
-          0
-        </div>
+        <div class="summary-label">With Serial</div>
+        <div class="summary-value" id="serialCustomers">0</div>
       </div>
 
     </section>
 
-
-    <div
-      class="message error"
-      id="errorBox"
-    ></div>
-
-    <div
-      class="message success"
-      id="successBox"
-    ></div>
-
+    <div class="message error-box" id="errorBox"></div>
+    <div class="message success-box" id="successBox"></div>
 
     <section class="search-card">
 
-      <input
-        type="search"
-        id="searchInput"
-        class="search-input"
-        placeholder="Search customer, mobile, address, device, serial..."
-        autocomplete="off"
-      >
+      <div class="search-row">
+
+        <input
+          type="search"
+          id="searchInput"
+          class="search-input"
+          placeholder="Search name, mobile, address, device, serial..."
+          autocomplete="off"
+        >
+
+        <select id="protectionFilter" class="filter-select">
+          <option value="">All Customers</option>
+          <option value="PROTECTED">Protected Customers</option>
+          <option value="UNPROTECTED">Unprotected Customers</option>
+        </select>
+
+      </div>
 
     </section>
 
-
     <section id="customerContainer">
-
-      <div class="loading">
-        Loading your customers...
-      </div>
-
+      <div class="loading">Loading customers...</div>
     </section>
 
   </main>
 
+  <!-- CUSTOMER MODAL -->
 
-  <!-- VIEW CUSTOMER MODAL -->
-
-  <div
-    class="modal-backdrop"
-    id="modalBackdrop"
-  >
+  <div class="modal-backdrop" id="modalBackdrop">
 
     <div class="modal">
 
       <div class="modal-header">
 
-        <div
-          class="modal-title"
-          id="modalTitle"
-        >
-          Customer
+        <div class="modal-title" id="modalTitle">
+          Customer Details
         </div>
 
         <button
@@ -533,25 +632,157 @@
 
       </div>
 
+      <div id="modalContent">
 
-      <div
-        class="detail-list"
-        id="detailList"
-      ></div>
+        <form id="customerForm">
 
+          <input type="hidden" id="editCustomerId">
 
-      <button
-        type="button"
-        class="modal-request-btn"
-        id="modalRequestBtn"
-      >
-        Create Service Request
-      </button>
+          <div class="form-grid">
+
+            <div class="form-field">
+              <label>Customer Name</label>
+              <input
+                type="text"
+                id="customerName"
+                class="form-input"
+                required
+              >
+            </div>
+
+            <div class="form-field">
+              <label>Mobile Number</label>
+              <input
+                type="tel"
+                id="customerMobile"
+                class="form-input"
+                required
+              >
+            </div>
+
+            <div class="form-field">
+              <label>Address</label>
+              <textarea
+                id="customerAddress"
+                class="form-textarea"
+              ></textarea>
+            </div>
+
+            <div class="form-field">
+              <label>Device Brand</label>
+              <input
+                type="text"
+                id="deviceBrand"
+                class="form-input"
+              >
+            </div>
+
+            <div class="form-field">
+              <label>Device Model</label>
+              <input
+                type="text"
+                id="deviceModel"
+                class="form-input"
+              >
+            </div>
+
+            <div class="form-field">
+              <label>Screen Size</label>
+              <input
+                type="text"
+                id="screenSize"
+                class="form-input"
+                placeholder="Example: 43"
+              >
+            </div>
+
+            <div class="form-field">
+              <label>Serial Number</label>
+              <input
+                type="text"
+                id="serialNumber"
+                class="form-input"
+              >
+            </div>
+
+            <div class="protected-panel" id="protectedPanel">
+
+              <div class="protected-title">
+                🛡️ Customer Protection
+              </div>
+
+              <div class="protected-text" id="protectedText">
+                This customer is not currently protected by a retailer.
+              </div>
+
+            </div>
+
+            <div class="form-field" id="retailerField">
+
+              <label>Original Retailer</label>
+
+              <select
+                id="originalRetailerId"
+                class="form-select"
+              >
+                <option value="">-- No Retailer --</option>
+              </select>
+
+            </div>
+
+            <div class="warning-panel" id="duplicateWarning">
+              ⚠️ Possible duplicate customer detected.
+              Please verify mobile number, address, device and serial number
+              before saving.
+            </div>
+
+          </div>
+
+        </form>
+
+      </div>
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="modal-btn cancel-btn"
+          id="cancelModalBtn"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          class="modal-btn save-btn"
+          id="saveCustomerBtn"
+        >
+          Save Customer
+        </button>
+
+      </div>
 
     </div>
 
   </div>
 
+  <!-- MORE MENU -->
+
+  <div class="more-panel" id="morePanel">
+
+    <button type="button" data-page="../admin/service-requests.html">
+      📝 Service Requests
+    </button>
+
+    <button type="button" data-page="../admin/jobs.html">
+      🔧 Jobs
+    </button>
+
+    <button type="button" data-page="../admin/reports.html">
+      📊 Reports
+    </button>
+
+  </div>
 
   <!-- BOTTOM NAV -->
 
@@ -560,22 +791,20 @@
     <button
       type="button"
       class="nav-item"
-      data-page="dashboard.html"
+      data-page="../admin/dashboard.html"
     >
       <span>⌂</span>
-      <span>Home</span>
+      <span>Dashboard</span>
     </button>
-
 
     <button
       type="button"
       class="nav-item"
-      data-page="new-service-request.html"
+      data-page="../admin/service-requests.html"
     >
       <span>📝</span>
-      <span>Request</span>
+      <span>Requests</span>
     </button>
-
 
     <button
       type="button"
@@ -585,23 +814,19 @@
       <span>Customers</span>
     </button>
 
-
     <button
       type="button"
       class="nav-item"
-      data-page="jobs.html"
+      id="moreNavBtn"
     >
-      <span>🔧</span>
-      <span>Jobs</span>
+      <span>•••</span>
+      <span>More</span>
     </button>
 
   </nav>
 
-
-  <script
-    type="module"
-    src="../js/retailer-customers.js"
-  ></script>
+  <!-- ONLY JS FILE -->
+  <script type="module" src="../js/customers.js"></script>
 
 </body>
 </html>
