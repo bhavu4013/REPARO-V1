@@ -3,83 +3,138 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jobs - REPARO V1</title>
+  <title>Jobs | REPARO V1</title>
+
   <link rel="stylesheet" href="../css/reparo.css">
 </head>
 
 <body>
 
-  <main class="page-container">
+  <div class="app-container">
 
-    <div class="page-header">
+    <!-- HEADER -->
+    <header class="page-header">
       <div>
+        <div class="eyebrow">REPARO V1</div>
         <h1>Jobs</h1>
-        <p>Service execution management</p>
-      </div>
-    </div>
-
-    <section class="summary-grid">
-
-      <div class="summary-card">
-        <span>Total</span>
-        <strong id="totalJobs">0</strong>
+        <p>Service execution & technician assignment</p>
       </div>
 
-      <div class="summary-card">
-        <span>New</span>
-        <strong id="newJobs">0</strong>
+      <div class="header-badge">
+        ADMIN
+      </div>
+    </header>
+
+
+    <!-- SUMMARY -->
+    <section class="stats-grid">
+
+      <div class="stat-card">
+        <div class="stat-label">TOTAL JOBS</div>
+        <div id="totalJobs" class="stat-value">0</div>
       </div>
 
-      <div class="summary-card">
-        <span>Active</span>
-        <strong id="activeJobs">0</strong>
+      <div class="stat-card">
+        <div class="stat-label">NEW</div>
+        <div id="newJobs" class="stat-value">0</div>
       </div>
 
-      <div class="summary-card">
-        <span>Completed</span>
-        <strong id="completedJobs">0</strong>
+      <div class="stat-card">
+        <div class="stat-label">ACTIVE</div>
+        <div id="activeJobs" class="stat-value">0</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">COMPLETED</div>
+        <div id="completedJobs" class="stat-value">0</div>
       </div>
 
     </section>
 
-    <section class="filter-bar">
 
-      <input
-        type="search"
-        id="searchInput"
-        placeholder="Search Job ID, customer, mobile..."
-      >
+    <!-- SEARCH -->
+    <section class="card">
 
-      <select id="statusFilter">
-        <option value="">All Status</option>
-        <option value="NEW">New</option>
-        <option value="ASSIGNED">Assigned</option>
-        <option value="IN PROGRESS">In Progress</option>
-        <option value="DIAGNOSIS">Diagnosis</option>
-        <option value="CUSTOMER APPROVAL">Customer Approval</option>
-        <option value="REPAIR">Repair</option>
-        <option value="COMPLETED">Completed</option>
-        <option value="CANCELLED">Cancelled</option>
-      </select>
+      <div class="section-title">
+        <div>
+          <h2>Job Management</h2>
+          <p>Search and manage service jobs</p>
+        </div>
+      </div>
+
+      <div class="input-group">
+
+        <input
+          type="search"
+          id="searchInput"
+          class="form-input"
+          placeholder="Search Job ID, customer, mobile..."
+        >
+
+        <select
+          id="statusFilter"
+          class="form-input">
+
+          <option value="">All Status</option>
+          <option value="NEW">New</option>
+          <option value="ASSIGNED">Assigned</option>
+          <option value="IN PROGRESS">In Progress</option>
+          <option value="DIAGNOSIS">Diagnosis</option>
+          <option value="CUSTOMER APPROVAL">
+            Customer Approval
+          </option>
+          <option value="REPAIR">Repair</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="CANCELLED">Cancelled</option>
+
+        </select>
+
+      </div>
 
     </section>
 
-    <div id="loading">
-      Loading jobs...
-    </div>
 
-    <section id="jobList"></section>
+    <!-- JOB LIST -->
+    <section>
 
-  </main>
+      <div id="loading" class="loading-state">
+        Loading Jobs...
+      </div>
+
+      <div id="jobList"></div>
+
+    </section>
+
+  </div>
 
 
   <!-- EDIT JOB MODAL -->
 
-  <div id="jobModal" class="modal hidden">
+  <div
+    id="jobModal"
+    class="modal-overlay hidden">
 
-    <div class="modal-content">
+    <div class="modal-card">
 
-      <h2>Edit Job</h2>
+      <div class="modal-header">
+
+        <div>
+          <div class="eyebrow">
+            JOB MANAGEMENT
+          </div>
+
+          <h2>Edit Job</h2>
+        </div>
+
+        <button
+          type="button"
+          id="closeModalBtn"
+          class="icon-btn">
+          ×
+        </button>
+
+      </div>
+
 
       <form id="jobForm">
 
@@ -88,44 +143,84 @@
           id="editJobId"
         >
 
-        <label>Job Status</label>
 
-        <select id="jobStatus">
-          <option value="NEW">NEW</option>
-          <option value="ASSIGNED">ASSIGNED</option>
-          <option value="IN PROGRESS">IN PROGRESS</option>
-          <option value="DIAGNOSIS">DIAGNOSIS</option>
-          <option value="CUSTOMER APPROVAL">
-            CUSTOMER APPROVAL
-          </option>
-          <option value="REPAIR">REPAIR</option>
-          <option value="COMPLETED">COMPLETED</option>
-          <option value="CANCELLED">CANCELLED</option>
-        </select>
+        <div class="form-field">
+
+          <label>
+            Job Status
+          </label>
+
+          <select
+            id="jobStatus"
+            class="form-input">
+
+            <option value="NEW">NEW</option>
+            <option value="ASSIGNED">ASSIGNED</option>
+            <option value="IN PROGRESS">
+              IN PROGRESS
+            </option>
+            <option value="DIAGNOSIS">
+              DIAGNOSIS
+            </option>
+            <option value="CUSTOMER APPROVAL">
+              CUSTOMER APPROVAL
+            </option>
+            <option value="REPAIR">
+              REPAIR
+            </option>
+            <option value="COMPLETED">
+              COMPLETED
+            </option>
+            <option value="CANCELLED">
+              CANCELLED
+            </option>
+
+          </select>
+
+        </div>
 
 
-        <label>Assign Technician</label>
+        <div class="form-field">
 
-        <select id="technicianSelect">
-          <option value="">
-            -- Select Technician --
-          </option>
-        </select>
+          <label>
+            Assign Technician
+          </label>
+
+          <select
+            id="technicianSelect"
+            class="form-input">
+
+            <option value="">
+              Select Technician
+            </option>
+
+          </select>
+
+        </div>
 
 
-        <label>Admin Notes</label>
+        <div class="form-field">
 
-        <textarea
-          id="adminNotes"
-          placeholder="Internal job notes..."
-        ></textarea>
+          <label>
+            Admin Notes
+          </label>
+
+          <textarea
+            id="adminNotes"
+            class="form-input"
+            rows="4"
+            placeholder="Internal job notes...">
+          </textarea>
+
+        </div>
 
 
         <div class="modal-actions">
 
           <button
             type="button"
-            id="closeModalBtn">
+            id="cancelModalBtn"
+            class="secondary-btn">
             Cancel
           </button>
 
