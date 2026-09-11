@@ -1,5 +1,3 @@
-import { auth, db } from "../js/firebase.js";
-
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged
@@ -10,38 +8,64 @@ import {
   getDoc
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+  auth,
+  db
+} from "./firebase.js";
 
-const form =
-  document.getElementById("loginForm");
+
+const loginForm =
+  document.getElementById(
+    "loginForm"
+  );
 
 const emailInput =
-  document.getElementById("email");
+  document.getElementById(
+    "email"
+  );
 
 const passwordInput =
-  document.getElementById("password");
+  document.getElementById(
+    "password"
+  );
 
 const loginBtn =
-  document.getElementById("loginBtn");
+  document.getElementById(
+    "loginBtn"
+  );
 
-const message =
-  document.getElementById("message");
+const backBtn =
+  document.getElementById(
+    "backBtn"
+  );
+
+const errorBox =
+  document.getElementById(
+    "errorBox"
+  );
+
+const successBox =
+  document.getElementById(
+    "successBox"
+  );
 
 
-// =====================================================
-// IF ALREADY LOGGED IN
-// =====================================================
+/* =========================================================
+   CHECK EXISTING LOGIN
+========================================================= */
 
 onAuthStateChanged(
   auth,
-  async user => {
+  async (user) => {
 
     if (!user) {
       return;
     }
 
+
     try {
 
-      const profileSnap =
+      const userSnapshot =
         await getDoc(
           doc(
             db,
@@ -51,28 +75,34 @@ onAuthStateChanged(
         );
 
 
-      if (!profileSnap.exists()) {
+      if (
+        !userSnapshot.exists()
+      ) {
+
         return;
       }
 
 
       const profile =
-        profileSnap.data();
+        userSnapshot.data();
 
 
       if (
-        profile.role === "customer"
-        && profile.active !== false
+        profile.role === "customer" &&
+        profile.active === true
       ) {
 
-        location.href =
+        window.location.href =
           "./status.html";
 
       }
 
     } catch (error) {
 
-      console.error(error);
+      console.error(
+        "Existing session check failed:",
+        error
+      );
 
     }
 
@@ -80,37 +110,55 @@ onAuthStateChanged(
 );
 
 
-// =====================================================
-// LOGIN
-// =====================================================
+/* =========================================================
+   LOGIN
+========================================================= */
 
-form.addEventListener(
+loginForm.addEventListener(
   "submit",
-  async event => {
+  async (event) => {
 
     event.preventDefault();
 
 
+    hideMessages();
+
+
     const email =
-      emailInput.value.trim();
+      emailInput.value
+        .trim()
+        .toLowerCase();
+
 
     const password =
       passwordInput.value;
 
 
-    if (!email || !password) {
+    if (!email) {
 
-      showMessage(
-        "Please enter email and password.",
-        "error"
+      showError(
+        "Please enter your email."
       );
 
       return;
-
     }
 
 
-    setLoading(true);
+    if (!password) {
+
+      showError(
+        "Please enter your password."
+      );
+
+      return;
+    }
+
+
+    loginBtn.disabled =
+      true;
+
+    loginBtn.textContent =
+      "Signing in...";
 
 
     try {
@@ -127,7 +175,11 @@ form.addEventListener(
         credential.user;
 
 
-      const profileSnap =
+      /*
+        Read the user's REPARO profile.
+      */
+
+      const userSnapshot =
         await getDoc(
           doc(
             db,
@@ -137,74 +189,110 @@ form.addEventListener(
         );
 
 
-      if (!profileSnap.exists()) {
+      if (
+        !userSnapshot.exists()
+      ) {
 
         await auth.signOut();
 
         throw new Error(
-          "CUSTOMER_PROFILE_NOT_FOUND"
+          "Customer profile not found. Please contact REPARO."
         );
 
       }
 
 
       const profile =
-        profileSnap.data();
+        userSnapshot.data();
 
+
+      /*
+        Customer login page accepts only
+        active customer accounts.
+      */
 
       if (
-        profile.role !== "customer"
+        profile.role !==
+        "customer"
       ) {
 
         await auth.signOut();
 
         throw new Error(
-          "NOT_CUSTOMER_ACCOUNT"
+          "This account is not registered as a customer account."
         );
 
       }
 
 
       if (
-        profile.active === false
+        profile.active !==
+        true
       ) {
 
         await auth.signOut();
 
         throw new Error(
-          "ACCOUNT_DISABLED"
+          "Your customer account is currently inactive."
         );
 
       }
 
 
-      showMessage(
-        "Login successful. Opening your service...",
-        "success"
+      /*
+        customerId is required because customer
+        Firestore access is linked to this ID.
+      */
+
+      if (
+        !profile.customerId
+      ) {
+
+        await auth.signOut();
+
+        throw new Error(
+          "Customer ID is missing from your profile. Please contact REPARO."
+        );
+
+      }
+
+
+      showSuccess(
+        "Login successful. Opening your service status..."
       );
 
 
       setTimeout(
         () => {
 
-          location.href =
+          window.location.href =
             "./status.html";
 
         },
-        500
+        400
       );
 
 
     } catch (error) {
 
-      console.error(error);
-
-      showMessage(
-        getErrorMessage(error),
-        "error"
+      console.error(
+        "Customer login error:",
+        error
       );
 
-      setLoading(false);
+
+      showError(
+        getFriendlyError(
+          error
+        )
+      );
+
+
+      loginBtn.disabled =
+        false;
+
+      loginBtn.textContent =
+        "Login";
 
     }
 
@@ -212,68 +300,107 @@ form.addEventListener(
 );
 
 
-// =====================================================
-// UI
-// =====================================================
+/* =========================================================
+   BACK
+========================================================= */
 
-function setLoading(isLoading) {
+backBtn.addEventListener(
+  "click",
+  () => {
 
-  loginBtn.disabled =
-    isLoading;
+    window.location.href =
+      "../index.html";
 
-  loginBtn.textContent =
-    isLoading
-      ? "Logging in..."
-      : "Login";
-
-}
+  }
+);
 
 
-function showMessage(
-  text,
-  type
+/* =========================================================
+   ERROR MESSAGE
+========================================================= */
+
+function getFriendlyError(
+  error
 ) {
 
-  message.textContent =
-    text;
-
-  message.className =
-    `message ${type}`;
-
-}
+  const code =
+    error?.code ||
+    "";
 
 
-function getErrorMessage(error) {
-
-  switch (error?.code) {
+  switch (code) {
 
     case "auth/invalid-credential":
       return "Invalid email or password.";
 
     case "auth/user-not-found":
-      return "Customer account not found.";
+      return "No account was found with this email.";
 
     case "auth/wrong-password":
       return "Invalid email or password.";
 
     case "auth/invalid-email":
-      return "Please enter a valid email.";
+      return "Please enter a valid email address.";
 
     case "auth/too-many-requests":
-      return "Too many attempts. Please try again later.";
+      return "Too many login attempts. Please try again later.";
 
-    case "CUSTOMER_PROFILE_NOT_FOUND":
-      return "Customer account is not properly linked.";
-
-    case "NOT_CUSTOMER_ACCOUNT":
-      return "This account is not a customer account.";
-
-    case "ACCOUNT_DISABLED":
-      return "Your customer account is currently disabled.";
+    case "auth/user-disabled":
+      return "This Firebase account has been disabled.";
 
     default:
-      return "Unable to login. Please try again.";
+      return (
+        error?.message ||
+        "Unable to login. Please try again."
+      );
 
   }
+
+}
+
+
+/* =========================================================
+   MESSAGES
+========================================================= */
+
+function showError(
+  message
+) {
+
+  successBox.style.display =
+    "none";
+
+  errorBox.textContent =
+    message;
+
+  errorBox.style.display =
+    "block";
+
+}
+
+
+function showSuccess(
+  message
+) {
+
+  errorBox.style.display =
+    "none";
+
+  successBox.textContent =
+    message;
+
+  successBox.style.display =
+    "block";
+
+}
+
+
+function hideMessages() {
+
+  errorBox.style.display =
+    "none";
+
+  successBox.style.display =
+    "none";
 
 }
