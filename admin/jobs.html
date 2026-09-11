@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Jobs - REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+
+  <style>
+    .page-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:18px;
+    }
+
+    .page-header h1 {
+      margin:0;
+      font-size:24px;
+    }
+
+    .muted {
+      color:#6B7280;
+      font-size:13px;
+    }
+
+    .summary-grid {
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+      margin-bottom:18px;
+    }
+
+    .summary-card {
+      background:#fff;
+      border-radius:18px;
+      padding:14px;
+      box-shadow:0 8px 25px rgba(15,23,42,.05);
+    }
+
+    .summary-number {
+      font-size:22px;
+      font-weight:900;
+      margin-top:4px;
+    }
+
+    .filters {
+      display:grid;
+      grid-template-columns:1fr 180px;
+      gap:10px;
+      margin-bottom:18px;
+    }
+
+    .filters input,
+    .filters select,
+    .modal input,
+    .modal select,
+    .modal textarea {
+      width:100%;
+      box-sizing:border-box;
+      border:1px solid #E5E7EB;
+      border-radius:14px;
+      padding:12px;
+      background:#fff;
+      color:#111827;
+      outline:none;
+    }
+
+    .job-card {
+      background:#fff;
+      border-radius:20px;
+      padding:16px;
+      margin-bottom:12px;
+      box-shadow:0 8px 25px rgba(15,23,42,.06);
+    }
+
+    .job-top {
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+
+    .job-id {
+      font-size:14px;
+      font-weight:900;
+    }
+
+    .customer-name {
+      font-size:17px;
+      font-weight:800;
+      margin-top:4px;
+    }
+
+    .status {
+      display:inline-flex;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    .status-new {
+      background:#E0F2FE;
+      color:#0369A1;
+    }
+
+    .status-assigned {
+      background:#EDE9FE;
+      color:#6D28D9;
+    }
+
+    .status-progress {
+      background:#FEF3C7;
+      color:#92400E;
+    }
+
+    .status-diagnosis {
+      background:#DBEAFE;
+      color:#1D4ED8;
+    }
+
+    .status-approval {
+      background:#FCE7F3;
+      color:#9D174D;
+    }
+
+    .status-repair {
+      background:#DCFCE7;
+      color:#166534;
+    }
+
+    .status-completed {
+      background:#D1FAE5;
+      color:#065F46;
+    }
+
+    .status-cancelled {
+      background:#FEE2E2;
+      color:#991B1B;
+    }
+
+    .job-info {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin:14px 0;
+    }
+
+    .info-box {
+      background:#F6F8FB;
+      border-radius:14px;
+      padding:10px;
+    }
+
+    .info-label {
+      font-size:10px;
+      color:#6B7280;
+      margin-bottom:3px;
+      font-weight:700;
+    }
+
+    .info-value {
+      font-size:13px;
+      font-weight:700;
+      word-break:break-word;
+    }
+
+    .actions {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .btn-small {
+      border:0;
+      border-radius:12px;
+      padding:9px 12px;
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .btn-primary {
+      background:#08AEE0;
+      color:#fff;
+    }
+
+    .btn-yellow {
+      background:#FFE32B;
+      color:#111827;
+    }
+
+    .btn-danger {
+      background:#FEE2E2;
+      color:#991B1B;
+    }
+
+    .empty {
+      text-align:center;
+      padding:45px 20px;
+      color:#6B7280;
+      background:#fff;
+      border-radius:20px;
+    }
+
+    .modal-backdrop {
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.55);
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      z-index:9999;
+    }
+
+    .modal-backdrop.show {
+      display:flex;
+    }
+
+    .modal {
+      width:100%;
+      max-width:560px;
+      max-height:92vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:24px 24px 0 0;
+      padding:20px;
+      box-sizing:border-box;
+    }
+
+    .modal h2 {
+      margin-top:0;
+    }
+
+    .form-group {
+      margin-bottom:12px;
+    }
+
+    .form-group label {
+      display:block;
+      font-size:12px;
+      font-weight:700;
+      margin-bottom:6px;
+      color:#374151;
+    }
+
+    .modal textarea {
+      min-height:80px;
+      resize:vertical;
+    }
+
+    .modal-actions {
+      display:flex;
+      gap:10px;
+      margin-top:16px;
+    }
+
+    .modal-actions button {
+      flex:1;
+    }
+
+    .technician-box {
+      background:#F6F8FB;
+      border-radius:16px;
+      padding:12px;
+      margin-bottom:14px;
+    }
+
+    .technician-box strong {
+      display:block;
+      margin-bottom:4px;
+    }
+
+    @media(max-width:600px) {
+      .summary-grid {
+        grid-template-columns:1fr 1fr;
+      }
+
+      .filters {
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 p-4 min-h-screen pb-24">
+
+<main class="w-full max-w-2xl mx-auto">
+
+  <div class="page-header">
+    <div>
+      <h1>Jobs</h1>
+      <div class="muted">Service execution management</div>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+
+    <div class="summary-card">
+      <div class="muted">Total</div>
+      <div id="totalJobs" class="summary-number">0</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="muted">New</div>
+      <div id="newJobs" class="summary-number">0</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="muted">Active</div>
+      <div id="activeJobs" class="summary-number">0</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="muted">Completed</div>
+      <div id="completedJobs" class="summary-number">0</div>
+    </div>
+
+  </div>
+
+  <div class="filters">
+
+    <input
+      type="search"
+      id="searchInput"
+      placeholder="Search Job ID, customer, mobile, model..."
+    >
+
+    <select id="statusFilter">
+      <option value="">All Status</option>
+      <option value="NEW">New</option>
+      <option value="ASSIGNED">Assigned</option>
+      <option value="IN PROGRESS">In Progress</option>
+      <option value="DIAGNOSIS">Diagnosis</option>
+      <option value="CUSTOMER APPROVAL">Customer Approval</option>
+      <option value="REPAIR">Repair</option>
+      <option value="COMPLETED">Completed</option>
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+
+  </div>
+
+  <div id="loading" class="empty">
+    Loading jobs...
+  </div>
+
+  <div id="jobList"></div>
+
+</main>
+
+
+<!-- JOB EDIT / ASSIGN MODAL -->
+
+<div id="modalBackdrop" class="modal-backdrop">
+
+  <div class="modal">
+
+    <h2>Edit Job</h2>
+
+    <div id="technicianBox" class="technician-box">
+      Loading technicians...
+    </div>
+
+    <form id="jobForm">
+
+      <input type="hidden" id="editJobId">
+
+      <div class="form-group">
+        <label>Job Status</label>
+
+        <select id="jobStatus">
+
+          <option value="NEW">NEW</option>
+          <option value="ASSIGNED">ASSIGNED</option>
+          <option value="IN PROGRESS">IN PROGRESS</option>
+          <option value="DIAGNOSIS">DIAGNOSIS</option>
+          <option value="CUSTOMER APPROVAL">CUSTOMER APPROVAL</option>
+          <option value="REPAIR">REPAIR</option>
+          <option value="COMPLETED">COMPLETED</option>
+          <option value="CANCELLED">CANCELLED</option>
+
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Assign Technician</label>
+
+        <select id="technicianSelect">
+
+          <option value="">
+            -- Select Technician --
+          </option>
+
+        </select>
+
+      </div>
+
+      <div class="form-group">
+        <label>Admin Notes</label>
+
+        <textarea
+          id="adminNotes"
+          placeholder="Internal job notes..."
+        ></textarea>
+      </div>
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          id="cancelModalBtn"
+          class="btn-small">
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="btn-small btn-primary">
+          Save Job
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<script type="module" src="../js/jobs.js"></script>
+
+</body>
+</html>
