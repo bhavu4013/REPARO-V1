@@ -3,866 +3,654 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>REPARO V1 - Jobs</title>
 
   <style>
     :root {
-      --pink: #f9547c;
-      --yellow: #ffe32b;
-      --blue: #08aee0;
-      --navy: #172033;
-      --muted: #6b7280;
-      --bg: #f6f7fb;
-      --border: #e5e7eb;
-      --green: #16a34a;
-      --red: #dc2626;
-      --orange: #f59e0b;
+      --pink:#f9547c;
+      --yellow:#ffe32b;
+      --blue:#08aee0;
+      --navy:#172033;
+      --muted:#6b7280;
+      --bg:#f6f7fb;
+      --border:#e5e7eb;
+      --green:#16a34a;
+      --red:#dc2626;
+      --orange:#f59e0b;
     }
 
     * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html {
-      scroll-behavior: smooth;
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
     }
 
     body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--navy);
-      font-family: Arial, Helvetica, sans-serif;
-      min-height: 100vh;
-      padding-bottom: 88px;
+      margin:0;
+      background:var(--bg);
+      color:var(--navy);
+      font-family:Arial,Helvetica,sans-serif;
+      min-height:100vh;
+      padding-bottom:86px;
     }
 
-    button,
-    input,
-    select,
-    textarea {
-      font: inherit;
+    button,input,select,textarea {
+      font:inherit;
     }
 
     button {
-      cursor: pointer;
+      cursor:pointer;
     }
 
-    /* =========================
-       STICKY HEADER
-    ========================= */
+    /* HEADER */
 
     .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-
-      width: 100%;
-      background: rgba(255, 255, 255, 0.97);
-      border-bottom: 1px solid #eeeeee;
-
-      padding: 14px 16px;
-
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      position:sticky;
+      top:0;
+      z-index:50;
+      background:rgba(255,255,255,.97);
+      border-bottom:1px solid #eee;
+      padding:14px 16px;
+      backdrop-filter:blur(10px);
     }
 
     .brand-row {
-      width: 100%;
-      max-width: 900px;
-      margin: 0 auto;
-
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      width:100%;
+      max-width:900px;
+      margin:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
     }
 
     .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-
-      font-size: 23px;
-      font-weight: 900;
-      letter-spacing: -0.4px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:23px;
+      font-weight:900;
     }
 
     .brand-logo {
-      width: 42px;
-      height: 42px;
-
-      border-radius: 13px;
-      background: var(--yellow);
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      font-size: 22px;
-      font-weight: 900;
+      width:42px;
+      height:42px;
+      border-radius:13px;
+      background:var(--yellow);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:22px;
+      font-weight:900;
     }
 
     .logout {
-      border: 0;
-      background: #f1f3f6;
-      color: var(--navy);
-
-      border-radius: 22px;
-      padding: 10px 16px;
-
-      font-size: 13px;
-      font-weight: 800;
+      border:0;
+      background:#f1f3f6;
+      color:var(--navy);
+      border-radius:22px;
+      padding:10px 16px;
+      font-size:13px;
+      font-weight:800;
     }
 
-    .logout:active {
-      transform: scale(.97);
-    }
-
-    /* =========================
-       MAIN MASTER FRAME
-    ========================= */
+    /* MAIN */
 
     main {
-      width: 100%;
-      max-width: 900px;
-      margin: 0 auto;
-
-      padding: 22px 16px 30px;
+      width:100%;
+      max-width:900px;
+      margin:auto;
+      padding:22px 16px 30px;
     }
 
     .heading-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .page-title {
-      min-width: 0;
+      margin-bottom:20px;
     }
 
     h1 {
-      margin: 0;
-
-      font-size: 32px;
-      line-height: 1.05;
-      font-weight: 900;
-      letter-spacing: -1px;
+      margin:0;
+      font-size:32px;
+      line-height:1.05;
+      font-weight:900;
+      letter-spacing:-1px;
     }
 
     .subtitle {
-      margin: 8px 0 0;
-
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.4;
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:14px;
     }
 
-    /* =========================
-       SUMMARY
-    ========================= */
+    /* MESSAGES */
+
+    .message {
+      display:none;
+      border-radius:15px;
+      padding:13px 15px;
+      margin-bottom:15px;
+      font-size:13px;
+      font-weight:700;
+      line-height:1.4;
+    }
+
+    .message.error {
+      background:#fee2e2;
+      color:#991b1b;
+    }
+
+    .message.success {
+      background:#dcfce7;
+      color:#166534;
+    }
+
+    /* SUMMARY */
 
     .summary {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-
-      gap: 10px;
-      margin-bottom: 18px;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+      margin-bottom:18px;
     }
 
     .summary-card {
-      min-width: 0;
-
-      background: #fff;
-      border-radius: 20px;
-
-      padding: 15px 12px;
-
-      box-shadow:
-        0 5px 18px rgba(15, 23, 42, .05);
+      background:#fff;
+      border-radius:20px;
+      padding:15px 12px;
+      box-shadow:0 5px 18px rgba(15,23,42,.05);
     }
 
     .summary-label {
-      color: var(--muted);
-
-      font-size: 10px;
-      font-weight: 900;
-
-      text-transform: uppercase;
-      margin-bottom: 5px;
+      color:var(--muted);
+      font-size:10px;
+      font-weight:900;
+      text-transform:uppercase;
+      margin-bottom:5px;
     }
 
     .summary-value {
-      font-size: 26px;
-      line-height: 1;
-      font-weight: 900;
+      font-size:26px;
+      font-weight:900;
     }
 
     .summary-card.new .summary-value {
-      color: var(--pink);
+      color:var(--pink);
     }
 
     .summary-card.active .summary-value {
-      color: var(--blue);
+      color:var(--blue);
     }
 
     .summary-card.completed .summary-value {
-      color: var(--green);
+      color:var(--green);
     }
 
-    /* =========================
-       MANAGEMENT
-    ========================= */
+    /* MANAGEMENT */
 
     .management {
-      background: #fff;
-      border-radius: 25px;
-
-      padding: 19px;
-      margin-bottom: 18px;
-
-      box-shadow:
-        0 5px 20px rgba(15, 23, 42, .055);
+      background:#fff;
+      border-radius:24px;
+      padding:18px;
+      margin-bottom:18px;
+      box-shadow:0 5px 20px rgba(15,23,42,.055);
     }
 
     .management-title {
-      margin: 0;
-
-      font-size: 21px;
-      line-height: 1.2;
-      font-weight: 900;
+      margin:0;
+      font-size:21px;
+      font-weight:900;
     }
 
     .management-subtitle {
-      margin: 6px 0 15px;
-
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
+      margin:6px 0 15px;
+      color:var(--muted);
+      font-size:13px;
     }
 
     .filters {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 150px;
-
-      gap: 9px;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 170px;
+      gap:9px;
     }
 
     .filters input,
     .filters select {
-      width: 100%;
-
-      border: 1px solid var(--border);
-      background: #fafbfc;
-
-      border-radius: 14px;
-      padding: 13px 14px;
-
-      outline: none;
-      color: var(--navy);
-      font-size: 14px;
+      width:100%;
+      border:1px solid var(--border);
+      background:#fafbfc;
+      border-radius:14px;
+      padding:13px 14px;
+      outline:none;
+      color:var(--navy);
+      font-size:14px;
     }
 
     .filters input:focus,
     .filters select:focus {
-      border-color: var(--pink);
-      background: #fff;
+      border-color:var(--pink);
+      background:#fff;
     }
 
-    /* =========================
-       MESSAGE
-    ========================= */
-
-    .message {
-      display: none;
-
-      border-radius: 15px;
-      padding: 13px 15px;
-      margin-bottom: 15px;
-
-      font-size: 13px;
-      font-weight: 700;
-      line-height: 1.4;
-    }
-
-    .message.error {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .message.success {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    /* =========================
-       JOB LIST
-    ========================= */
+    /* JOBS */
 
     .job-list {
-      display: flex;
-      flex-direction: column;
-      gap: 13px;
+      display:flex;
+      flex-direction:column;
+      gap:13px;
     }
 
     .job-card {
-      background: #fff;
-      border-radius: 22px;
-
-      padding: 17px;
-
-      box-shadow:
-        0 5px 19px rgba(15, 23, 42, .055);
+      background:#fff;
+      border-radius:22px;
+      padding:17px;
+      box-shadow:0 5px 19px rgba(15,23,42,.055);
     }
 
     .job-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-
-      gap: 12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
     }
 
     .job-id {
-      margin: 0;
-
-      font-size: 18px;
-      line-height: 1.2;
-      font-weight: 900;
-
-      word-break: break-word;
+      margin:0;
+      font-size:19px;
+      font-weight:900;
+      word-break:break-word;
     }
 
     .customer-name {
-      margin-top: 4px;
-
-      color: var(--muted);
-      font-size: 13px;
+      margin-top:4px;
+      color:var(--muted);
+      font-size:12px;
     }
 
     .status {
-      flex: 0 0 auto;
-
-      border-radius: 999px;
-      padding: 7px 10px;
-
-      font-size: 10px;
-      font-weight: 900;
-
-      white-space: nowrap;
+      flex:0 0 auto;
+      border-radius:999px;
+      padding:7px 10px;
+      font-size:10px;
+      font-weight:900;
+      white-space:nowrap;
     }
 
     .status-new {
-      background: #ffe4ec;
-      color: #c72554;
+      background:#ffe4ec;
+      color:#c72554;
     }
 
     .status-assigned {
-      background: #dff7fd;
-      color: #08779a;
+      background:#dff7fd;
+      color:#08779a;
     }
 
     .status-progress {
-      background: #fff3c4;
-      color: #796000;
+      background:#fff3c4;
+      color:#796000;
     }
 
     .status-diagnosis {
-      background: #e9ddff;
-      color: #6335a5;
+      background:#e9ddff;
+      color:#6335a5;
     }
 
     .status-approval {
-      background: #ffedd5;
-      color: #9a4d00;
+      background:#ffedd5;
+      color:#9a4d00;
     }
 
     .status-repair {
-      background: #dbeafe;
-      color: #1d4ed8;
+      background:#dbeafe;
+      color:#1d4ed8;
     }
 
     .status-completed {
-      background: #dcfce7;
-      color: #166534;
+      background:#dcfce7;
+      color:#166534;
     }
 
     .status-cancelled {
-      background: #fee2e2;
-      color: #991b1b;
+      background:#fee2e2;
+      color:#991b1b;
     }
 
     .job-info {
-      display: grid;
-      gap: 8px;
-
-      margin-top: 15px;
+      display:grid;
+      gap:8px;
+      margin-top:15px;
     }
 
     .info-row {
-      display: flex;
-      align-items: flex-start;
-
-      gap: 9px;
-
-      font-size: 13px;
-      line-height: 1.35;
-      color: #4b5563;
+      display:flex;
+      align-items:flex-start;
+      gap:9px;
+      font-size:13px;
+      line-height:1.35;
+      color:#4b5563;
     }
 
     .info-icon {
-      width: 20px;
-      flex: 0 0 20px;
-
-      text-align: center;
+      width:20px;
+      flex:0 0 20px;
+      text-align:center;
     }
 
     .job-divider {
-      height: 1px;
-
-      background: #eeeeee;
-
-      margin: 15px 0;
+      height:1px;
+      background:#eee;
+      margin:15px 0;
     }
 
     .job-actions {
-      display: flex;
-      gap: 9px;
+      display:flex;
+      gap:9px;
     }
 
     .job-action {
-      flex: 1;
-
-      border: 0;
-      border-radius: 13px;
-
-      padding: 11px;
-
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .job-action:active {
-      transform: scale(.98);
+      flex:1;
+      border:0;
+      border-radius:13px;
+      padding:11px;
+      font-size:13px;
+      font-weight:800;
     }
 
     .view-btn {
-      background: #dff5fc;
-      color: #08779a;
+      background:#dff5fc;
+      color:#08779a;
     }
 
     .assign-btn {
-      background: #fff2a8;
-      color: #5d5100;
+      background:#fff2a8;
+      color:#5d5100;
     }
 
-    /* =========================
-       EMPTY / LOADING
-    ========================= */
+    /* EMPTY */
 
-    .empty {
-      background: #fff;
-      border-radius: 23px;
-
-      padding: 40px 20px;
-
-      text-align: center;
-
-      box-shadow:
-        0 5px 18px rgba(15, 23, 42, .04);
+    .empty,
+    .loading {
+      background:#fff;
+      border-radius:23px;
+      padding:40px 20px;
+      text-align:center;
+      box-shadow:0 5px 18px rgba(15,23,42,.04);
     }
 
     .empty-icon {
-      font-size: 40px;
-      margin-bottom: 10px;
+      font-size:40px;
+      margin-bottom:10px;
     }
 
     .empty-title {
-      font-size: 20px;
-      font-weight: 900;
-      margin-bottom: 7px;
+      font-size:20px;
+      font-weight:900;
+      margin-bottom:7px;
     }
 
     .empty-text {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.45;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.45;
     }
 
     .loading {
-      background: #fff;
-      border-radius: 22px;
-
-      padding: 38px;
-
-      text-align: center;
-
-      color: var(--muted);
-      font-size: 14px;
+      color:var(--muted);
+      font-size:14px;
     }
 
-    /* =========================
-       MODAL
-    ========================= */
+    /* MODAL */
 
     .modal-backdrop {
-      display: none;
-
-      position: fixed;
-      inset: 0;
-
-      background: rgba(15, 23, 42, .55);
-
-      z-index: 100;
-
-      padding: 15px;
-
-      overflow-y: auto;
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.55);
+      z-index:100;
+      padding:15px;
+      overflow-y:auto;
     }
 
     .modal-backdrop.show {
-      display: flex;
-
-      align-items: center;
-      justify-content: center;
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
 
     .modal {
-      width: 100%;
-      max-width: 560px;
-
-      background: #fff;
-      border-radius: 26px;
-
-      padding: 20px;
-
-      box-shadow:
-        0 25px 70px rgba(0, 0, 0, .25);
+      width:100%;
+      max-width:560px;
+      background:#fff;
+      border-radius:26px;
+      padding:20px;
+      box-shadow:0 25px 70px rgba(0,0,0,.25);
     }
 
     .modal-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      gap: 12px;
-      margin-bottom: 18px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:18px;
     }
 
     .modal-head h2 {
-      margin: 0;
-
-      font-size: 22px;
-      line-height: 1.2;
-      font-weight: 900;
+      margin:0;
+      font-size:22px;
+      font-weight:900;
     }
 
     .close-btn {
-      width: 38px;
-      height: 38px;
-
-      flex: 0 0 38px;
-
-      border: 0;
-      border-radius: 50%;
-
-      background: #f1f3f6;
-
-      font-size: 23px;
+      width:39px;
+      height:39px;
+      border:0;
+      border-radius:50%;
+      background:#f1f3f6;
+      font-size:23px;
     }
 
     .modal-content {
-      display: grid;
-      gap: 12px;
+      display:grid;
+      gap:12px;
     }
 
     .form-field label {
-      display: block;
-
-      margin: 0 0 6px 3px;
-
-      color: #4b5563;
-
-      font-size: 12px;
-      font-weight: 800;
+      display:block;
+      margin:0 0 6px 3px;
+      color:#4b5563;
+      font-size:12px;
+      font-weight:800;
     }
 
     .form-field input,
     .form-field select,
     .form-field textarea {
-      width: 100%;
-
-      border: 1px solid var(--border);
-      border-radius: 14px;
-
-      background: #fafbfc;
-
-      padding: 12px 13px;
-
-      outline: none;
-
-      color: var(--navy);
-      font-size: 14px;
+      width:100%;
+      border:1px solid var(--border);
+      background:#fafbfc;
+      border-radius:14px;
+      padding:13px;
+      outline:none;
+      color:var(--navy);
+      font-size:14px;
     }
 
     .form-field textarea {
-      min-height: 90px;
-      resize: vertical;
+      min-height:90px;
+      resize:vertical;
     }
 
     .form-field input:focus,
     .form-field select:focus,
     .form-field textarea:focus {
-      border-color: var(--pink);
-      background: #fff;
+      border-color:var(--pink);
+      background:#fff;
     }
 
     .modal-actions {
-      display: flex;
-      gap: 9px;
-
-      margin-top: 18px;
+      display:flex;
+      gap:9px;
+      margin-top:18px;
     }
 
     .modal-action {
-      flex: 1;
-
-      border: 0;
-      border-radius: 14px;
-
-      padding: 13px;
-
-      font-size: 14px;
-      font-weight: 900;
-    }
-
-    .modal-action:disabled {
-      opacity: .6;
-      cursor: not-allowed;
+      flex:1;
+      border:0;
+      border-radius:14px;
+      padding:13px;
+      font-size:14px;
+      font-weight:900;
     }
 
     .cancel-btn {
-      background: #f1f3f6;
-      color: #374151;
+      background:#f1f3f6;
+      color:#374151;
     }
 
     .save-btn {
-      background: var(--pink);
-      color: #fff;
+      background:var(--pink);
+      color:#fff;
     }
 
-    /* =========================
-       MORE PANEL
-    ========================= */
+    .modal-action:disabled {
+      opacity:.6;
+      cursor:not-allowed;
+    }
+
+    /* MORE */
 
     .more-panel {
-      display: none;
-
-      position: fixed;
-      left: 12px;
-      right: 12px;
-      bottom: 86px;
-
-      max-width: 420px;
-      margin: 0 auto;
-
-      background: #fff;
-      border-radius: 22px;
-
-      padding: 10px;
-
-      box-shadow:
-        0 15px 45px rgba(15, 23, 42, .18);
-
-      z-index: 45;
+      display:none;
+      position:fixed;
+      left:12px;
+      right:12px;
+      bottom:86px;
+      max-width:420px;
+      margin:auto;
+      background:#fff;
+      border-radius:22px;
+      padding:10px;
+      box-shadow:0 15px 45px rgba(15,23,42,.18);
+      z-index:45;
     }
 
     .more-panel.show {
-      display: block;
+      display:block;
     }
 
     .more-title {
-      padding: 10px 12px 7px;
-
-      font-size: 13px;
-      font-weight: 900;
-      color: var(--muted);
+      padding:10px 12px 7px;
+      color:var(--muted);
+      font-size:13px;
+      font-weight:900;
     }
 
     .more-link {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-
-      width: 100%;
-
-      padding: 13px 12px;
-
-      border-radius: 14px;
-
-      text-decoration: none;
-
-      color: var(--navy);
-
-      font-size: 14px;
-      font-weight: 800;
+      display:flex;
+      align-items:center;
+      gap:11px;
+      width:100%;
+      padding:13px 12px;
+      border-radius:14px;
+      text-decoration:none;
+      color:var(--navy);
+      font-size:14px;
+      font-weight:800;
     }
 
     .more-link:hover {
-      background: #f6f7fb;
+      background:#f6f7fb;
     }
 
     .more-icon {
-      width: 25px;
-      text-align: center;
-      font-size: 18px;
+      width:25px;
+      text-align:center;
+      font-size:18px;
     }
 
-    /* =========================
-       BOTTOM NAV
-    ========================= */
+    /* BOTTOM NAV */
 
     .bottom-nav {
-      position: fixed;
-
-      left: 0;
-      right: 0;
-      bottom: 0;
-
-      height: 76px;
-
-      background: #fff;
-
-      border-top: 1px solid #e8e8e8;
-
-      display: flex;
-
-      z-index: 40;
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      height:76px;
+      background:#fff;
+      border-top:1px solid #e8e8e8;
+      display:flex;
+      z-index:40;
     }
 
     .nav-item {
-      flex: 1;
-
-      min-width: 0;
-
-      text-decoration: none;
-
-      color: #6b7280;
-
-      display: flex;
-      flex-direction: column;
-
-      align-items: center;
-      justify-content: center;
-
-      gap: 4px;
-
-      font-size: 10px;
-      font-weight: 800;
+      flex:1;
+      min-width:0;
+      border:0;
+      background:#fff;
+      text-decoration:none;
+      color:#6b7280;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:4px;
+      font-size:10px;
+      font-weight:800;
     }
 
     .nav-item.active {
-      color: var(--pink);
+      color:var(--pink);
     }
 
     .nav-icon {
-      font-size: 20px;
-      line-height: 1;
+      font-size:20px;
+      line-height:1;
     }
 
-    /* =========================
-       RESPONSIVE
-    ========================= */
-
-    @media (max-width: 620px) {
-
-      .topbar {
-        padding: 12px 14px;
-      }
-
-      .brand {
-        font-size: 21px;
-      }
-
-      .brand-logo {
-        width: 40px;
-        height: 40px;
-      }
-
-      main {
-        padding: 19px 14px 28px;
-      }
+    @media (max-width:650px) {
 
       .summary {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns:repeat(2,1fr);
       }
 
       .filters {
-        grid-template-columns: 1fr;
-      }
-
-      h1 {
-        font-size: 30px;
-      }
-
-      .management {
-        padding: 17px;
-        border-radius: 22px;
-      }
-
-      .job-card {
-        border-radius: 20px;
+        grid-template-columns:1fr;
       }
 
       .job-actions {
-        flex-direction: column;
+        flex-direction:column;
       }
 
       .job-action {
-        width: 100%;
+        width:100%;
       }
 
       .modal {
-        border-radius: 23px;
-        padding: 17px;
+        border-radius:23px;
+        padding:17px;
       }
     }
 
-    @media (max-width: 380px) {
-
-      .logout {
-        padding: 9px 12px;
-      }
+    @media (max-width:380px) {
 
       .brand {
-        gap: 8px;
-        font-size: 19px;
+        font-size:20px;
+      }
+
+      .brand-logo {
+        width:40px;
+        height:40px;
       }
 
       h1 {
-        font-size: 28px;
-      }
-
-      .summary-card {
-        padding: 13px 10px;
+        font-size:28px;
       }
 
       .summary-value {
-        font-size: 23px;
+        font-size:23px;
       }
     }
   </style>
 </head>
 
 <body>
-
-  <!-- =========================
-       HEADER
-  ========================== -->
 
   <header class="topbar">
 
@@ -874,9 +662,7 @@
           R
         </div>
 
-        <span>
-          REPARO
-        </span>
+        <span>REPARO</span>
 
       </div>
 
@@ -893,24 +679,16 @@
   </header>
 
 
-  <!-- =========================
-       MAIN
-  ========================== -->
-
   <main>
 
     <div class="heading-row">
 
-      <div class="page-title">
-
-        <h1>
-          Jobs
-        </h1>
+      <div>
+        <h1>Jobs</h1>
 
         <p class="subtitle">
           Service execution & technician assignment
         </p>
-
       </div>
 
     </div>
@@ -926,8 +704,6 @@
       class="message success"
     ></div>
 
-
-    <!-- SUMMARY -->
 
     <section class="summary">
 
@@ -997,8 +773,6 @@
     </section>
 
 
-    <!-- MANAGEMENT -->
-
     <section class="management">
 
       <h2 class="management-title">
@@ -1063,8 +837,6 @@
     </section>
 
 
-    <!-- JOBS -->
-
     <section id="jobContainer">
 
       <div class="loading">
@@ -1075,10 +847,6 @@
 
   </main>
 
-
-  <!-- =========================
-       MORE PANEL
-  ========================== -->
 
   <div
     id="morePanel"
@@ -1156,10 +924,6 @@
   </div>
 
 
-  <!-- =========================
-       BOTTOM NAV
-  ========================== -->
-
   <nav class="bottom-nav">
 
     <a
@@ -1198,7 +962,6 @@
       id="moreNavBtn"
       class="nav-item"
       type="button"
-      style="border:0;background:#fff;"
     >
       <span class="nav-icon">☰</span>
       <span>More</span>
@@ -1206,10 +969,6 @@
 
   </nav>
 
-
-  <!-- =========================
-       VIEW / EDIT JOB MODAL
-  ========================== -->
 
   <div
     id="modalBackdrop"
@@ -1221,7 +980,7 @@
       <div class="modal-head">
 
         <h2 id="modalTitle">
-          Job Details
+          Job Management
         </h2>
 
         <button
@@ -1266,7 +1025,6 @@
   </div>
 
 
-  <!-- ONLY JAVASCRIPT FILE -->
   <script
     type="module"
     src="../js/jobs.js"
