@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Repair Estimate | REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+
+  <style>
+    .estimate-page {
+      max-width: 650px;
+      margin: auto;
+      padding: 18px 14px 90px;
+    }
+
+    .header {
+      margin-bottom: 18px;
+    }
+
+    .header h1 {
+      margin: 5px 0;
+    }
+
+    .header p {
+      margin: 0;
+      color: #6B7280;
+      font-size: 13px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #FFE32B;
+      color: #111827;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 6px 22px rgba(17,24,39,.07);
+    }
+
+    .card h2 {
+      margin: 0 0 13px;
+      font-size: 17px;
+    }
+
+    .line {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 11px 0;
+      border-bottom: 1px solid #EEF0F4;
+      font-size: 13px;
+    }
+
+    .line:last-child {
+      border-bottom: 0;
+    }
+
+    .line span {
+      color: #6B7280;
+    }
+
+    .line strong {
+      color: #111827;
+      text-align: right;
+    }
+
+    .total {
+      background: #FFF4CC;
+      border-radius: 15px;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .total span {
+      color: #705600;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .total strong {
+      font-size: 22px;
+      color: #111827;
+    }
+
+    .approval-box {
+      background: #F6F8FB;
+      border-radius: 15px;
+      padding: 13px;
+      color: #6B7280;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .approve,
+    .reject {
+      width: 100%;
+      border: 0;
+      border-radius: 13px;
+      padding: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 9px;
+    }
+
+    .approve {
+      background: #F9547C;
+      color: #fff;
+    }
+
+    .reject {
+      background: #F3F4F6;
+      color: #111827;
+    }
+
+    .status {
+      text-align: center;
+      border-radius: 13px;
+      padding: 12px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .approved {
+      background: #E8F8F0;
+      color: #16734B;
+    }
+
+    .rejected {
+      background: #FFE8EC;
+      color: #B42345;
+    }
+
+    .pending {
+      background: #FFF4CC;
+      color: #806500;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 35px;
+      color: #6B7280;
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="estimate-page">
+
+  <header class="header">
+
+    <span class="badge">
+      REPARO SERVICE
+    </span>
+
+    <h1>Repair Estimate</h1>
+
+    <p>
+      Please review the estimate before repair.
+    </p>
+
+  </header>
+
+
+  <div id="loading" class="loading">
+    Loading estimate...
+  </div>
+
+
+  <div id="content" style="display:none;">
+
+    <section class="card">
+
+      <h2 id="jobTitle">
+        Service Job
+      </h2>
+
+      <div class="line">
+        <span>Customer</span>
+        <strong id="customer">-</strong>
+      </div>
+
+      <div class="line">
+        <span>Device</span>
+        <strong id="device">-</strong>
+      </div>
+
+      <div class="line">
+        <span>Problem</span>
+        <strong id="problem">-</strong>
+      </div>
+
+      <div class="line">
+        <span>Diagnosis</span>
+        <strong id="diagnosis">-</strong>
+      </div>
+
+    </section>
+
+
+    <section class="card">
+
+      <h2>Estimated Charges</h2>
+
+      <div class="line">
+        <span>Service / Labour</span>
+        <strong id="labour">₹0</strong>
+      </div>
+
+      <div class="line">
+        <span>Parts / Material</span>
+        <strong id="parts">₹0</strong>
+      </div>
+
+      <div class="total">
+        <span>TOTAL ESTIMATE</span>
+        <strong id="total">₹0</strong>
+      </div>
+
+    </section>
+
+
+    <section class="card">
+
+      <h2>Customer Approval</h2>
+
+      <div
+        id="approvalStatus"
+        class="status pending">
+        Approval Pending
+      </div>
+
+      <div
+        id="approvalActions">
+
+        <div class="approval-box">
+          Repair work will proceed only after
+          customer approval of the estimate.
+        </div>
+
+        <button
+          id="approveBtn"
+          class="approve">
+          Approve Repair
+        </button>
+
+        <button
+          id="rejectBtn"
+          class="reject">
+          Reject Estimate
+        </button>
+
+      </div>
+
+    </section>
+
+  </div>
+
+</main>
+
+
+<script
+  type="module"
+  src="../js/customer-estimate.js">
+</script>
+
+</body>
+</html>
