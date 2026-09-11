@@ -4,370 +4,391 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>My Jobs | REPARO V1</title>
+  <title>My Jobs | REPARO</title>
 
   <link rel="stylesheet" href="../css/reparo.css">
 
   <style>
-    .jobs-page {
-      max-width: 1100px;
-      margin: auto;
-      padding: 18px 14px 90px;
-    }
-
-    .jobs-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-
-    .jobs-header h1 {
-      margin: 4px 0;
-      color: #111827;
-    }
-
-    .jobs-header p {
+    body {
       margin: 0;
-      color: #6B7280;
-      font-size: 13px;
+      background: #f7f8fc;
+      color: #172033;
+      font-family: Arial, sans-serif;
+      padding-bottom: 80px;
     }
 
-    .partner-badge {
-      background: #FFE32B;
-      color: #111827;
-      padding: 7px 10px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 800;
-      white-space: nowrap;
+    .page {
+      max-width: 760px;
+      margin: auto;
+      padding: 16px;
     }
 
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 16px;
     }
 
-    .stat-card {
-      background: #fff;
-      border-radius: 18px;
-      padding: 15px;
-      box-shadow: 0 6px 20px rgba(17,24,39,.07);
-    }
-
-    .stat-label {
-      color: #6B7280;
-      font-size: 11px;
-      margin-bottom: 6px;
-    }
-
-    .stat-value {
-      color: #111827;
-      font-size: 23px;
+    .page-title {
+      margin: 0;
+      font-size: 24px;
       font-weight: 800;
     }
 
-    .filter-card {
+    .page-subtitle {
+      margin: 5px 0 0;
+      color: #687386;
+      font-size: 13px;
+    }
+
+    .logout-btn {
+      border: 0;
       background: #fff;
-      border-radius: 18px;
-      padding: 13px;
-      margin-bottom: 15px;
-      box-shadow: 0 6px 20px rgba(17,24,39,.06);
+      color: #e5395f;
+      padding: 9px 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 3px 12px rgba(0,0,0,.06);
     }
 
-    .filter-row {
+    .summary-grid {
       display: grid;
-      grid-template-columns: 1fr 170px;
-      gap: 9px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
     }
 
-    .input,
-    .select {
+    .summary-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px 10px;
+      text-align: center;
+      box-shadow: 0 5px 18px rgba(20,30,60,.07);
+    }
+
+    .summary-number {
+      font-size: 23px;
+      font-weight: 800;
+      color: #18243a;
+    }
+
+    .summary-label {
+      margin-top: 4px;
+      color: #7a8495;
+      font-size: 11px;
+    }
+
+    .search-box {
+      background: #fff;
+      border-radius: 15px;
+      padding: 11px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 15px rgba(20,30,60,.05);
+    }
+
+    .search-box input,
+    .filter-box select {
       width: 100%;
       box-sizing: border-box;
-      border: 1px solid #E5E7EB;
-      border-radius: 12px;
-      padding: 11px 12px;
-      background: #fff;
-      color: #111827;
-      font-size: 13px;
+      border: 1px solid #e1e5ed;
+      background: #fafbfe;
+      border-radius: 11px;
+      padding: 12px;
       outline: none;
+      font-size: 14px;
     }
 
-    .input:focus,
-    .select:focus {
-      border-color: #08AEE0;
+    .filter-box {
+      margin-bottom: 15px;
     }
 
     .job-card {
       background: #fff;
-      border-radius: 20px;
-      padding: 16px;
+      border-radius: 18px;
       margin-bottom: 12px;
-      box-shadow: 0 6px 22px rgba(17,24,39,.07);
+      padding: 15px;
+      box-shadow: 0 6px 20px rgba(20,30,60,.07);
     }
 
     .job-top {
       display: flex;
       justify-content: space-between;
+      gap: 10px;
       align-items: flex-start;
-      gap: 12px;
     }
 
-    .job-number {
+    .job-id {
+      margin: 0;
+      font-size: 15px;
       font-weight: 800;
-      font-size: 16px;
-      color: #111827;
     }
 
-    .job-customer {
-      color: #6B7280;
-      font-size: 12px;
-      margin-top: 4px;
+    .customer-name {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #556176;
+      font-weight: 600;
     }
 
     .status {
-      border-radius: 999px;
-      padding: 6px 9px;
-      font-size: 9px;
-      font-weight: 800;
       white-space: nowrap;
+      border-radius: 20px;
+      padding: 6px 9px;
+      font-size: 10px;
+      font-weight: 800;
     }
 
     .status-new {
-      background: #FFF4CC;
-      color: #806500;
+      background: #fff3c4;
+      color: #8b6900;
     }
 
-    .status-assigned,
-    .status-in-progress,
+    .status-assigned {
+      background: #e9f1ff;
+      color: #2863c7;
+    }
+
+    .status-progress {
+      background: #e9f1ff;
+      color: #2863c7;
+    }
+
     .status-diagnosis {
-      background: #E8F4FF;
-      color: #05658A;
+      background: #f0eaff;
+      color: #6842c8;
     }
 
-    .status-customer-approval {
-      background: #FFF0F4;
-      color: #B42345;
+    .status-approval {
+      background: #fff0d9;
+      color: #b56a00;
     }
 
     .status-repair {
-      background: #E8F8F0;
-      color: #16734B;
+      background: #ffe9ef;
+      color: #d82f58;
     }
 
     .status-completed {
-      background: #E8F8F0;
-      color: #16734B;
+      background: #e5f8ed;
+      color: #16834a;
     }
 
     .status-cancelled {
-      background: #F3F4F6;
-      color: #6B7280;
+      background: #f0f1f3;
+      color: #747b87;
     }
 
-    .job-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 9px;
-      margin-top: 14px;
-    }
-
-    .info-box {
-      background: #F6F8FB;
-      border-radius: 13px;
-      padding: 10px;
-    }
-
-    .info-box.full {
-      grid-column: 1 / -1;
-    }
-
-    .info-box span {
-      display: block;
-      color: #6B7280;
-      font-size: 10px;
-      margin-bottom: 4px;
-    }
-
-    .info-box strong {
-      color: #111827;
-      font-size: 12px;
-      word-break: break-word;
-    }
-
-    .job-action {
-      width: 100%;
-      border: 0;
-      background: #08AEE0;
-      color: #fff;
-      border-radius: 12px;
-      padding: 11px;
+    .job-info {
       margin-top: 13px;
-      font-size: 12px;
-      font-weight: 800;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 9px;
+      margin: 8px 0;
+      font-size: 13px;
+      color: #4e596c;
+    }
+
+    .info-icon {
+      width: 20px;
+      flex-shrink: 0;
+    }
+
+    .job-divider {
+      height: 1px;
+      background: #edf0f4;
+      margin: 13px 0;
+    }
+
+    .job-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .view-btn {
+      border: 0;
+      background: #fff0f3;
+      color: #d82f58;
+      padding: 9px 13px;
+      border-radius: 10px;
+      font-weight: 700;
       cursor: pointer;
     }
 
-    .progress-wrap {
-      margin-top: 16px;
-    }
-
-    .progress-title {
-      font-size: 11px;
-      color: #6B7280;
-      margin-bottom: 9px;
-      font-weight: 700;
-    }
-
-    .progress-line {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 4px;
-    }
-
-    .progress-step {
-      height: 5px;
-      border-radius: 999px;
-      background: #E5E7EB;
-    }
-
-    .progress-step.active {
-      background: #08AEE0;
-    }
-
-    .progress-labels {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 3px;
-      margin-top: 5px;
-    }
-
-    .progress-labels span {
-      font-size: 8px;
-      color: #6B7280;
-      text-align: center;
-    }
-
-    .empty {
+    .empty,
+    .loading {
       background: #fff;
       border-radius: 18px;
-      padding: 35px 15px;
+      padding: 35px 20px;
       text-align: center;
-      color: #6B7280;
-      box-shadow: 0 6px 20px rgba(17,24,39,.06);
+      color: #70798a;
+      box-shadow: 0 5px 18px rgba(20,30,60,.06);
     }
 
-    .loading {
-      text-align: center;
-      padding: 30px;
-      color: #6B7280;
+    .empty-icon {
+      font-size: 34px;
+      margin-bottom: 8px;
     }
 
-    /* DETAIL MODAL */
+    .empty-title {
+      font-weight: 800;
+      color: #273248;
+      margin-bottom: 5px;
+    }
 
-    .modal-bg {
+    .message {
+      display: none;
+      padding: 11px 13px;
+      border-radius: 11px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    #errorBox {
+      background: #fff0f1;
+      color: #c62845;
+    }
+
+    #successBox {
+      background: #e8f8ef;
+      color: #187a48;
+    }
+
+    .modal-backdrop {
+      display: none;
       position: fixed;
       inset: 0;
-      background: rgba(17,24,39,.45);
-      display: none;
+      background: rgba(15,22,38,.55);
+      z-index: 1000;
+      padding: 18px;
+      box-sizing: border-box;
       align-items: flex-end;
       justify-content: center;
-      padding: 10px;
-      z-index: 9999;
     }
 
-    .modal-bg.show {
+    .modal-backdrop.show {
       display: flex;
     }
 
     .modal {
       width: 100%;
-      max-width: 540px;
-      max-height: 92vh;
+      max-width: 620px;
+      max-height: 88vh;
       overflow-y: auto;
       background: #fff;
-      border-radius: 22px;
+      border-radius: 22px 22px 10px 10px;
       padding: 18px;
+      box-sizing: border-box;
     }
 
-    .modal-head {
+    .modal-header {
       display: flex;
       justify-content: space-between;
-      gap: 10px;
       align-items: center;
       margin-bottom: 15px;
     }
 
-    .modal-head h2 {
+    .modal-title {
       margin: 0;
       font-size: 19px;
+      font-weight: 800;
     }
 
-    .close {
+    .close-btn {
       border: 0;
-      background: #F3F4F6;
+      background: #f1f3f7;
       width: 34px;
       height: 34px;
       border-radius: 50%;
-      font-size: 18px;
+      font-size: 20px;
       cursor: pointer;
     }
 
     .detail-section {
-      margin-bottom: 16px;
-    }
-
-    .detail-section h3 {
-      margin: 0 0 9px;
-      font-size: 14px;
-      color: #111827;
-    }
-
-    .estimate-box {
-      background: #FFF4CC;
+      margin-bottom: 15px;
+      border: 1px solid #edf0f4;
       border-radius: 15px;
       padding: 13px;
+    }
+
+    .detail-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #d82f58;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .detail-row {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      gap: 10px;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid #f1f2f5;
+      font-size: 13px;
     }
 
-    .estimate-box span {
-      color: #705600;
+    .detail-row:last-child {
+      border-bottom: 0;
+    }
+
+    .detail-label {
+      color: #7b8494;
+    }
+
+    .detail-value {
+      color: #263146;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 65px;
+      background: #fff;
+      border-top: 1px solid #eceef3;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 900;
+    }
+
+    .bottom-nav a {
+      text-decoration: none;
+      color: #7b8494;
       font-size: 11px;
       font-weight: 700;
+      text-align: center;
     }
 
-    .estimate-box strong {
-      color: #111827;
+    .bottom-nav a.active {
+      color: #d82f58;
+    }
+
+    .nav-icon {
+      display: block;
       font-size: 20px;
+      margin-bottom: 3px;
     }
 
-    .privacy-note {
-      background: #F6F8FB;
-      border-radius: 13px;
-      padding: 11px;
-      color: #6B7280;
-      font-size: 10px;
-      line-height: 1.5;
-    }
-
-    @media (min-width: 700px) {
-      .stats-grid {
-        grid-template-columns: repeat(4, 1fr);
+    @media (min-width: 600px) {
+      .page {
+        padding: 24px;
       }
 
-      .job-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-
-      .modal-bg {
+      .modal-backdrop {
         align-items: center;
+      }
+
+      .modal {
+        border-radius: 22px;
       }
     }
   </style>
@@ -375,154 +396,121 @@
 
 <body>
 
-<main class="jobs-page">
+  <main class="page">
 
-  <header class="jobs-header">
-
-    <div>
-      <div class="eyebrow">
-        REPARO V1 • PARTNER
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">My Jobs</h1>
+        <p class="page-subtitle">Track your service jobs</p>
       </div>
 
-      <h1>My Jobs</h1>
+      <button id="logoutBtn" class="logout-btn" type="button">
+        Logout
+      </button>
+    </header>
 
-      <p>
-        Track your customer's service progress
-      </p>
-    </div>
+    <div id="errorBox" class="message"></div>
+    <div id="successBox" class="message"></div>
 
-    <div class="partner-badge">
-      SERVICE PARTNER
-    </div>
+    <section class="summary-grid">
+      <div class="summary-card">
+        <div id="totalJobs" class="summary-number">0</div>
+        <div class="summary-label">Total Jobs</div>
+      </div>
 
-  </header>
+      <div class="summary-card">
+        <div id="activeJobs" class="summary-number">0</div>
+        <div class="summary-label">Active</div>
+      </div>
 
+      <div class="summary-card">
+        <div id="completedJobs" class="summary-number">0</div>
+        <div class="summary-label">Completed</div>
+      </div>
+    </section>
 
-  <!-- SUMMARY -->
-
-  <section class="stats-grid">
-
-    <div class="stat-card">
-      <div class="stat-label">TOTAL JOBS</div>
-      <div class="stat-value" id="totalJobs">0</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-label">ACTIVE</div>
-      <div class="stat-value" id="activeJobs">0</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-label">APPROVAL</div>
-      <div class="stat-value" id="approvalJobs">0</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-label">COMPLETED</div>
-      <div class="stat-value" id="completedJobs">0</div>
-    </div>
-
-  </section>
-
-
-  <!-- FILTER -->
-
-  <section class="filter-card">
-
-    <div class="filter-row">
-
+    <div class="search-box">
       <input
         id="searchInput"
-        class="input"
         type="search"
-        placeholder="Search job, customer, mobile, device..."
+        placeholder="Search Job, Customer, Mobile, Device..."
+        autocomplete="off"
       >
+    </div>
 
-      <select
-        id="statusFilter"
-        class="select">
-
-        <option value="ALL">
-          All Status
-        </option>
-
-        <option value="ASSIGNED">
-          Assigned
-        </option>
-
-        <option value="IN PROGRESS">
-          In Progress
-        </option>
-
-        <option value="DIAGNOSIS">
-          Diagnosis
-        </option>
-
-        <option value="CUSTOMER APPROVAL">
-          Customer Approval
-        </option>
-
-        <option value="REPAIR">
-          Repair
-        </option>
-
-        <option value="COMPLETED">
-          Completed
-        </option>
-
+    <div class="filter-box">
+      <select id="statusFilter">
+        <option value="">All Status</option>
+        <option value="NEW">New</option>
+        <option value="ASSIGNED">Assigned</option>
+        <option value="IN PROGRESS">In Progress</option>
+        <option value="DIAGNOSIS">Diagnosis</option>
+        <option value="CUSTOMER APPROVAL">Customer Approval</option>
+        <option value="REPAIR">Repair</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="CANCELLED">Cancelled</option>
       </select>
-
     </div>
 
-  </section>
+    <section id="jobContainer">
+      <div class="loading">Loading jobs...</div>
+    </section>
 
+  </main>
 
-  <!-- JOB LIST -->
+  <nav class="bottom-nav">
+    <a href="./dashboard.html">
+      <span class="nav-icon">⌂</span>
+      Home
+    </a>
 
-  <section id="jobList">
+    <a href="./new-service-request.html">
+      <span class="nav-icon">＋</span>
+      Request
+    </a>
 
-    <div class="loading">
-      Loading jobs...
+    <a href="./customers.html">
+      <span class="nav-icon">👥</span>
+      Customers
+    </a>
+
+    <a href="./jobs.html" class="active">
+      <span class="nav-icon">🔧</span>
+      Jobs
+    </a>
+
+    <a href="./earnings.html">
+      <span class="nav-icon">₹</span>
+      Earnings
+    </a>
+  </nav>
+
+  <div id="modalBackdrop" class="modal-backdrop">
+
+    <div class="modal">
+
+      <div class="modal-header">
+        <h2 id="modalTitle" class="modal-title">Job Details</h2>
+
+        <button
+          id="closeModalBtn"
+          class="close-btn"
+          type="button"
+        >
+          ×
+        </button>
+      </div>
+
+      <div id="modalContent"></div>
+
     </div>
-
-  </section>
-
-</main>
-
-
-<!-- DETAIL MODAL -->
-
-<div
-  id="jobModal"
-  class="modal-bg">
-
-  <div class="modal">
-
-    <div class="modal-head">
-
-      <h2 id="modalJobTitle">
-        Job Details
-      </h2>
-
-      <button
-        class="close"
-        onclick="closeJob()">
-        ×
-      </button>
-
-    </div>
-
-    <div id="modalContent"></div>
 
   </div>
 
-</div>
-
-
-<script
-  type="module"
-  src="../js/retailer-jobs.js">
-</script>
+  <script
+    type="module"
+    src="../js/retailer-jobs.js"
+  ></script>
 
 </body>
 </html>
