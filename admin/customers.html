@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#F9547C">
+
+  <title>Customers - REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #F6F8FB;
+      color: #111827;
+      font-family: Arial, sans-serif;
+      padding-bottom: 90px;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 18px 16px 30px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 25px;
+      font-weight: 800;
+    }
+
+    .header p {
+      margin: 5px 0 0;
+      color: #6B7280;
+      font-size: 13px;
+    }
+
+    .add-btn {
+      border: 0;
+      background: #F9547C;
+      color: #fff;
+      font-weight: 700;
+      border-radius: 14px;
+      padding: 12px 15px;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 7px 18px rgba(249, 84, 124, .20);
+    }
+
+    .search-wrap {
+      margin-bottom: 18px;
+    }
+
+    .search-input {
+      width: 100%;
+      border: 1px solid #E5E7EB;
+      background: #fff;
+      border-radius: 15px;
+      padding: 14px 15px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: #F9547C;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .summary-card {
+      background: #fff;
+      border-radius: 17px;
+      padding: 14px 8px;
+      text-align: center;
+      box-shadow: 0 7px 22px rgba(17, 24, 39, .06);
+    }
+
+    .summary-number {
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .summary-label {
+      color: #6B7280;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .customer-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 25px rgba(17, 24, 39, .07);
+    }
+
+    .customer-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .customer-main {
+      min-width: 0;
+    }
+
+    .customer-name {
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 5px;
+      word-break: break-word;
+    }
+
+    .customer-detail {
+      color: #6B7280;
+      font-size: 13px;
+      line-height: 1.65;
+      word-break: break-word;
+    }
+
+    .protection-badge {
+      flex-shrink: 0;
+      height: fit-content;
+      background: #FFF4B8;
+      color: #665800;
+      padding: 6px 9px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .customer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 13px;
+      border-top: 1px solid #F0F1F3;
+    }
+
+    .retailer-info {
+      color: #6B7280;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .retailer-info strong {
+      color: #111827;
+      font-size: 12px;
+    }
+
+    .edit-btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 13px;
+      background: #E0F7FF;
+      color: #087EA4;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .message {
+      background: #fff;
+      border-radius: 20px;
+      padding: 35px 20px;
+      text-align: center;
+      color: #6B7280;
+      box-shadow: 0 7px 22px rgba(17, 24, 39, .05);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, .50);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 700px;
+      background: #fff;
+      border-radius: 25px 25px 0 0;
+      padding: 20px;
+      max-height: 93vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .close-btn {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 50%;
+      background: #F6F8FB;
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .required {
+      color: #F9547C;
+    }
+
+    .form-control {
+      width: 100%;
+      border: 1px solid #E5E7EB;
+      background: #fff;
+      border-radius: 13px;
+      padding: 13px 14px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .form-control:focus {
+      border-color: #F9547C;
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 75px;
+    }
+
+    select.form-control {
+      appearance: auto;
+    }
+
+    .section-title {
+      margin: 20px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #E5E7EB;
+      font-size: 14px;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    .protection-box {
+      background: #FFFBE5;
+      border-radius: 15px;
+      padding: 13px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+    }
+
+    .protection-box-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #665800;
+      margin-bottom: 4px;
+    }
+
+    .protection-box-text {
+      font-size: 11px;
+      line-height: 1.5;
+      color: #756A18;
+    }
+
+    .warning-box {
+      display: none;
+      background: #FEE2E2;
+      color: #991B1B;
+      border-radius: 13px;
+      padding: 12px;
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .warning-box.show {
+      display: block;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      padding: 13px;
+      border-radius: 13px;
+      border: 0;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .cancel-btn {
+      background: #F1F3F5;
+      color: #374151;
+    }
+
+    .save-btn {
+      background: #F9547C;
+      color: #fff;
+    }
+
+    .save-btn:disabled {
+      opacity: .6;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 70px;
+      background: #fff;
+      border-top: 1px solid #EAECEF;
+      display: flex;
+      justify-content: center;
+      z-index: 5000;
+      box-shadow: 0 -5px 20px rgba(17, 24, 39, .05);
+    }
+
+    .nav-inner {
+      width: 100%;
+      max-width: 700px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .nav-item {
+      text-decoration: none;
+      color: #6B7280;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .nav-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .nav-item.active {
+      color: #F9547C;
+    }
+
+    @media (min-width: 600px) {
+      .modal {
+        align-items: center;
+        padding: 20px;
+      }
+
+      .modal-box {
+        border-radius: 25px;
+        max-height: 90vh;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="page">
+
+    <div class="header">
+
+      <div>
+        <h1>Customers</h1>
+        <p>Protected customer relationship</p>
+      </div>
+
+      <button
+        class="add-btn"
+        id="addCustomerBtn"
+      >
+        + Add
+      </button>
+
+    </div>
+
+
+    <div class="search-wrap">
+
+      <input
+        id="searchInput"
+        class="search-input"
+        type="search"
+        placeholder="Search name, mobile, TV..."
+      >
+
+    </div>
+
+
+    <div class="summary">
+
+      <div class="summary-card">
+        <div id="totalCount" class="summary-number">0</div>
+        <div class="summary-label">Total</div>
+      </div>
+
+      <div class="summary-card">
+        <div id="protectedCount" class="summary-number">0</div>
+        <div class="summary-label">Protected</div>
+      </div>
+
+      <div class="summary-card">
+        <div id="unassignedCount" class="summary-number">0</div>
+        <div class="summary-label">Unassigned</div>
+      </div>
+
+    </div>
+
+
+    <div id="customerList">
+
+      <div class="message">
+        Loading customers...
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- CUSTOMER MODAL -->
+
+  <div id="customerModal" class="modal">
+
+    <div class="modal-box">
+
+      <div class="modal-header">
+
+        <h2 id="modalTitle">
+          Add Customer
+        </h2>
+
+        <button
+          id="closeModalBtn"
+          class="close-btn"
+          type="button"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <form id="customerForm">
+
+        <div class="section-title">
+          Customer Details
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Customer Name
+            <span class="required">*</span>
+          </label>
+
+          <input
+            id="customerName"
+            class="form-control"
+            type="text"
+            placeholder="Enter customer name"
+            required
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Mobile Number
+            <span class="required">*</span>
+          </label>
+
+          <input
+            id="customerMobile"
+            class="form-control"
+            type="tel"
+            inputmode="numeric"
+            placeholder="Enter mobile number"
+            required
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>Address</label>
+
+          <textarea
+            id="customerAddress"
+            class="form-control"
+            placeholder="Customer address"
+          ></textarea>
+
+        </div>
+
+
+        <div class="section-title">
+          TV / Device Details
+        </div>
+
+
+        <div class="form-group">
+
+          <label>Brand</label>
+
+          <input
+            id="deviceBrand"
+            class="form-control"
+            type="text"
+            placeholder="Example: Sony"
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>Model</label>
+
+          <input
+            id="deviceModel"
+            class="form-control"
+            type="text"
+            placeholder="Example: KD-55X80L"
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>Serial Number</label>
+
+          <input
+            id="deviceSerial"
+            class="form-control"
+            type="text"
+            placeholder="Enter serial number"
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>Screen Size</label>
+
+          <select
+            id="screenSize"
+            class="form-control"
+          >
+
+            <option value="">
+              Select screen size
+            </option>
+
+            <option value="24">24"</option>
+            <option value="32">32"</option>
+            <option value="40">40"</option>
+            <option value="43">43"</option>
+            <option value="50">50"</option>
+            <option value="55">55"</option>
+            <option value="65">65"</option>
+            <option value="75">75"</option>
+            <option value="85">85"</option>
+            <option value="Other">Other</option>
+
+          </select>
+
+        </div>
+
+
+        <div class="section-title">
+          Retailer Protection
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Original Retailer
+            <span class="required">*</span>
+          </label>
+
+          <select
+            id="retailerSelect"
+            class="form-control"
+            required
+          >
+
+            <option value="">
+              Select retailer
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div
+          id="duplicateWarning"
+          class="warning-box"
+        ></div>
+
+
+        <div class="protection-box">
+
+          <div class="protection-box-title">
+            🔒 Customer Protection
+          </div>
+
+          <div class="protection-box-text">
+            The first retailer who registers the customer
+            becomes the protected relationship owner.
+            Customer ownership should not change during
+            normal service operations.
+          </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>Notes</label>
+
+          <textarea
+            id="customerNotes"
+            class="form-control"
+            placeholder="Additional customer notes"
+          ></textarea>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+          <button
+            type="button"
+            id="cancelBtn"
+            class="cancel-btn"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            id="saveBtn"
+            class="save-btn"
+          >
+            Create Customer
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- BOTTOM NAV -->
+
+  <div class="bottom-nav">
+
+    <div class="nav-inner">
+
+      <a
+        href="./dashboard.html"
+        class="nav-item"
+      >
+        <span class="nav-icon">⌂</span>
+        <span>Home</span>
+      </a>
+
+
+      <a
+        href="./retailers.html"
+        class="nav-item"
+      >
+        <span class="nav-icon">▣</span>
+        <span>Retailers</span>
+      </a>
+
+
+      <a
+        href="./technicians.html"
+        class="nav-item"
+      >
+        <span class="nav-icon">⚙</span>
+        <span>Technicians</span>
+      </a>
+
+
+      <a
+        href="./customers.html"
+        class="nav-item active"
+      >
+        <span class="nav-icon">◉</span>
+        <span>Customers</span>
+      </a>
+
+    </div>
+
+  </div>
+
+
+  <!-- ONLY JAVASCRIPT FILE -->
+
+  <script
+    type="module"
+    src="../js/customers.js"
+  ></script>
+
+</body>
+</html>
