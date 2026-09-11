@@ -1,239 +1,577 @@
-import { auth, db } from "./firebase.js";
-
 import {
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
   collection,
   getDocs,
-  getDoc,
   doc,
+  getDoc,
   updateDoc,
-  query,
-  orderBy,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+  auth,
+  db
+} from "./firebase.js";
 
-const $ = id =>
-  document.getElementById(id);
+
+/* =====================================================
+   DOM
+===================================================== */
+
+const jobContainer =
+  document.getElementById("jobContainer");
+
+const searchInput =
+  document.getElementById("searchInput");
+
+const statusFilter =
+  document.getElementById("statusFilter");
+
+const logoutBtn =
+  document.getElementById("logoutBtn");
+
+const errorBox =
+  document.getElementById("errorBox");
+
+const successBox =
+  document.getElementById("successBox");
+
+const totalJobs =
+  document.getElementById("totalJobs");
+
+const newJobs =
+  document.getElementById("newJobs");
+
+const activeJobs =
+  document.getElementById("activeJobs");
+
+const completedJobs =
+  document.getElementById("completedJobs");
+
+const modalBackdrop =
+  document.getElementById("modalBackdrop");
+
+const closeModalBtn =
+  document.getElementById("closeModalBtn");
+
+const cancelModalBtn =
+  document.getElementById("cancelModalBtn");
+
+const modalTitle =
+  document.getElementById("modalTitle");
+
+const modalContent =
+  document.getElementById("modalContent");
+
+const saveJobBtn =
+  document.getElementById("saveJobBtn");
 
 
-let jobs = [];
+/* =====================================================
+   STATE
+===================================================== */
+
+let allJobs = [];
+
 let technicians = [];
 
+let selectedJobId = null;
 
-// ==================================================
-// AUTH
-// ==================================================
+let adminUser = null;
 
-onAuthStateChanged(auth, async user => {
 
-  if (!user) {
-    location.href = "../index.html";
-    return;
-  }
+/* =====================================================
+   AUTH
+===================================================== */
 
-  try {
+onAuthStateChanged(
+  auth,
+  async (user) => {
 
-    const profile =
-      await getDoc(
-        doc(db, "users", user.uid)
-      );
+    if (!user) {
 
-    if (
-      !profile.exists() ||
-      profile.data().role !== "admin"
-    ) {
-      location.href = "../index.html";
+      window.location.href =
+        "../index.html";
+
       return;
+
     }
 
-    await Promise.all([
-      loadJobs(),
-      loadTechnicians()
-    ]);
 
-  } catch (error) {
+    try {
 
-    console.error(error);
+      const userRef =
+        doc(
+          db,
+          "users",
+          user.uid
+        );
 
-    $("loading").textContent =
-      "Unable to load Jobs.";
+
+      const snapshot =
+        await getDoc(
+          userRef
+        );
+
+
+      if (!snapshot.exists()) {
+
+        await signOut(auth);
+
+        window.location.href =
+          "../index.html";
+
+        return;
+
+      }
+
+
+      const profile =
+        snapshot.data();
+
+
+      if (
+        profile.role !== "admin" ||
+        profile.active !== true
+      ) {
+
+        await signOut(auth);
+
+        window.location.href =
+          "../index.html";
+
+        return;
+
+      }
+
+
+      adminUser =
+        user;
+
+
+      await loadPage();
+
+    }
+    catch (error) {
+
+      showError(
+        error.message ||
+        "Authorization error."
+      );
+
+    }
 
   }
+);
 
-});
 
+/* =====================================================
+   LOAD PAGE
+===================================================== */
 
-// ==================================================
-// LOAD JOBS
-// ==================================================
-
-async function loadJobs() {
-
-  $("loading").style.display = "block";
+async function loadPage() {
 
   try {
 
-    const q = query(
-      collection(db, "jobs"),
-      orderBy("createdAt", "desc")
-    );
-
-    const snap =
-      await getDocs(q);
-
-    jobs =
-      snap.docs.map(item => ({
-        id: item.id,
-        ...item.data()
-      }));
-
-  } catch (error) {
-
-    console.warn(
-      "Using fallback job query.",
-      error
-    );
-
-    const snap =
-      await getDocs(
-        collection(db, "jobs")
-      );
-
-    jobs =
-      snap.docs.map(item => ({
-        id: item.id,
-        ...item.data()
-      }));
+    await Promise.all([
+      loadTechnicians(),
+      loadJobs()
+    ]);
 
   }
+  catch (error) {
 
-  $("loading").style.display = "none";
+    showError(
+      error.message ||
+      "Page load failed."
+    );
 
-  updateStats();
-  renderJobs();
+  }
 
 }
 
 
-// ==================================================
-// LOAD TECHNICIANS
-// ==================================================
+/* =====================================================
+   LOAD TECHNICIANS
+===================================================== */
 
 async function loadTechnicians() {
 
-  const snap =
+  const snapshot =
     await getDocs(
-      collection(db, "technicians")
+      collection(
+        db,
+        "technicians"
+      )
     );
 
-  technicians =
-    snap.docs
-      .map(item => ({
-        id: item.id,
+
+  technicians = [];
+
+
+  snapshot.forEach(
+    item => {
+
+      technicians.push({
+
+        uid:
+          item.id,
+
         ...item.data()
-      }))
-      .filter(item =>
-        item.active !== false
+
+      });
+
+    }
+  );
+
+
+  /*
+    Fallback:
+    If technicians master collection is empty,
+    use users collection.
+  */
+
+  if (
+    technicians.length === 0
+  ) {
+
+    const usersSnapshot =
+      await getDocs(
+        collection(
+          db,
+          "users"
+        )
       );
 
-}
+
+    usersSnapshot.forEach(
+      item => {
+
+        const data =
+          item.data();
 
 
-// ==================================================
-// STATS
-// ==================================================
+        if (
+          data.role === "technician" &&
+          data.active === true
+        ) {
 
-function updateStats() {
+          technicians.push({
 
-  $("totalJobs").textContent =
-    jobs.length;
+            uid:
+              item.id,
 
+            ...data
 
-  $("newJobs").textContent =
-    jobs.filter(
-      j => j.status === "NEW"
-    ).length;
+          });
 
+        }
 
-  $("activeJobs").textContent =
-    jobs.filter(j =>
-      [
-        "ASSIGNED",
-        "IN PROGRESS",
-        "DIAGNOSIS",
-        "CUSTOMER APPROVAL",
-        "REPAIR"
-      ].includes(j.status)
-    ).length;
+      }
+    );
 
-
-  $("completedJobs").textContent =
-    jobs.filter(
-      j => j.status === "COMPLETED"
-    ).length;
+  }
 
 }
 
 
-// ==================================================
-// RENDER
-// ==================================================
+/* =====================================================
+   LOAD JOBS
+===================================================== */
+
+async function loadJobs() {
+
+  jobContainer.innerHTML = `
+
+    <div class="loading">
+      Loading jobs...
+    </div>
+
+  `;
+
+
+  try {
+
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "jobs"
+        )
+      );
+
+
+    allJobs = [];
+
+
+    snapshot.forEach(
+      item => {
+
+        allJobs.push({
+
+          id:
+            item.id,
+
+          ...item.data()
+
+        });
+
+      }
+    );
+
+
+    allJobs.sort(
+      (a, b) => {
+
+        const aTime =
+          a.createdAt?.seconds ||
+          0;
+
+        const bTime =
+          b.createdAt?.seconds ||
+          0;
+
+        return bTime - aTime;
+
+      }
+    );
+
+
+    updateSummary();
+
+    renderJobs();
+
+  }
+  catch (error) {
+
+    jobContainer.innerHTML = `
+
+      <div class="empty">
+
+        <div class="empty-icon">
+          ⚠️
+        </div>
+
+        <div class="empty-title">
+          Jobs Load Error
+        </div>
+
+        <div class="empty-text">
+          ${escapeHtml(
+            error.message ||
+            "Unable to load jobs."
+          )}
+        </div>
+
+      </div>
+
+    `;
+
+    throw error;
+
+  }
+
+}
+
+
+/* =====================================================
+   SUMMARY
+===================================================== */
+
+function updateSummary() {
+
+  const total =
+    allJobs.length;
+
+
+  const newCount =
+    allJobs.filter(
+      job =>
+        String(
+          job.status || ""
+        ).toUpperCase() === "NEW"
+    ).length;
+
+
+  const activeCount =
+    allJobs.filter(
+      job =>
+        isActiveStatus(
+          job.status
+        )
+    ).length;
+
+
+  const completedCount =
+    allJobs.filter(
+      job =>
+        String(
+          job.status || ""
+        ).toUpperCase() === "COMPLETED"
+    ).length;
+
+
+  totalJobs.textContent =
+    total;
+
+
+  newJobs.textContent =
+    newCount;
+
+
+  activeJobs.textContent =
+    activeCount;
+
+
+  completedJobs.textContent =
+    completedCount;
+
+}
+
+
+/* =====================================================
+   ACTIVE STATUS
+===================================================== */
+
+function isActiveStatus(status) {
+
+  const value =
+    String(
+      status || ""
+    ).toUpperCase();
+
+
+  return [
+
+    "ASSIGNED",
+
+    "IN PROGRESS",
+
+    "DIAGNOSIS",
+
+    "CUSTOMER APPROVAL",
+
+    "REPAIR"
+
+  ].includes(value);
+
+}
+
+
+/* =====================================================
+   FILTER EVENTS
+===================================================== */
+
+searchInput.addEventListener(
+  "input",
+  renderJobs
+);
+
+
+statusFilter.addEventListener(
+  "change",
+  renderJobs
+);
+
+
+/* =====================================================
+   RENDER JOBS
+===================================================== */
 
 function renderJobs() {
 
   const search =
-    $("searchInput")
-      .value
+    searchInput.value
       .trim()
       .toLowerCase();
 
+
   const status =
-    $("statusFilter").value;
+    statusFilter.value;
 
 
   const filtered =
-    jobs.filter(job => {
+    allJobs.filter(
+      job => {
 
-      const searchable = [
-        job.jobId,
-        job.requestId,
-        job.customerName,
-        job.customerMobile,
-        job.deviceBrand,
-        job.deviceModel,
-        job.serialNumber,
-        job.serviceType,
-        job.retailerId
-      ]
+        const searchable = [
+
+          job.id,
+
+          job.jobId,
+
+          job.customerName,
+
+          job.customerMobile,
+
+          job.mobile,
+
+          job.retailerName,
+
+          job.deviceBrand,
+
+          job.deviceModel,
+
+          job.serialNumber,
+
+          job.serviceType
+
+        ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
 
 
-      return (
-        (!search ||
-          searchable.includes(search)) &&
-        (!status ||
-          job.status === status)
-      );
-
-    });
+        const searchMatch =
+          !search ||
+          searchable.includes(
+            search
+          );
 
 
-  if (!filtered.length) {
+        const statusMatch =
+          !status ||
+          String(
+            job.status || ""
+          ).toUpperCase() ===
+          status;
 
-    $("jobList").innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">🔧</div>
-        <h3>No Jobs Found</h3>
-        <p>
+
+        return (
+          searchMatch &&
+          statusMatch
+        );
+
+      }
+    );
+
+
+  if (
+    filtered.length === 0
+  ) {
+
+    jobContainer.innerHTML = `
+
+      <div class="empty">
+
+        <div class="empty-icon">
+          🔧
+        </div>
+
+        <div class="empty-title">
+          No Jobs Found
+        </div>
+
+        <div class="empty-text">
           No service jobs match your search.
-        </p>
+        </div>
+
       </div>
+
     `;
 
     return;
@@ -241,43 +579,77 @@ function renderJobs() {
   }
 
 
-  $("jobList").innerHTML =
-    filtered
-      .map(jobCard)
-      .join("");
+  jobContainer.innerHTML = `
+
+    <div class="job-list">
+
+      ${filtered
+        .map(renderJobCard)
+        .join("")}
+
+    </div>
+
+  `;
 
 
   document
-    .querySelectorAll("[data-view-job]")
-    .forEach(button => {
+    .querySelectorAll(
+      "[data-view-job]"
+    )
+    .forEach(
+      button => {
 
-      button.onclick = () =>
-        viewJob(
-          button.dataset.viewJob
+        button.addEventListener(
+          "click",
+          () => {
+
+            openJobModal(
+              button.dataset.viewJob
+            );
+
+          }
         );
 
-    });
+      }
+    );
 
 
   document
-    .querySelectorAll("[data-edit-job]")
-    .forEach(button => {
+    .querySelectorAll(
+      "[data-assign-job]"
+    )
+    .forEach(
+      button => {
 
-      button.onclick = () =>
-        openEdit(
-          button.dataset.editJob
+        button.addEventListener(
+          "click",
+          () => {
+
+            openJobModal(
+              button.dataset.assignJob
+            );
+
+          }
         );
 
-    });
+      }
+    );
 
 }
 
 
-// ==================================================
-// JOB CARD
-// ==================================================
+/* =====================================================
+   JOB CARD
+===================================================== */
 
-function jobCard(job) {
+function renderJobCard(job) {
+
+  const status =
+    String(
+      job.status ||
+      "NEW"
+    ).toUpperCase();
+
 
   const technician =
     getTechnician(
@@ -285,484 +657,903 @@ function jobCard(job) {
     );
 
 
-  const device =
-    [
-      job.deviceBrand,
-      job.deviceModel
-    ]
-      .filter(Boolean)
-      .join(" ") || "Device not specified";
+  const technicianName =
+    job.technicianName ||
+    technician?.name ||
+    "Not Assigned";
 
 
   return `
 
-    <article class="card job-card">
+    <div class="job-card">
 
-      <div class="card-header">
+      <div class="job-top">
 
         <div>
 
-          <div class="eyebrow">
+          <h3 class="job-id">
             ${escapeHtml(
-              job.jobId || job.id
-            )}
-          </div>
-
-          <h3>
-            ${escapeHtml(
-              job.customerName ||
-              "Unknown Customer"
+              job.jobId ||
+              job.id
             )}
           </h3>
 
-          <p>
+          <div class="customer-name">
             ${escapeHtml(
-              job.customerMobile || ""
+              job.customerName ||
+              "Customer"
             )}
-          </p>
+          </div>
 
         </div>
 
-        <span class="status-badge">
+
+        <span
+          class="status ${getStatusClass(status)}"
+        >
           ${escapeHtml(
-            job.status || "NEW"
+            formatStatus(status)
           )}
         </span>
 
       </div>
 
 
-      <div class="card-info-grid">
+      <div class="job-info">
 
-        <div>
-          <span>Service</span>
-          <strong>
+        <div class="info-row">
+
+          <span class="info-icon">
+            📱
+          </span>
+
+          <span>
             ${escapeHtml(
-              job.serviceType || "-"
+              job.customerMobile ||
+              job.mobile ||
+              "-"
             )}
-          </strong>
+          </span>
+
         </div>
 
 
-        <div>
-          <span>Device</span>
-          <strong>
-            ${escapeHtml(device)}
-          </strong>
-        </div>
+        <div class="info-row">
 
+          <span class="info-icon">
+            📺
+          </span>
 
-        <div>
-          <span>Technician</span>
-          <strong>
-            ${escapeHtml(technician)}
-          </strong>
-        </div>
-
-
-        <div>
-          <span>Request ID</span>
-          <strong>
+          <span>
             ${escapeHtml(
-              job.requestId || "-"
+              getDeviceText(job)
             )}
-          </strong>
+          </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            🔧
+          </span>
+
+          <span>
+            ${escapeHtml(
+              job.serviceType ||
+              "Service"
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            👨‍🔧
+          </span>
+
+          <span>
+            ${escapeHtml(
+              technicianName
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            🏪
+          </span>
+
+          <span>
+            ${escapeHtml(
+              job.retailerName ||
+              job.retailerId ||
+              "-"
+            )}
+          </span>
+
         </div>
 
       </div>
 
 
-      <div class="card-actions">
+      <div class="job-divider"></div>
+
+
+      <div class="job-actions">
 
         <button
+          type="button"
+          class="job-action view-btn"
           data-view-job="${job.id}"
-          class="secondary-btn">
-          View
+        >
+          View / Edit
         </button>
 
+
         <button
-          data-edit-job="${job.id}"
-          class="primary-btn">
-          Assign / Edit
+          type="button"
+          class="job-action assign-btn"
+          data-assign-job="${job.id}"
+        >
+          Assign Technician
         </button>
 
       </div>
 
-    </article>
+    </div>
 
   `;
 
 }
 
 
-// ==================================================
-// OPEN EDIT
-// ==================================================
+/* =====================================================
+   OPEN JOB MODAL
+===================================================== */
 
-function openEdit(id) {
+function openJobModal(jobId) {
 
   const job =
-    jobs.find(
-      item => item.id === id
+    allJobs.find(
+      item =>
+        item.id === jobId
     );
 
-  if (!job) return;
+
+  if (!job) {
+
+    showError(
+      "Job not found."
+    );
+
+    return;
+
+  }
 
 
-  $("editJobId").value =
-    id;
-
-  $("jobStatus").value =
-    job.status || "NEW";
-
-  $("adminNotes").value =
-    job.adminNotes || "";
+  selectedJobId =
+    jobId;
 
 
-  const select =
-    $("technicianSelect");
+  modalTitle.textContent =
+    "Job Management";
 
 
-  select.innerHTML = `
-    <option value="">
-      Select Technician
-    </option>
+  const currentTechnician =
+    job.technicianId || "";
+
+
+  modalContent.innerHTML = `
+
+    <div class="form-field">
+
+      <label>
+        Job ID
+      </label>
+
+      <input
+        type="text"
+        value="${escapeAttribute(
+          job.jobId ||
+          job.id
+        )}"
+        readonly
+      >
+
+    </div>
+
+
+    <div class="form-field">
+
+      <label>
+        Customer
+      </label>
+
+      <input
+        type="text"
+        value="${escapeAttribute(
+          job.customerName ||
+          "-"
+        )}"
+        readonly
+      >
+
+    </div>
+
+
+    <div class="form-field">
+
+      <label>
+        Device
+      </label>
+
+      <input
+        type="text"
+        value="${escapeAttribute(
+          getDeviceText(job)
+        )}"
+        readonly
+      >
+
+    </div>
+
+
+    <div class="form-field">
+
+      <label>
+        Problem
+      </label>
+
+      <textarea
+        id="editProblem"
+      >${escapeHtml(
+        job.problem ||
+        ""
+      )}</textarea>
+
+    </div>
+
+
+    <div class="form-field">
+
+      <label>
+        Technician
+      </label>
+
+      <select id="editTechnician">
+
+        <option value="">
+          -- Not Assigned --
+        </option>
+
+        ${
+          technicians
+            .map(
+              technician => `
+
+                <option
+                  value="${escapeAttribute(
+                    technician.uid
+                  )}"
+                  ${
+                    technician.uid ===
+                    currentTechnician
+                      ? "selected"
+                      : ""
+                  }
+                >
+                  ${escapeHtml(
+                    technician.name ||
+                    technician.mobile ||
+                    technician.uid
+                  )}
+                </option>
+
+              `
+            )
+            .join("")
+        }
+
+      </select>
+
+    </div>
+
+
+    <div class="form-field">
+
+      <label>
+        Job Status
+      </label>
+
+      <select id="editStatus">
+
+        ${statusOptions(
+          job.status ||
+          "NEW"
+        )}
+
+      </select>
+
+    </div>
+
   `;
 
 
-  technicians.forEach(technician => {
-
-    const option =
-      document.createElement("option");
-
-    option.value =
-      technician.id;
-
-    option.textContent =
-      technician.name ||
-      technician.fullName ||
-      technician.mobile ||
-      technician.id;
-
-    if (
-      technician.id ===
-      job.technicianId
-    ) {
-      option.selected = true;
-    }
-
-    select.appendChild(option);
-
-  });
-
-
-  $("jobModal")
-    .classList
-    .remove("hidden");
+  modalBackdrop.classList.add(
+    "show"
+  );
 
 }
 
 
-// ==================================================
-// SAVE JOB
-// ==================================================
+/* =====================================================
+   STATUS OPTIONS
+===================================================== */
 
-$("jobForm")
-  .addEventListener(
-    "submit",
-    async event => {
+function statusOptions(
+  current
+) {
 
-      event.preventDefault();
+  const statuses = [
+
+    "NEW",
+
+    "ASSIGNED",
+
+    "IN PROGRESS",
+
+    "DIAGNOSIS",
+
+    "CUSTOMER APPROVAL",
+
+    "REPAIR",
+
+    "COMPLETED",
+
+    "CANCELLED"
+
+  ];
 
 
-      const id =
-        $("editJobId").value;
+  return statuses
+    .map(
+      status => `
 
-      const technicianId =
-        $("technicianSelect").value ||
-        null;
+        <option
+          value="${escapeAttribute(status)}"
+          ${
+            String(
+              current
+            ).toUpperCase() === status
+              ? "selected"
+              : ""
+          }
+        >
+          ${escapeHtml(
+            formatStatus(status)
+          )}
+        </option>
+
+      `
+    )
+    .join("");
+
+}
 
 
-      const technician =
-        technicians.find(
-          item =>
-            item.id === technicianId
+/* =====================================================
+   SAVE JOB
+===================================================== */
+
+saveJobBtn.addEventListener(
+  "click",
+  saveJob
+);
+
+
+async function saveJob() {
+
+  if (!selectedJobId) {
+
+    return;
+
+  }
+
+
+  const job =
+    allJobs.find(
+      item =>
+        item.id ===
+        selectedJobId
+    );
+
+
+  if (!job) {
+
+    showError(
+      "Job not found."
+    );
+
+    return;
+
+  }
+
+
+  const problem =
+    document.getElementById(
+      "editProblem"
+    )?.value.trim() || "";
+
+
+  const technicianId =
+    document.getElementById(
+      "editTechnician"
+    )?.value || "";
+
+
+  const status =
+    document.getElementById(
+      "editStatus"
+    )?.value || "NEW";
+
+
+  saveJobBtn.disabled =
+    true;
+
+
+  saveJobBtn.textContent =
+    "Saving...";
+
+
+  try {
+
+    const technician =
+      getTechnician(
+        technicianId
+      );
+
+
+    const updateData = {
+
+      problem,
+
+      technicianId,
+
+      technicianName:
+        technician?.name ||
+        "",
+
+      status,
+
+      updatedAt:
+        serverTimestamp()
+
+    };
+
+
+    await updateDoc(
+
+      doc(
+        db,
+        "jobs",
+        selectedJobId
+      ),
+
+      updateData
+
+    );
+
+
+    /*
+      When technician is assigned,
+      synchronize the linked Service Request.
+    */
+
+    if (
+      job.requestId ||
+      job.serviceRequestId
+    ) {
+
+      const requestId =
+        job.requestId ||
+        job.serviceRequestId;
+
+
+      const requestRef =
+        doc(
+          db,
+          "service_requests",
+          requestId
         );
 
 
-      let status =
-        $("jobStatus").value;
+      const requestSnapshot =
+        await getDoc(
+          requestRef
+        );
 
 
       if (
-        technicianId &&
-        status === "NEW"
+        requestSnapshot.exists()
       ) {
-        status = "ASSIGNED";
-      }
 
+        const requestUpdate = {
 
-      try {
+          updatedAt:
+            serverTimestamp()
 
-        await updateDoc(
-          doc(db, "jobs", id),
-          {
-
-            status,
-
-            technicianId,
-
-            technicianName:
-              technician
-                ? (
-                  technician.name ||
-                  technician.fullName ||
-                  ""
-                )
-                : "",
-
-            adminNotes:
-              $("adminNotes")
-                .value
-                .trim(),
-
-            updatedAt:
-              serverTimestamp()
-
-          }
-        );
-
-
-        // ------------------------------------------
-        // SERVICE REQUEST SYNC
-        // ------------------------------------------
-
-        const job =
-          jobs.find(
-            item => item.id === id
-          );
+        };
 
 
         if (
-          job?.requestId &&
           technicianId
         ) {
 
-          try {
-
-            await updateDoc(
-              doc(
-                db,
-                "service_requests",
-                job.requestId
-              ),
-              {
-
-                status: "ASSIGNED",
-
-                updatedAt:
-                  serverTimestamp()
-
-              }
-            );
-
-          } catch (error) {
-
-            console.warn(
-              "Service Request sync:",
-              error
-            );
-
-          }
+          requestUpdate.status =
+            "ASSIGNED";
 
         }
 
 
-        closeModal();
-
-        await loadJobs();
-
-        alert(
-          "Job updated successfully."
-        );
-
-
-      } catch (error) {
-
-        console.error(error);
-
-        alert(
-          "Unable to update Job.\n\n" +
-          error.message
+        await updateDoc(
+          requestRef,
+          requestUpdate
         );
 
       }
 
     }
-  );
 
 
-// ==================================================
-// VIEW JOB
-// ==================================================
+    closeModal();
 
-function viewJob(id) {
 
-  const job =
-    jobs.find(
-      item => item.id === id
+    await loadJobs();
+
+
+    showSuccess(
+      "Job updated successfully."
     );
 
-  if (!job) return;
+  }
+  catch (error) {
 
+    showError(
+      error.message ||
+      "Job update failed."
+    );
 
-  alert(
+  }
+  finally {
 
-`JOB DETAILS
+    saveJobBtn.disabled =
+      false;
 
-Job ID:
-${job.jobId || job.id}
+    saveJobBtn.textContent =
+      "Save Changes";
 
-Request ID:
-${job.requestId || "-"}
-
-Customer:
-${job.customerName || "-"}
-
-Mobile:
-${job.customerMobile || "-"}
-
-Service:
-${job.serviceType || "-"}
-
-Device:
-${job.deviceBrand || "-"} ${job.deviceModel || "-"}
-
-Serial:
-${job.serialNumber || "-"}
-
-Retailer:
-${job.retailerId || "-"}
-
-Technician:
-${getTechnician(job.technicianId)}
-
-Status:
-${job.status || "-"}
-
-Problem:
-${job.problem || "-"}
-
-Admin Notes:
-${job.adminNotes || "-"}`
-
-  );
+  }
 
 }
 
 
-// ==================================================
-// CLOSE MODAL
-// ==================================================
-
-$("closeModalBtn")
-  .addEventListener(
-    "click",
-    closeModal
-  );
-
-
-$("cancelModalBtn")
-  .addEventListener(
-    "click",
-    closeModal
-  );
-
-
-$("jobModal")
-  .addEventListener(
-    "click",
-    event => {
-
-      if (
-        event.target ===
-        $("jobModal")
-      ) {
-        closeModal();
-      }
-
-    }
-  );
-
+/* =====================================================
+   CLOSE MODAL
+===================================================== */
 
 function closeModal() {
 
-  $("jobModal")
-    .classList
-    .add("hidden");
+  modalBackdrop.classList.remove(
+    "show"
+  );
+
+
+  selectedJobId =
+    null;
+
+
+  modalContent.innerHTML =
+    "";
 
 }
 
 
-// ==================================================
-// FILTER
-// ==================================================
-
-$("searchInput")
-  .addEventListener(
-    "input",
-    renderJobs
-  );
+closeModalBtn.addEventListener(
+  "click",
+  closeModal
+);
 
 
-$("statusFilter")
-  .addEventListener(
-    "change",
-    renderJobs
-  );
+cancelModalBtn.addEventListener(
+  "click",
+  closeModal
+);
 
 
-// ==================================================
-// TECHNICIAN NAME
-// ==================================================
+modalBackdrop.addEventListener(
+  "click",
+  event => {
 
-function getTechnician(id) {
+    if (
+      event.target ===
+      modalBackdrop
+    ) {
 
-  if (!id) return "Not Assigned";
+      closeModal();
+
+    }
+
+  }
+);
 
 
-  const technician =
-    technicians.find(
-      item => item.id === id
-    );
+/* =====================================================
+   TECHNICIAN FINDER
+===================================================== */
+
+function getTechnician(
+  uid
+) {
+
+  if (!uid) {
+
+    return null;
+
+  }
 
 
-  if (!technician) {
-    return id;
+  return technicians.find(
+    technician =>
+      technician.uid === uid
+  ) || null;
+
+}
+
+
+/* =====================================================
+   DEVICE TEXT
+===================================================== */
+
+function getDeviceText(job) {
+
+  const parts = [
+
+    job.deviceBrand,
+
+    job.deviceModel,
+
+    job.screenSize
+      ? `${job.screenSize}"`
+
+      : null
+
+  ]
+  .filter(Boolean);
+
+
+  if (
+    parts.length
+  ) {
+
+    return parts.join(" ");
+
   }
 
 
   return (
-    technician.name ||
-    technician.fullName ||
-    technician.mobile ||
-    technician.id
+    job.device ||
+    job.product ||
+    "Device"
   );
 
 }
 
 
-// ==================================================
-// HTML ESCAPE
-// ==================================================
+/* =====================================================
+   STATUS CLASS
+===================================================== */
 
-function escapeHtml(value) {
+function getStatusClass(
+  status
+) {
 
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  switch (
+    String(
+      status
+    ).toUpperCase()
+  ) {
+
+    case "NEW":
+      return "status-new";
+
+    case "ASSIGNED":
+      return "status-assigned";
+
+    case "IN PROGRESS":
+      return "status-progress";
+
+    case "DIAGNOSIS":
+      return "status-diagnosis";
+
+    case "CUSTOMER APPROVAL":
+      return "status-approval";
+
+    case "REPAIR":
+      return "status-repair";
+
+    case "COMPLETED":
+      return "status-completed";
+
+    case "CANCELLED":
+      return "status-cancelled";
+
+    default:
+      return "status-assigned";
+
+  }
+
+}
+
+
+/* =====================================================
+   FORMAT STATUS
+===================================================== */
+
+function formatStatus(
+  status
+) {
+
+  return String(
+    status ||
+    ""
+  )
+
+    .toLowerCase()
+
+    .replace(
+      /\b\w/g,
+      letter =>
+        letter.toUpperCase()
+    );
+
+}
+
+
+/* =====================================================
+   MESSAGES
+===================================================== */
+
+function showError(
+  message
+) {
+
+  successBox.style.display =
+    "none";
+
+
+  errorBox.textContent =
+    message;
+
+
+  errorBox.style.display =
+    "block";
+
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
+}
+
+
+function showSuccess(
+  message
+) {
+
+  errorBox.style.display =
+    "none";
+
+
+  successBox.textContent =
+    message;
+
+
+  successBox.style.display =
+    "block";
+
+}
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+logoutBtn.addEventListener(
+  "click",
+  async () => {
+
+    try {
+
+      await signOut(
+        auth
+      );
+
+
+      window.location.href =
+        "../index.html";
+
+    }
+    catch (error) {
+
+      showError(
+        error.message ||
+        "Logout failed."
+      );
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHtml(
+  value
+) {
+
+  return String(
+    value ?? ""
+  )
+
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
+
+}
+
+
+/* =====================================================
+   ESCAPE ATTRIBUTE
+===================================================== */
+
+function escapeAttribute(
+  value
+) {
+
+  return escapeHtml(
+    value
+  );
 
 }
