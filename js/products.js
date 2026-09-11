@@ -8,7 +8,7 @@ import {
   getDocs,
   doc,
   getDoc,
-  setDoc,
+  addDoc,
   updateDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -32,9 +32,6 @@ const searchInput =
 const categoryFilter =
   document.getElementById("categoryFilter");
 
-const addProductBtn =
-  document.getElementById("addProductBtn");
-
 const logoutBtn =
   document.getElementById("logoutBtn");
 
@@ -56,11 +53,11 @@ const lowStock =
 const outOfStock =
   document.getElementById("outOfStock");
 
+const addProductBtn =
+  document.getElementById("addProductBtn");
+
 const modalBackdrop =
   document.getElementById("modalBackdrop");
-
-const modalTitle =
-  document.getElementById("modalTitle");
 
 const closeModalBtn =
   document.getElementById("closeModalBtn");
@@ -68,14 +65,17 @@ const closeModalBtn =
 const cancelBtn =
   document.getElementById("cancelBtn");
 
+const modalTitle =
+  document.getElementById("modalTitle");
+
 const productForm =
   document.getElementById("productForm");
 
-const saveBtn =
-  document.getElementById("saveBtn");
-
 const editProductId =
   document.getElementById("editProductId");
+
+const saveBtn =
+  document.getElementById("saveBtn");
 
 const productName =
   document.getElementById("productName");
@@ -126,7 +126,7 @@ const warrantyDays =
 
 let allProducts = [];
 
-let adminUser = null;
+let selectedProductId = null;
 
 
 /* =====================================================
@@ -149,17 +149,13 @@ onAuthStateChanged(
 
     try {
 
-      const userRef =
-        doc(
-          db,
-          "users",
-          user.uid
-        );
-
-
       const snapshot =
         await getDoc(
-          userRef
+          doc(
+            db,
+            "users",
+            user.uid
+          )
         );
 
 
@@ -192,10 +188,6 @@ onAuthStateChanged(
         return;
 
       }
-
-
-      adminUser =
-        user;
 
 
       await loadProducts();
@@ -261,19 +253,17 @@ async function loadProducts() {
     allProducts.sort(
       (a, b) => {
 
-        const nameA =
-          String(
-            a.name || ""
-          ).toLowerCase();
+        const aTime =
+          getTimestamp(
+            a.createdAt
+          );
 
-        const nameB =
-          String(
-            b.name || ""
-          ).toLowerCase();
+        const bTime =
+          getTimestamp(
+            b.createdAt
+          );
 
-        return nameA.localeCompare(
-          nameB
-        );
+        return bTime - aTime;
 
       }
     );
@@ -332,35 +322,19 @@ function updateSummary() {
     ).length;
 
 
-  const out =
+  const low =
     allProducts.filter(
       product =>
-        Number(
-          product.currentStock || 0
-        ) <= 0
+        getStockStatus(product) ===
+        "LOW"
     ).length;
 
 
-  const low =
+  const out =
     allProducts.filter(
-      product => {
-
-        const stock =
-          Number(
-            product.currentStock || 0
-          );
-
-        const minimum =
-          Number(
-            product.minStock ?? 2
-          );
-
-        return (
-          stock > 0 &&
-          stock <= minimum
-        );
-
-      }
+      product =>
+        getStockStatus(product) ===
+        "OUT"
     ).length;
 
 
@@ -408,7 +382,11 @@ function renderProducts() {
 
 
   const category =
-    categoryFilter.value;
+    String(
+      categoryFilter.value || ""
+    )
+      .trim()
+      .toUpperCase();
 
 
   const filtered =
@@ -417,38 +395,31 @@ function renderProducts() {
 
         const searchable = [
 
+          product.id,
           product.name,
-
-          product.brand,
-
-          product.model,
-
-          product.sku,
-
+          product.productName,
           product.category,
-
+          product.brand,
+          product.model,
+          product.sku,
           product.supplier
 
         ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
 
 
         const searchMatch =
           !search ||
-          searchable.includes(
-            search
-          );
+          searchable.includes(search);
 
 
         const categoryMatch =
           !category ||
-          String(
-            product.category ||
-            ""
-          ).toUpperCase() ===
-          category;
+          normalizeCategory(
+            product.category
+          ) === category;
 
 
         return (
@@ -502,6 +473,255 @@ function renderProducts() {
   `;
 
 
+  bindProductButtons();
+
+}
+
+
+/* =====================================================
+   PRODUCT CARD
+===================================================== */
+
+function renderProductCard(product) {
+
+  const active =
+    product.active !== false;
+
+
+  const stockStatus =
+    getStockStatus(product);
+
+
+  const stockClass =
+    stockStatus === "OUT"
+      ? "stock-out"
+      : stockStatus === "LOW"
+        ? "stock-low"
+        : "stock-normal";
+
+
+  const stockText =
+    stockStatus === "OUT"
+      ? "Out of Stock"
+      : stockStatus === "LOW"
+        ? `${getNumber(
+            product.currentStock
+          )} Low`
+        : getNumber(
+            product.currentStock
+          );
+
+
+  const productTitle =
+    product.name ||
+    product.productName ||
+    "Unnamed Product";
+
+
+  const meta = [
+
+    product.category,
+
+    product.brand,
+
+    product.model
+
+  ]
+    .filter(Boolean)
+    .join(" • ");
+
+
+  return `
+
+    <div class="product-card">
+
+      <div class="product-top">
+
+        <div>
+
+          <h3 class="product-name">
+            ${escapeHtml(
+              productTitle
+            )}
+          </h3>
+
+          <div class="product-meta">
+            ${escapeHtml(
+              meta ||
+              "Product"
+            )}
+          </div>
+
+        </div>
+
+
+        <span
+          class="badge ${
+            active
+              ? "badge-active"
+              : "badge-inactive"
+          }"
+        >
+          ${
+            active
+              ? "ACTIVE"
+              : "INACTIVE"
+          }
+        </span>
+
+      </div>
+
+
+      <div class="product-info">
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            🏷️
+          </span>
+
+          <span>
+            SKU:
+            ${escapeHtml(
+              product.sku ||
+              "-"
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            🚚
+          </span>
+
+          <span>
+            Supplier:
+            ${escapeHtml(
+              product.supplier ||
+              "-"
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+          <span class="info-icon">
+            🛡️
+          </span>
+
+          <span>
+            Warranty:
+            ${escapeHtml(
+              formatWarranty(
+                product.warrantyDays
+              )
+            )}
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="price-row">
+
+        <div class="price-box">
+
+          <div class="price-label">
+            Purchase
+          </div>
+
+          <div class="price-value">
+            ₹${formatMoney(
+              product.purchaseCost
+            )}
+          </div>
+
+        </div>
+
+
+        <div class="price-box">
+
+          <div class="price-label">
+            Selling
+          </div>
+
+          <div class="price-value">
+            ₹${formatMoney(
+              product.sellingPrice
+            )}
+          </div>
+
+        </div>
+
+
+        <div class="price-box">
+
+          <div class="price-label">
+            Stock
+          </div>
+
+          <div class="price-value ${stockClass}">
+            ${escapeHtml(
+              stockText
+            )}
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="divider"></div>
+
+
+      <div class="actions">
+
+        <button
+          type="button"
+          class="action edit-btn"
+          data-edit-product="${escapeAttribute(
+            product.id
+          )}"
+        >
+          Edit
+        </button>
+
+
+        <button
+          type="button"
+          class="action toggle-btn"
+          data-toggle-product="${escapeAttribute(
+            product.id
+          )}"
+        >
+          ${
+            active
+              ? "Deactivate"
+              : "Activate"
+          }
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   BUTTON BINDING
+===================================================== */
+
+function bindProductButtons() {
+
   document
     .querySelectorAll(
       "[data-edit-product]"
@@ -549,276 +769,6 @@ function renderProducts() {
 
 
 /* =====================================================
-   PRODUCT CARD
-===================================================== */
-
-function renderProductCard(
-  product
-) {
-
-  const active =
-    product.active !== false;
-
-
-  const stock =
-    Number(
-      product.currentStock || 0
-    );
-
-
-  const minimum =
-    Number(
-      product.minStock ?? 2
-    );
-
-
-  let stockClass =
-    "stock-normal";
-
-
-  let stockText =
-    `${stock} units`;
-
-
-  if (
-    stock <= 0
-  ) {
-
-    stockClass =
-      "stock-out";
-
-    stockText =
-      "Out of Stock";
-
-  }
-  else if (
-    stock <= minimum
-  ) {
-
-    stockClass =
-      "stock-low";
-
-    stockText =
-      `${stock} units • Low`;
-
-  }
-
-
-  const purchase =
-    Number(
-      product.purchaseCost || 0
-    );
-
-
-  const selling =
-    Number(
-      product.sellingPrice || 0
-    );
-
-
-  const margin =
-    selling - purchase;
-
-
-  return `
-
-    <div class="product-card">
-
-      <div class="product-top">
-
-        <div>
-
-          <h3 class="product-name">
-            ${escapeHtml(
-              product.name ||
-              "Unnamed Product"
-            )}
-          </h3>
-
-          <div class="product-meta">
-
-            ${escapeHtml(
-              product.brand ||
-              "No Brand"
-            )}
-
-            ${
-              product.model
-                ? " • " +
-                  escapeHtml(
-                    product.model
-                  )
-                : ""
-            }
-
-            ${
-              product.sku
-                ? " • SKU: " +
-                  escapeHtml(
-                    product.sku
-                  )
-                : ""
-            }
-
-          </div>
-
-        </div>
-
-
-        <span
-          class="badge ${
-            active
-              ? "badge-active"
-              : "badge-inactive"
-          }"
-        >
-          ${
-            active
-              ? "ACTIVE"
-              : "INACTIVE"
-          }
-        </span>
-
-      </div>
-
-
-      <div class="product-info">
-
-        <div class="info-row">
-
-          <span class="info-icon">
-            📦
-          </span>
-
-          <span>
-            ${escapeHtml(
-              formatCategory(
-                product.category
-              )
-            )}
-          </span>
-
-        </div>
-
-
-        <div class="info-row">
-
-          <span class="info-icon">
-            📊
-          </span>
-
-          <span class="${stockClass}">
-            ${escapeHtml(
-              stockText
-            )}
-          </span>
-
-        </div>
-
-
-        <div class="info-row">
-
-          <span class="info-icon">
-            🏭
-          </span>
-
-          <span>
-            ${escapeHtml(
-              product.supplier ||
-              "Supplier not added"
-            )}
-          </span>
-
-        </div>
-
-      </div>
-
-
-      <div class="price-row">
-
-        <div class="price-box">
-
-          <div class="price-label">
-            Purchase
-          </div>
-
-          <div class="price-value">
-            ₹${formatMoney(
-              purchase
-            )}
-          </div>
-
-        </div>
-
-
-        <div class="price-box">
-
-          <div class="price-label">
-            Selling
-          </div>
-
-          <div class="price-value">
-            ₹${formatMoney(
-              selling
-            )}
-          </div>
-
-        </div>
-
-
-        <div class="price-box">
-
-          <div class="price-label">
-            Margin
-          </div>
-
-          <div class="price-value">
-            ₹${formatMoney(
-              margin
-            )}
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div class="divider"></div>
-
-
-      <div class="actions">
-
-        <button
-          type="button"
-          class="action edit-btn"
-          data-edit-product="${product.id}"
-        >
-          Edit
-        </button>
-
-
-        <button
-          type="button"
-          class="action toggle-btn"
-          data-toggle-product="${product.id}"
-        >
-          ${
-            active
-              ? "Deactivate"
-              : "Activate"
-          }
-        </button>
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-/* =====================================================
    ADD PRODUCT
 ===================================================== */
 
@@ -830,7 +780,8 @@ addProductBtn.addEventListener(
 
 function openAddModal() {
 
-  hideMessages();
+  selectedProductId =
+    null;
 
 
   productForm.reset();
@@ -838,6 +789,10 @@ function openAddModal() {
 
   editProductId.value =
     "";
+
+
+  marginType.value =
+    "PERCENTAGE";
 
 
   marginValue.value =
@@ -872,9 +827,6 @@ function openAddModal() {
     "show"
   );
 
-
-  productName.focus();
-
 }
 
 
@@ -882,12 +834,7 @@ function openAddModal() {
    EDIT PRODUCT
 ===================================================== */
 
-function openEditModal(
-  productId
-) {
-
-  hideMessages();
-
+function openEditModal(productId) {
 
   const product =
     allProducts.find(
@@ -907,36 +854,51 @@ function openEditModal(
   }
 
 
+  selectedProductId =
+    productId;
+
+
   editProductId.value =
-    product.id;
+    productId;
 
 
   productName.value =
-    product.name || "";
+    product.name ||
+    product.productName ||
+    "";
 
 
   productCategory.value =
-    product.category || "";
+    normalizeCategory(
+      product.category
+    );
 
 
   brand.value =
-    product.brand || "";
+    product.brand ||
+    "";
 
 
   model.value =
-    product.model || "";
+    product.model ||
+    "";
 
 
   sku.value =
-    product.sku || "";
+    product.sku ||
+    "";
 
 
   purchaseCost.value =
-    product.purchaseCost ?? 0;
+    getNumber(
+      product.purchaseCost
+    );
 
 
   sellingPrice.value =
-    product.sellingPrice ?? 0;
+    getNumber(
+      product.sellingPrice
+    );
 
 
   marginType.value =
@@ -945,27 +907,38 @@ function openEditModal(
 
 
   marginValue.value =
-    product.marginValue ?? 0;
+    getNumber(
+      product.marginValue
+    );
 
 
   retailerShare.value =
-    product.retailerShare ?? 0;
+    getNumber(
+      product.retailerShare
+    );
 
 
   currentStock.value =
-    product.currentStock ?? 0;
+    getNumber(
+      product.currentStock
+    );
 
 
   minStock.value =
-    product.minStock ?? 2;
+    getNumber(
+      product.minStock
+    );
 
 
   supplier.value =
-    product.supplier || "";
+    product.supplier ||
+    "";
 
 
   warrantyDays.value =
-    product.warrantyDays ?? 0;
+    getNumber(
+      product.warrantyDays
+    );
 
 
   modalTitle.textContent =
@@ -984,6 +957,344 @@ function openEditModal(
 
 
 /* =====================================================
+   SAVE PRODUCT
+===================================================== */
+
+productForm.addEventListener(
+  "submit",
+  async event => {
+
+    event.preventDefault();
+
+
+    await saveProduct();
+
+  }
+);
+
+
+async function saveProduct() {
+
+  const name =
+    productName.value.trim();
+
+
+  const category =
+    normalizeCategory(
+      productCategory.value
+    );
+
+
+  const purchase =
+    numberValue(
+      purchaseCost.value
+    );
+
+
+  const selling =
+    numberValue(
+      sellingPrice.value
+    );
+
+
+  if (!name) {
+
+    showError(
+      "Product name is required."
+    );
+
+    return;
+
+  }
+
+
+  if (!category) {
+
+    showError(
+      "Please select a product category."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    purchase < 0 ||
+    selling < 0
+  ) {
+
+    showError(
+      "Price cannot be negative."
+    );
+
+    return;
+
+  }
+
+
+  const productData = {
+
+    name,
+
+    category,
+
+    brand:
+      brand.value.trim(),
+
+    model:
+      model.value.trim(),
+
+    sku:
+      sku.value.trim(),
+
+    purchaseCost:
+      purchase,
+
+    sellingPrice:
+      selling,
+
+    marginType:
+      marginType.value ||
+      "PERCENTAGE",
+
+    marginValue:
+      numberValue(
+        marginValue.value
+      ),
+
+    retailerShare:
+      numberValue(
+        retailerShare.value
+      ),
+
+    currentStock:
+      Math.max(
+        0,
+        Math.floor(
+          numberValue(
+            currentStock.value
+          )
+        )
+      ),
+
+    minStock:
+      Math.max(
+        0,
+        Math.floor(
+          numberValue(
+            minStock.value
+          )
+        )
+      ),
+
+    supplier:
+      supplier.value.trim(),
+
+    warrantyDays:
+      Math.max(
+        0,
+        Math.floor(
+          numberValue(
+            warrantyDays.value
+          )
+        )
+      )
+
+  };
+
+
+  saveBtn.disabled =
+    true;
+
+
+  saveBtn.textContent =
+    selectedProductId
+      ? "Saving..."
+      : "Creating...";
+
+
+  try {
+
+    if (selectedProductId) {
+
+      /*
+        Do not overwrite the active field.
+        It is controlled by Activate /
+        Deactivate.
+      */
+
+      await updateDoc(
+
+        doc(
+          db,
+          "products",
+          selectedProductId
+        ),
+
+        {
+          ...productData,
+
+          updatedAt:
+            serverTimestamp()
+        }
+
+      );
+
+
+      closeModal();
+
+      await loadProducts();
+
+      showSuccess(
+        "Product updated successfully."
+      );
+
+    }
+    else {
+
+      await addDoc(
+
+        collection(
+          db,
+          "products"
+        ),
+
+        {
+          ...productData,
+
+          active:
+            true,
+
+          createdAt:
+            serverTimestamp(),
+
+          updatedAt:
+            serverTimestamp()
+
+        }
+
+      );
+
+
+      closeModal();
+
+      await loadProducts();
+
+      showSuccess(
+        "Product created successfully."
+      );
+
+    }
+
+  }
+  catch (error) {
+
+    console.error(
+      "Product save error:",
+      error
+    );
+
+
+    showError(
+      getErrorMessage(error)
+    );
+
+  }
+  finally {
+
+    saveBtn.disabled =
+      false;
+
+
+    saveBtn.textContent =
+      selectedProductId
+        ? "Save Changes"
+        : "Create Product";
+
+  }
+
+}
+
+
+/* =====================================================
+   TOGGLE PRODUCT
+===================================================== */
+
+async function toggleProduct(productId) {
+
+  const product =
+    allProducts.find(
+      item =>
+        item.id === productId
+    );
+
+
+  if (!product) {
+
+    showError(
+      "Product not found."
+    );
+
+    return;
+
+  }
+
+
+  const newState =
+    product.active === false;
+
+
+  try {
+
+    await updateDoc(
+
+      doc(
+        db,
+        "products",
+        productId
+      ),
+
+      {
+        active:
+          newState,
+
+        updatedAt:
+          serverTimestamp()
+
+      }
+
+    );
+
+
+    await loadProducts();
+
+
+    showSuccess(
+      newState
+        ? "Product activated."
+        : "Product deactivated."
+    );
+
+  }
+  catch (error) {
+
+    console.error(
+      "Product status error:",
+      error
+    );
+
+
+    showError(
+      getErrorMessage(error)
+    );
+
+  }
+
+}
+
+
+/* =====================================================
    CLOSE MODAL
 ===================================================== */
 
@@ -993,7 +1304,10 @@ function closeModal() {
     "show"
   );
 
-  productForm.reset();
+
+  selectedProductId =
+    null;
+
 
   editProductId.value =
     "";
@@ -1031,462 +1345,124 @@ modalBackdrop.addEventListener(
 
 
 /* =====================================================
-   SAVE PRODUCT
+   STOCK STATUS
 ===================================================== */
 
-productForm.addEventListener(
-  "submit",
-  async event => {
-
-    event.preventDefault();
-
-
-    hideMessages();
-
-
-    if (!adminUser) {
-
-      showError(
-        "Admin session મળી નથી."
-      );
-
-      return;
-
-    }
-
-
-    const productId =
-      editProductId.value.trim();
-
-
-    const data = {
-
-      name:
-        productName.value.trim(),
-
-      category:
-        productCategory.value,
-
-      brand:
-        brand.value.trim(),
-
-      model:
-        model.value.trim(),
-
-      sku:
-        sku.value.trim(),
-
-      purchaseCost:
-        Number(
-          purchaseCost.value || 0
-        ),
-
-      sellingPrice:
-        Number(
-          sellingPrice.value || 0
-        ),
-
-      marginType:
-        marginType.value,
-
-      marginValue:
-        Number(
-          marginValue.value || 0
-        ),
-
-      retailerShare:
-        Number(
-          retailerShare.value || 0
-        ),
-
-      currentStock:
-        Number(
-          currentStock.value || 0
-        ),
-
-      minStock:
-        Number(
-          minStock.value || 0
-        ),
-
-      supplier:
-        supplier.value.trim(),
-
-      warrantyDays:
-        Number(
-          warrantyDays.value || 0
-        )
-
-    };
-
-
-    if (!data.name) {
-
-      showError(
-        "Product name દાખલ કરો."
-      );
-
-      return;
-
-    }
-
-
-    if (!data.category) {
-
-      showError(
-        "Category select કરો."
-      );
-
-      return;
-
-    }
-
-
-    if (
-      data.purchaseCost < 0 ||
-      data.sellingPrice < 0
-    ) {
-
-      showError(
-        "Price negative ન હોઈ શકે."
-      );
-
-      return;
-
-    }
-
-
-    saveBtn.disabled =
-      true;
-
-
-    saveBtn.textContent =
-      productId
-        ? "Saving..."
-        : "Creating...";
-
-
-    try {
-
-      if (productId) {
-
-        await updateProduct(
-          productId,
-          data
-        );
-
-      }
-      else {
-
-        await createProduct(
-          data
-        );
-
-      }
-
-    }
-    catch (error) {
-
-      showError(
-        getErrorMessage(error)
-      );
-
-    }
-    finally {
-
-      saveBtn.disabled =
-        false;
-
-      saveBtn.textContent =
-        productId
-          ? "Save Changes"
-          : "Create Product";
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   CREATE PRODUCT
-===================================================== */
-
-async function createProduct(
-  data
-) {
-
-  const productRef =
-    doc(
-      collection(
-        db,
-        "products"
-      )
+function getStockStatus(product) {
+
+  const stock =
+    getNumber(
+      product.currentStock
     );
 
 
-  await setDoc(
-
-    productRef,
-
-    {
-
-      ...data,
-
-      active:
-        true,
-
-      createdAt:
-        serverTimestamp(),
-
-      createdBy:
-        adminUser.uid
-
-    }
-
-  );
+  const minimum =
+    getNumber(
+      product.minStock
+    );
 
 
-  closeModal();
+  if (stock <= 0) {
+
+    return "OUT";
+
+  }
 
 
-  await loadProducts();
+  if (stock <= minimum) {
+
+    return "LOW";
+
+  }
 
 
-  showSuccess(
-    "Product created successfully."
-  );
+  return "NORMAL";
 
 }
 
 
 /* =====================================================
-   UPDATE PRODUCT
+   CATEGORY
 ===================================================== */
 
-async function updateProduct(
-  productId,
-  data
-) {
-
-  await updateDoc(
-
-    doc(
-      db,
-      "products",
-      productId
-    ),
-
-    {
-
-      ...data,
-
-      updatedAt:
-        serverTimestamp(),
-
-      updatedBy:
-        adminUser.uid
-
-    }
-
-  );
-
-
-  closeModal();
-
-
-  await loadProducts();
-
-
-  showSuccess(
-    "Product updated successfully."
-  );
-
-}
-
-
-/* =====================================================
-   ACTIVATE / DEACTIVATE
-===================================================== */
-
-async function toggleProduct(
-  productId
-) {
-
-  hideMessages();
-
-
-  const product =
-    allProducts.find(
-      item =>
-        item.id === productId
-    );
-
-
-  if (!product) {
-
-    showError(
-      "Product not found."
-    );
-
-    return;
-
-  }
-
-
-  const newStatus =
-    product.active === false;
-
-
-  const action =
-    newStatus
-      ? "activate"
-      : "deactivate";
-
-
-  if (
-    !confirm(
-      `શું તમે આ productને ${action} કરવા માંગો છો?`
-    )
-  ) {
-
-    return;
-
-  }
-
-
-  try {
-
-    await updateDoc(
-
-      doc(
-        db,
-        "products",
-        productId
-      ),
-
-      {
-
-        active:
-          newStatus,
-
-        updatedAt:
-          serverTimestamp(),
-
-        updatedBy:
-          adminUser.uid
-
-      }
-
-    );
-
-
-    await loadProducts();
-
-
-    showSuccess(
-
-      newStatus
-        ? "Product activated successfully."
-        : "Product deactivated successfully."
-
-    );
-
-  }
-  catch (error) {
-
-    showError(
-      getErrorMessage(error)
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   LOGOUT
-===================================================== */
-
-logoutBtn.addEventListener(
-  "click",
-  async () => {
-
-    try {
-
-      await signOut(
-        auth
-      );
-
-
-      window.location.href =
-        "../index.html";
-
-    }
-    catch (error) {
-
-      showError(
-        getErrorMessage(error)
-      );
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   HELPERS
-===================================================== */
-
-function formatCategory(
+function normalizeCategory(
   category
 ) {
 
-  const value =
-    String(
-      category || "OTHER"
-    );
-
-
-  const map = {
-
-    TV:
-      "TV",
-
-    DTH:
-      "DTH",
-
-    ACCESSORIES:
-      "Accessories",
-
-    PARTS:
-      "Repair Parts",
-
-    INSTALLATION:
-      "Installation",
-
-    OTHER:
-      "Other"
-
-  };
-
-
-  return (
-    map[value] ||
-    value
-  );
+  return String(
+    category || ""
+  )
+    .trim()
+    .toUpperCase();
 
 }
 
 
-function formatMoney(
-  value
-) {
+/* =====================================================
+   WARRANTY
+===================================================== */
 
-  return Number(
-    value || 0
-  ).toLocaleString(
+function formatWarranty(days) {
+
+  const value =
+    getNumber(days);
+
+
+  if (value <= 0) {
+
+    return "No Warranty";
+
+  }
+
+
+  if (
+    value % 365 === 0
+  ) {
+
+    const years =
+      value / 365;
+
+    return `${years} Year${
+      years === 1
+        ? ""
+        : "s"
+    }`;
+
+  }
+
+
+  if (
+    value % 30 === 0
+  ) {
+
+    const months =
+      value / 30;
+
+    return `${months} Month${
+      months === 1
+        ? ""
+        : "s"
+    }`;
+
+  }
+
+
+  return `${value} Days`;
+
+}
+
+
+/* =====================================================
+   MONEY
+===================================================== */
+
+function formatMoney(value) {
+
+  const number =
+    getNumber(value);
+
+
+  return number.toLocaleString(
     "en-IN",
     {
       minimumFractionDigits: 0,
@@ -1497,9 +1473,169 @@ function formatMoney(
 }
 
 
-function escapeHtml(
-  value
+/* =====================================================
+   NUMBER
+===================================================== */
+
+function numberValue(value) {
+
+  const number =
+    Number(value);
+
+
+  return Number.isFinite(
+    number
+  )
+    ? number
+    : 0;
+
+}
+
+
+function getNumber(value) {
+
+  return numberValue(
+    value
+  );
+
+}
+
+
+/* =====================================================
+   TIMESTAMP
+===================================================== */
+
+function getTimestamp(
+  timestamp
 ) {
+
+  if (!timestamp) {
+
+    return 0;
+
+  }
+
+
+  if (
+    typeof timestamp.toMillis ===
+    "function"
+  ) {
+
+    return timestamp.toMillis();
+
+  }
+
+
+  if (
+    typeof timestamp.seconds ===
+    "number"
+  ) {
+
+    return timestamp.seconds * 1000;
+
+  }
+
+
+  return 0;
+
+}
+
+
+/* =====================================================
+   ERROR MESSAGE
+===================================================== */
+
+function getErrorMessage(error) {
+
+  if (
+    error?.code ===
+    "permission-denied"
+  ) {
+
+    return "Firestore permission denied. Admin Firebase Rules check કરો.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "unauthenticated"
+  ) {
+
+    return "Login session expired. Please login again.";
+
+  }
+
+
+  if (
+    error?.code ===
+    "unavailable"
+  ) {
+
+    return "Firebase temporarily unavailable. Internet connection check કરો.";
+
+  }
+
+
+  return (
+    error?.message ||
+    "Unable to complete the operation."
+  );
+
+}
+
+
+/* =====================================================
+   SHOW ERROR
+===================================================== */
+
+function showError(message) {
+
+  successBox.style.display =
+    "none";
+
+
+  errorBox.textContent =
+    message;
+
+
+  errorBox.style.display =
+    "block";
+
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
+}
+
+
+/* =====================================================
+   SHOW SUCCESS
+===================================================== */
+
+function showSuccess(message) {
+
+  errorBox.style.display =
+    "none";
+
+
+  successBox.textContent =
+    message;
+
+
+  successBox.style.display =
+    "block";
+
+}
+
+
+/* =====================================================
+   ESCAPE
+===================================================== */
+
+function escapeHtml(value) {
 
   return String(
     value ?? ""
@@ -1533,88 +1669,10 @@ function escapeHtml(
 }
 
 
-function getErrorMessage(
-  error
-) {
+function escapeAttribute(value) {
 
-  console.error(
-    "REPARO ERROR:",
-    error
+  return escapeHtml(
+    value
   );
-
-
-  switch (
-    error?.code
-  ) {
-
-    case "permission-denied":
-
-      return "Firestore permission denied. Admin rules check કરો.";
-
-    case "unavailable":
-
-      return "Firebase temporarily unavailable. Internet connection check કરો.";
-
-    case "failed-precondition":
-
-      return "Firestore operation failed due to a database condition.";
-
-    default:
-
-      return (
-        error?.message ||
-        "Operation failed."
-      );
-
-  }
-
-}
-
-
-function hideMessages() {
-
-  errorBox.style.display =
-    "none";
-
-  successBox.style.display =
-    "none";
-
-  errorBox.textContent =
-    "";
-
-  successBox.textContent =
-    "";
-
-}
-
-
-function showError(
-  message
-) {
-
-  successBox.style.display =
-    "none";
-
-  errorBox.textContent =
-    message;
-
-  errorBox.style.display =
-    "block";
-
-}
-
-
-function showSuccess(
-  message
-) {
-
-  errorBox.style.display =
-    "none";
-
-  successBox.textContent =
-    message;
-
-  successBox.style.display =
-    "block";
 
 }
