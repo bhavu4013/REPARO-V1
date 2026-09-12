@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retailer Profile | REPARO V1</title>
+
+  <link rel="stylesheet" href="../css/reparo.css">
+
+  <style>
+    .retailer-profile-page {
+      max-width: 700px;
+      margin: auto;
+      padding: 18px 14px 90px;
+    }
+
+    .profile-header {
+      margin-bottom: 18px;
+    }
+
+    .profile-header h1 {
+      margin: 4px 0;
+      color: #111827;
+    }
+
+    .profile-header p {
+      margin: 0;
+      color: #6B7280;
+      font-size: 13px;
+    }
+
+    .profile-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 14px;
+      box-shadow: 0 6px 22px rgba(17,24,39,.07);
+    }
+
+    .profile-hero {
+      text-align: center;
+      padding: 24px 16px;
+    }
+
+    .avatar {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: #F9547C;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      font-size: 30px;
+      font-weight: 800;
+    }
+
+    .profile-name {
+      color: #111827;
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .shop-name {
+      color: #6B7280;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      margin-top: 11px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      background: #E8F8F0;
+      color: #16734B;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .section-title {
+      color: #111827;
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 15px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field label {
+      display: block;
+      color: #6B7280;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+      color: #111827;
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .field textarea {
+      min-height: 85px;
+      resize: vertical;
+    }
+
+    .field input:focus {
+      border-color: #08AEE0;
+    }
+
+    .readonly input,
+    .readonly textarea {
+      background: #F6F7F9;
+      color: #6B7280;
+    }
+
+    .readonly-note {
+      color: #9CA3AF;
+      font-size: 10px;
+      margin-top: 5px;
+      line-height: 1.4;
+    }
+
+    .save-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 13px;
+      padding: 13px;
+      background: #F9547C;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+
+    .save-btn:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      display: none;
+      border-radius: 13px;
+      padding: 12px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .message.success {
+      background: #E8F8F0;
+      color: #16734B;
+    }
+
+    .message.error {
+      background: #FFF0F1;
+      color: #BD304B;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 12px 0;
+      border-bottom: 1px solid #EEF0F4;
+    }
+
+    .info-row:last-child {
+      border-bottom: 0;
+    }
+
+    .info-label {
+      color: #6B7280;
+      font-size: 11px;
+    }
+
+    .info-value {
+      color: #111827;
+      font-size: 12px;
+      font-weight: 800;
+      text-align: right;
+      word-break: break-word;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 64px;
+      background: #fff;
+      border-top: 1px solid #E8EAF0;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 50;
+    }
+
+    .nav-item {
+      text-decoration: none;
+      color: #7D8492;
+      font-size: 10px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .nav-item span {
+      display: block;
+      font-size: 20px;
+      margin-bottom: 2px;
+    }
+
+    .nav-item.active {
+      color: #F9547C;
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="retailer-profile-page">
+
+  <header class="profile-header">
+    <div class="eyebrow">REPARO V1 • PARTNER</div>
+
+    <h1>My Profile</h1>
+
+    <p>
+      Retailer service partner account
+    </p>
+  </header>
+
+
+  <div id="messageBox" class="message"></div>
+
+
+  <!-- PROFILE HERO -->
+
+  <section class="profile-card profile-hero">
+
+    <div class="avatar" id="avatar">
+      R
+    </div>
+
+    <div class="profile-name" id="profileName">
+      Retailer
+    </div>
+
+    <div class="shop-name" id="profileShopName">
+      -
+    </div>
+
+    <div class="status-badge" id="statusBadge">
+      ACTIVE
+    </div>
+
+  </section>
+
+
+  <!-- PERSONAL INFORMATION -->
+
+  <section class="profile-card">
+
+    <div class="section-title">
+      Personal Information
+    </div>
+
+    <div class="field">
+
+      <label for="name">
+        CONTACT PERSON / NAME
+      </label>
+
+      <input
+        type="text"
+        id="name"
+        maxlength="80"
+        placeholder="Enter name"
+      >
+
+    </div>
+
+
+    <div class="field readonly">
+
+      <label for="mobile">
+        MOBILE NUMBER
+      </label>
+
+      <input
+        type="text"
+        id="mobile"
+        disabled
+      >
+
+      <div class="readonly-note">
+        Mobile number is linked with your REPARO login and cannot be changed here.
+      </div>
+
+    </div>
+
+
+    <button
+      type="button"
+      class="save-btn"
+      id="saveBtn"
+    >
+      Save Changes
+    </button>
+
+  </section>
+
+
+  <!-- SHOP INFORMATION -->
+
+  <section class="profile-card">
+
+    <div class="section-title">
+      Shop Information
+    </div>
+
+    <div class="field readonly">
+
+      <label for="shopName">
+        SHOP NAME
+      </label>
+
+      <input
+        type="text"
+        id="shopName"
+        disabled
+      >
+
+    </div>
+
+
+    <div class="field readonly">
+
+      <label for="address">
+        SHOP ADDRESS
+      </label>
+
+      <textarea
+        id="address"
+        disabled
+      ></textarea>
+
+      <div class="readonly-note">
+        Shop details are managed by REPARO Admin.
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ACCOUNT INFORMATION -->
+
+  <section class="profile-card">
+
+    <div class="section-title">
+      Account Information
+    </div>
+
+    <div class="info-row">
+
+      <div class="info-label">
+        Account Type
+      </div>
+
+      <div class="info-value">
+        Service Partner
+      </div>
+
+    </div>
+
+
+    <div class="info-row">
+
+      <div class="info-label">
+        Role
+      </div>
+
+      <div class="info-value">
+        Retailer
+      </div>
+
+    </div>
+
+
+    <div class="info-row">
+
+      <div class="info-label">
+        Status
+      </div>
+
+      <div
+        class="info-value"
+        id="accountStatus"
+      >
+        Active
+      </div>
+
+    </div>
+
+
+    <div class="info-row">
+
+      <div class="info-label">
+        Joined
+      </div>
+
+      <div
+        class="info-value"
+        id="createdAt"
+      >
+        -
+      </div>
+
+    </div>
+
+  </section>
+
+</main>
+
+
+<!-- BOTTOM NAV -->
+
+<nav class="bottom-nav">
+
+  <a
+    href="./dashboard.html"
+    class="nav-item"
+  >
+    <span>⌂</span>
+    Home
+  </a>
+
+  <a
+    href="./new-service-request.html"
+    class="nav-item"
+  >
+    <span>＋</span>
+    Request
+  </a>
+
+  <a
+    href="./customers.html"
+    class="nav-item"
+  >
+    <span>♙</span>
+    Customers
+  </a>
+
+  <a
+    href="./earnings.html"
+    class="nav-item"
+  >
+    <span>₹</span>
+    Earnings
+  </a>
+
+  <a
+    href="./profile.html"
+    class="nav-item active"
+  >
+    <span>●</span>
+    Profile
+  </a>
+
+</nav>
+
+
+<script
+  type="module"
+  src="../js/retailer-profile.js"
+></script>
+
+</body>
+</html>
