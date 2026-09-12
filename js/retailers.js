@@ -105,11 +105,8 @@ const shopNameInput =
 const mobileInput =
   document.getElementById("mobile");
 
-const emailInput =
-  document.getElementById("email");
-
-const passwordInput =
-  document.getElementById("password");
+const pinInput =
+  document.getElementById("pin");
 
 const addressInput =
   document.getElementById("address");
@@ -134,7 +131,45 @@ let adminUser = null;
 
 
 /* =====================================================
-   MESSAGE HELPERS
+   HELPERS
+===================================================== */
+
+function normalizeMobile(mobile) {
+
+  const value =
+    String(mobile || "")
+      .replace(/\D/g, "");
+
+  if (value.length === 10) {
+    return value;
+  }
+
+  if (
+    value.length === 12 &&
+    value.startsWith("91")
+  ) {
+    return value.substring(2);
+  }
+
+  return null;
+}
+
+
+function getInternalAuthEmail(mobile) {
+
+  const normalized =
+    normalizeMobile(mobile);
+
+  if (!normalized) {
+    throw new Error("INVALID_MOBILE");
+  }
+
+  return `${normalized}@login.reparo.local`;
+}
+
+
+/* =====================================================
+   MESSAGES
 ===================================================== */
 
 function showError(message) {
@@ -149,7 +184,6 @@ function showError(message) {
     top: 0,
     behavior: "smooth"
   });
-
 }
 
 
@@ -160,7 +194,6 @@ function showSuccess(message) {
   successBox.textContent = message;
 
   successBox.style.display = "block";
-
 }
 
 
@@ -173,12 +206,11 @@ function hideMessages() {
   errorBox.textContent = "";
 
   successBox.textContent = "";
-
 }
 
 
 /* =====================================================
-   FIREBASE ERROR TRANSLATION
+   FIREBASE ERROR
 ===================================================== */
 
 function firebaseErrorMessage(error) {
@@ -188,52 +220,35 @@ function firebaseErrorMessage(error) {
     error
   );
 
-
   const code =
     error?.code || "";
-
 
   switch (code) {
 
     case "auth/email-already-in-use":
-
-      return "આ emailથી retailer account પહેલેથી જ છે.";
+      return "આ mobile numberથી retailer account પહેલેથી જ છે.";
 
     case "auth/invalid-email":
-
-      return "Email address સાચો નથી.";
+      return "Mobile login account બનાવવામાં problem આવી.";
 
     case "auth/weak-password":
-
-      return "Password ઓછામાં ઓછો 6 charactersનો હોવો જોઈએ.";
+      return "PIN exactly 6 digitsનો હોવો જોઈએ.";
 
     case "auth/network-request-failed":
-
       return "Internet connection check કરો.";
 
     case "auth/operation-not-allowed":
-
       return "Firebase Authenticationમાં Email/Password enable નથી.";
 
     case "auth/too-many-requests":
-
       return "ઘણા પ્રયાસ થયા છે. થોડા સમય પછી ફરી પ્રયાસ કરો.";
 
-    case "permission-denied":
-
-    case "firestore/permission-denied":
-
-      return "Firestore Security Rulesએ આ operation deny કરી છે.";
-
     default:
-
       return (
         error?.message ||
         "Retailer operation કરતી વખતે error આવ્યો."
       );
-
   }
-
 }
 
 
@@ -251,9 +266,7 @@ onAuthStateChanged(
         "../index.html";
 
       return;
-
     }
-
 
     try {
 
@@ -264,12 +277,10 @@ onAuthStateChanged(
           user.uid
         );
 
-
       const snapshot =
         await getDoc(
           userRef
         );
-
 
       if (!snapshot.exists()) {
 
@@ -279,13 +290,10 @@ onAuthStateChanged(
           "../index.html";
 
         return;
-
       }
-
 
       const profile =
         snapshot.data();
-
 
       if (
         profile.role !== "admin" ||
@@ -298,13 +306,10 @@ onAuthStateChanged(
           "../index.html";
 
         return;
-
       }
-
 
       adminUser =
         user;
-
 
       await loadRetailers();
 
@@ -314,7 +319,6 @@ onAuthStateChanged(
       showError(
         firebaseErrorMessage(error)
       );
-
     }
 
   }
@@ -329,7 +333,6 @@ async function loadRetailers() {
 
   hideMessages();
 
-
   retailerContainer.innerHTML = `
 
     <div class="loading">
@@ -337,7 +340,6 @@ async function loadRetailers() {
     </div>
 
   `;
-
 
   try {
 
@@ -349,16 +351,13 @@ async function loadRetailers() {
         )
       );
 
-
     allRetailers = [];
-
 
     snapshot.forEach(
       documentSnapshot => {
 
         const data =
           documentSnapshot.data();
-
 
         if (
           data.role === "retailer"
@@ -387,17 +386,14 @@ async function loadRetailers() {
             a.name || ""
           ).toLowerCase();
 
-
         const nameB =
           String(
             b.name || ""
           ).toLowerCase();
 
-
         return nameA.localeCompare(
           nameB
         );
-
       }
     );
 
@@ -417,13 +413,10 @@ async function loadRetailers() {
 
     `;
 
-
     showError(
       firebaseErrorMessage(error)
     );
-
   }
-
 }
 
 
@@ -436,29 +429,23 @@ function renderStats() {
   const total =
     allRetailers.length;
 
-
   const active =
     allRetailers.filter(
       retailer =>
         retailer.active === true
     ).length;
 
-
   const inactive =
     total - active;
-
 
   totalCount.textContent =
     total;
 
-
   activeCount.textContent =
     active;
 
-
   inactiveCount.textContent =
     inactive;
-
 }
 
 
@@ -473,7 +460,7 @@ searchInput.addEventListener(
 
 
 /* =====================================================
-   RENDER
+   RENDER RETAILERS
 ===================================================== */
 
 function renderRetailers() {
@@ -483,34 +470,24 @@ function renderRetailers() {
       .trim()
       .toLowerCase();
 
-
   const filtered =
     allRetailers.filter(
       retailer => {
 
         const searchable =
           [
-
             retailer.name,
-
             retailer.shopName,
-
             retailer.mobile,
-
-            retailer.email,
-
             retailer.address
-
           ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
 
-
         return searchable.includes(
           term
         );
-
       }
     );
 
@@ -528,7 +505,6 @@ function renderRetailers() {
     `;
 
     return;
-
   }
 
 
@@ -548,9 +524,7 @@ function renderRetailers() {
 
 
   document
-    .querySelectorAll(
-      "[data-edit]"
-    )
+    .querySelectorAll("[data-edit]")
     .forEach(
       button => {
 
@@ -570,9 +544,7 @@ function renderRetailers() {
 
 
   document
-    .querySelectorAll(
-      "[data-toggle]"
-    )
+    .querySelectorAll("[data-toggle]")
     .forEach(
       button => {
 
@@ -589,7 +561,6 @@ function renderRetailers() {
 
       }
     );
-
 }
 
 
@@ -603,7 +574,6 @@ function renderRetailerCard(
 
   const active =
     retailer.active === true;
-
 
   return `
 
@@ -667,21 +637,6 @@ function renderRetailerCard(
         <div class="detail">
 
           <span class="detail-icon">
-            ✉️
-          </span>
-
-          <span>
-            ${escapeHtml(
-              retailer.email || "-"
-            )}
-          </span>
-
-        </div>
-
-
-        <div class="detail">
-
-          <span class="detail-icon">
             📍
           </span>
 
@@ -727,7 +682,6 @@ function renderRetailerCard(
     </div>
 
   `;
-
 }
 
 
@@ -745,30 +699,29 @@ function openAddModal() {
 
   hideMessages();
 
-
   retailerForm.reset();
-
 
   editUid.value =
     "";
 
+  mobileInput.disabled =
+    false;
+
+  pinInput.disabled =
+    false;
+
+  pinInput.required =
+    true;
 
   modalTitle.textContent =
     "Add Retailer";
 
-
   saveBtn.textContent =
     "Create Retailer";
-
-
-  passwordInput.required =
-    true;
-
 
   modalBackdrop.classList.add(
     "show"
   );
-
 
   setTimeout(
     () => {
@@ -778,7 +731,6 @@ function openAddModal() {
     },
     100
   );
-
 }
 
 
@@ -790,13 +742,11 @@ function openEditModal(uid) {
 
   hideMessages();
 
-
   const retailer =
     allRetailers.find(
       item =>
         item.uid === uid
     );
-
 
   if (!retailer) {
 
@@ -805,7 +755,6 @@ function openEditModal(uid) {
     );
 
     return;
-
   }
 
 
@@ -825,16 +774,32 @@ function openEditModal(uid) {
     retailer.mobile || "";
 
 
-  emailInput.value =
-    retailer.email || "";
+  addressInput.value =
+    retailer.address || "";
 
 
-  passwordInput.value =
+  /*
+   * Firebase Auth login identity
+   * mobile સાથે જોડાયેલી છે.
+   *
+   * તેથી existing retailerનું mobile
+   * edit કરીશું નહીં.
+   */
+
+  mobileInput.disabled =
+    true;
+
+
+  pinInput.value =
     "";
 
 
-  addressInput.value =
-    retailer.address || "";
+  pinInput.disabled =
+    true;
+
+
+  pinInput.required =
+    false;
 
 
   modalTitle.textContent =
@@ -845,14 +810,9 @@ function openEditModal(uid) {
     "Save Changes";
 
 
-  passwordInput.required =
-    false;
-
-
   modalBackdrop.classList.add(
     "show"
   );
-
 }
 
 
@@ -866,13 +826,19 @@ function closeModal() {
     "show"
   );
 
-
   retailerForm.reset();
-
 
   editUid.value =
     "";
 
+  mobileInput.disabled =
+    false;
+
+  pinInput.disabled =
+    false;
+
+  pinInput.required =
+    true;
 }
 
 
@@ -915,7 +881,6 @@ retailerForm.addEventListener(
 
     event.preventDefault();
 
-
     hideMessages();
 
 
@@ -926,7 +891,6 @@ retailerForm.addEventListener(
       );
 
       return;
-
     }
 
 
@@ -946,14 +910,8 @@ retailerForm.addEventListener(
       mobileInput.value.trim();
 
 
-    const email =
-      emailInput.value
-        .trim()
-        .toLowerCase();
-
-
-    const password =
-      passwordInput.value;
+    const pin =
+      pinInput.value.trim();
 
 
     const address =
@@ -961,7 +919,7 @@ retailerForm.addEventListener(
 
 
     /* ---------------------------------------------
-       VALIDATION
+       BASIC VALIDATION
     --------------------------------------------- */
 
     if (!name) {
@@ -971,7 +929,6 @@ retailerForm.addEventListener(
       );
 
       return;
-
     }
 
 
@@ -982,7 +939,6 @@ retailerForm.addEventListener(
       );
 
       return;
-
     }
 
 
@@ -997,21 +953,6 @@ retailerForm.addEventListener(
       );
 
       return;
-
-    }
-
-
-    if (
-      !email ||
-      !email.includes("@")
-    ) {
-
-      showError(
-        "Valid email દાખલ કરો."
-      );
-
-      return;
-
     }
 
 
@@ -1027,31 +968,29 @@ retailerForm.addEventListener(
           name,
           shopName,
           mobile,
-          email,
           address
         }
       );
 
       return;
-
     }
 
 
     /* ---------------------------------------------
-       CREATE
+       CREATE PIN
     --------------------------------------------- */
 
     if (
-      !password ||
-      password.length < 6
+      !/^[0-9]{6}$/.test(
+        pin
+      )
     ) {
 
       showError(
-        "Password ઓછામાં ઓછો 6 charactersનો હોવો જોઈએ."
+        "PIN exactly 6 digitsનો હોવો જોઈએ."
       );
 
       return;
-
     }
 
 
@@ -1060,8 +999,7 @@ retailerForm.addEventListener(
       name,
       shopName,
       mobile,
-      email,
-      password,
+      pin,
       address
 
     });
@@ -1081,7 +1019,6 @@ async function createRetailer(
   saveBtn.disabled =
     true;
 
-
   saveBtn.textContent =
     "Creating...";
 
@@ -1089,10 +1026,8 @@ async function createRetailer(
   let secondaryApp =
     null;
 
-
   let secondaryAuth =
     null;
-
 
   let createdUser =
     null;
@@ -1100,13 +1035,11 @@ async function createRetailer(
 
   try {
 
-
     /*
-      IMPORTANT:
-
-      Adminનું current login intact રાખવા માટે
-      અલગ Firebase App/Auth instance.
-    */
+     * Adminનું current Firebase session
+     * disturb ન થાય તે માટે secondary
+     * Firebase App/Auth instance વાપરીએ છીએ.
+     */
 
     secondaryApp =
       initializeApp(
@@ -1126,17 +1059,23 @@ async function createRetailer(
 
 
     /* ---------------------------------------------
-       CREATE AUTH ACCOUNT
+       INTERNAL FIREBASE LOGIN
     --------------------------------------------- */
+
+    const internalEmail =
+      getInternalAuthEmail(
+        data.mobile
+      );
+
 
     const credential =
       await createUserWithEmailAndPassword(
 
         secondaryAuth,
 
-        data.email,
+        internalEmail,
 
-        data.password
+        data.pin
 
       );
 
@@ -1150,7 +1089,7 @@ async function createRetailer(
 
 
     /* ---------------------------------------------
-       CREATE USER PROFILE
+       USERS PROFILE
     --------------------------------------------- */
 
     await setDoc(
@@ -1172,12 +1111,6 @@ async function createRetailer(
         mobile:
           data.mobile,
 
-        email:
-          data.email,
-
-        address:
-          data.address,
-
         role:
           "retailer",
 
@@ -1196,7 +1129,7 @@ async function createRetailer(
 
 
     /* ---------------------------------------------
-       CREATE RETAILER MASTER
+       RETAILER MASTER
     --------------------------------------------- */
 
     await setDoc(
@@ -1221,9 +1154,6 @@ async function createRetailer(
         mobile:
           data.mobile,
 
-        email:
-          data.email,
-
         address:
           data.address,
 
@@ -1241,9 +1171,9 @@ async function createRetailer(
     );
 
 
-    /* ---------------------------------------------
-       SIGN OUT SECONDARY
-    --------------------------------------------- */
+    /*
+     * Secondary account logout.
+     */
 
     await signOut(
       secondaryAuth
@@ -1252,22 +1182,15 @@ async function createRetailer(
 
     closeModal();
 
-
     await loadRetailers();
 
 
     showSuccess(
-
-      "Retailer successfully created. " +
-      "Login email: " +
-      data.email
-
+      "Retailer successfully created. હવે Retailer Mobile + 6 Digit PINથી login કરી શકે છે."
     );
-
 
   }
   catch (error) {
-
 
     console.error(
       "CREATE RETAILER ERROR:",
@@ -1276,8 +1199,10 @@ async function createRetailer(
 
 
     /*
-      Auth account rollback.
-    */
+     * જો Auth account બન્યું હોય પરંતુ
+     * Firestore write fail થયું હોય,
+     * તો rollback કરવાનો પ્રયાસ.
+     */
 
     if (createdUser) {
 
@@ -1293,8 +1218,12 @@ async function createRetailer(
           rollbackError
         );
 
-      }
+        showError(
+          "Retailer profile creation failed. Firebase Auth account rollback પણ complete થઈ શક્યું નથી. Admin Consoleમાં account check કરો."
+        );
 
+        return;
+      }
     }
 
 
@@ -1307,10 +1236,8 @@ async function createRetailer(
   }
   finally {
 
-
     saveBtn.disabled =
       false;
-
 
     saveBtn.textContent =
       editUid.value
@@ -1346,7 +1273,6 @@ async function createRetailer(
     }
 
   }
-
 }
 
 
@@ -1362,16 +1288,14 @@ async function updateRetailer(
   saveBtn.disabled =
     true;
 
-
   saveBtn.textContent =
     "Saving...";
 
 
   try {
 
-
     /* ---------------------------------------------
-       UPDATE USERS
+       USERS
     --------------------------------------------- */
 
     await updateDoc(
@@ -1390,12 +1314,6 @@ async function updateRetailer(
         shopName:
           data.shopName,
 
-        mobile:
-          data.mobile,
-
-        email:
-          data.email,
-
         address:
           data.address,
 
@@ -1411,7 +1329,7 @@ async function updateRetailer(
 
 
     /* ---------------------------------------------
-       UPDATE RETAILER MASTER
+       RETAILER MASTER
     --------------------------------------------- */
 
     const retailerRef =
@@ -1443,12 +1361,6 @@ async function updateRetailer(
 
           shopName:
             data.shopName,
-
-          mobile:
-            data.mobile,
-
-          email:
-            data.email,
 
           address:
             data.address,
@@ -1483,9 +1395,6 @@ async function updateRetailer(
           mobile:
             data.mobile,
 
-          email:
-            data.email,
-
           address:
             data.address,
 
@@ -1507,14 +1416,12 @@ async function updateRetailer(
 
     closeModal();
 
-
     await loadRetailers();
 
 
     showSuccess(
       "Retailer updated successfully."
     );
-
 
   }
   catch (error) {
@@ -1531,12 +1438,10 @@ async function updateRetailer(
     saveBtn.disabled =
       false;
 
-
     saveBtn.textContent =
       "Save Changes";
 
   }
-
 }
 
 
@@ -1565,7 +1470,6 @@ async function toggleRetailer(
     );
 
     return;
-
   }
 
 
@@ -1586,14 +1490,11 @@ async function toggleRetailer(
 
 
   if (!confirmed) {
-
     return;
-
   }
 
 
   try {
-
 
     /* ---------------------------------------------
        USERS STATUS
@@ -1686,9 +1587,7 @@ async function toggleRetailer(
         error
       )
     );
-
   }
-
 }
 
 
@@ -1705,7 +1604,6 @@ logoutBtn.addEventListener(
       await signOut(
         auth
       );
-
 
       window.location.href =
         "../index.html";
