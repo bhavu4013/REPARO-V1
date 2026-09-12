@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>REPARO Login</title>
 
     <link rel="stylesheet" href="./css/reparo.css">
@@ -126,8 +127,12 @@
 
         <form id="loginForm">
 
+            <!-- Mobile -->
             <div class="field">
-                <label for="mobile">Mobile Number</label>
+
+                <label for="mobile">
+                    Mobile Number
+                </label>
 
                 <input
                     id="mobile"
@@ -135,13 +140,21 @@
                     inputmode="numeric"
                     autocomplete="tel"
                     maxlength="10"
-                    placeholder="Enter mobile number"
+                    minlength="10"
+                    pattern="[0-9]{10}"
+                    placeholder="Enter 10 digit mobile number"
                     required
                 >
+
             </div>
 
+
+            <!-- PIN -->
             <div class="field">
-                <label for="pin">PIN</label>
+
+                <label for="pin">
+                    6 Digit PIN
+                </label>
 
                 <input
                     id="pin"
@@ -149,21 +162,34 @@
                     inputmode="numeric"
                     autocomplete="current-password"
                     maxlength="6"
-                    placeholder="Enter PIN"
+                    minlength="6"
+                    pattern="[0-9]{6}"
+                    placeholder="Enter 6 digit PIN"
                     required
                 >
+
             </div>
 
+
+            <!-- Login -->
             <button
                 id="loginBtn"
                 class="login-btn"
                 type="submit">
+
                 LOGIN
+
             </button>
 
         </form>
 
-        <div id="errorBox" class="error-box"></div>
+
+        <!-- Error -->
+        <div
+            id="errorBox"
+            class="error-box">
+        </div>
+
 
         <div class="login-info">
             Admin • Retailer • Technician • Customer
@@ -173,7 +199,11 @@
 
 </div>
 
-<script type="module" src="./js/auth.js"></script>
+
+<script
+    type="module"
+    src="./js/auth.js">
+</script>
 
 </body>
 </html>
