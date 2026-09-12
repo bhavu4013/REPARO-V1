@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technician Profile - REPARO</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f7f8fc;
+            color: #172033;
+            font-family: Arial, sans-serif;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            background: #ffffff;
+            padding: 18px 16px;
+            border-bottom: 1px solid #eceef4;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            color: #7a8191;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .logout-btn {
+            border: 0;
+            background: #fff0f3;
+            color: #e83e61;
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+
+        .container {
+            padding: 16px;
+            max-width: 700px;
+            margin: auto;
+        }
+
+        .profile-card {
+            background: #172033;
+            color: white;
+            border-radius: 20px;
+            padding: 24px 20px;
+            text-align: center;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 25px rgba(23, 32, 51, 0.14);
+        }
+
+        .avatar {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #e83e61;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 30px;
+            font-weight: 800;
+        }
+
+        .profile-name {
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .role {
+            font-size: 12px;
+            opacity: 0.72;
+            margin-top: 5px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: #e8f8ef;
+            color: #148344;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+
+        .field {
+            margin-bottom: 14px;
+        }
+
+        .field:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            color: #7b8290;
+            font-size: 12px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid #e0e3ea;
+            background: #ffffff;
+            border-radius: 11px;
+            padding: 12px;
+            font-size: 14px;
+            color: #172033;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #e83e61;
+        }
+
+        input:disabled {
+            background: #f3f4f7;
+            color: #737a88;
+        }
+
+        .readonly-note {
+            color: #9299a5;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .save-btn {
+            width: 100%;
+            border: 0;
+            background: #e83e61;
+            color: white;
+            padding: 13px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            margin-top: 5px;
+        }
+
+        .save-btn:disabled {
+            opacity: 0.6;
+        }
+
+        .message {
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .success {
+            background: #e8f8ef;
+            color: #148344;
+        }
+
+        .error {
+            background: #fff0f1;
+            color: #bd304b;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #eef0f4;
+        }
+
+        .info-row:last-child {
+            border-bottom: 0;
+        }
+
+        .info-label {
+            color: #7b8290;
+            font-size: 12px;
+        }
+
+        .info-value {
+            font-size: 13px;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 64px;
+            background: white;
+            border-top: 1px solid #e8eaf0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 20;
+        }
+
+        .nav-item {
+            text-decoration: none;
+            color: #7d8492;
+            font-size: 11px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .nav-item span {
+            display: block;
+            font-size: 21px;
+            margin-bottom: 2px;
+        }
+
+        .nav-item.active {
+            color: #e83e61;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="header-row">
+            <div>
+                <div class="title">My Profile</div>
+                <div class="subtitle">Technician Account</div>
+            </div>
+
+            <button class="logout-btn" id="logoutBtn">
+                Logout
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <div id="messageBox" class="message"></div>
+
+        <section class="profile-card">
+
+            <div class="avatar" id="avatar">
+                T
+            </div>
+
+            <div class="profile-name" id="profileName">
+                Technician
+            </div>
+
+            <div class="role">
+                REPARO Service Technician
+            </div>
+
+            <div class="status-badge" id="statusBadge">
+                ACTIVE
+            </div>
+
+        </section>
+
+        <section class="card">
+
+            <div class="section-title">
+                Personal Information
+            </div>
+
+            <div class="field">
+
+                <label for="name">
+                    Full Name
+                </label>
+
+                <input
+                    type="text"
+                    id="name"
+                    maxlength="80"
+                    placeholder="Enter your name"
+                >
+
+            </div>
+
+            <div class="field">
+
+                <label for="mobile">
+                    Mobile Number
+                </label>
+
+                <input
+                    type="text"
+                    id="mobile"
+                    disabled
+                >
+
+                <div class="readonly-note">
+                    Mobile number is linked to your login and cannot be changed here.
+                </div>
+
+            </div>
+
+            <button
+                class="save-btn"
+                id="saveBtn"
+            >
+                Save Changes
+            </button>
+
+        </section>
+
+        <section class="card">
+
+            <div class="section-title">
+                Account Information
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">
+                    Role
+                </div>
+
+                <div class="info-value">
+                    Technician
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">
+                    Account Status
+                </div>
+
+                <div class="info-value" id="accountStatus">
+                    Active
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">
+                    Account Created
+                </div>
+
+                <div class="info-value" id="createdAt">
+                    -
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <nav class="bottom-nav">
+
+        <a href="./dashboard.html" class="nav-item">
+            <span>⌂</span>
+            Home
+        </a>
+
+        <a href="./jobs.html" class="nav-item">
+            <span>▣</span>
+            Jobs
+        </a>
+
+        <a href="./earnings.html" class="nav-item">
+            <span>₹</span>
+            Earnings
+        </a>
+
+        <a href="./profile.html" class="nav-item active">
+            <span>●</span>
+            Profile
+        </a>
+
+    </nav>
+
+    <script type="module" src="../js/technician-profile.js"></script>
+
+</body>
+</html>
