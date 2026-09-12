@@ -180,6 +180,7 @@
       font-weight: 700;
       text-align: right;
       max-width: 65%;
+      word-break: break-word;
     }
 
     .form-field {
@@ -199,8 +200,7 @@
     }
 
     .form-field input,
-    .form-field textarea,
-    .form-field select {
+    .form-field textarea {
       width: 100%;
       box-sizing: border-box;
       border: 1px solid #dfe4ec;
@@ -271,7 +271,6 @@
       background: #fff;
       color: #d82f58;
       border: 1px solid #f1c5d0;
-      margin-bottom: 8px;
     }
 
     .primary-btn:disabled,
@@ -307,6 +306,15 @@
       color: #70798a;
     }
 
+    .locked-box {
+      padding: 12px;
+      border-radius: 13px;
+      background: #f3f4f6;
+      color: #697386;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
     @media (min-width: 600px) {
       .page {
         padding: 24px;
@@ -320,28 +328,55 @@
   <main class="page">
 
     <div class="topbar">
+
       <button
         id="backBtn"
         class="back-btn"
         type="button"
-      >‹</button>
+      >
+        ‹
+      </button>
 
       <div>
-        <h1 class="page-title">Job Detail</h1>
-        <div id="headerJobId" class="job-id">Loading...</div>
+
+        <h1 class="page-title">
+          Job Detail
+        </h1>
+
+        <div
+          id="headerJobId"
+          class="job-id"
+        >
+          Loading...
+        </div>
+
       </div>
+
     </div>
 
-    <div id="errorBox" class="message"></div>
-    <div id="successBox" class="message"></div>
+
+    <div
+      id="errorBox"
+      class="message"
+    ></div>
+
+
+    <div
+      id="successBox"
+      class="message"
+    ></div>
+
 
     <div id="pageContainer">
+
       <div class="loading">
         Loading job...
       </div>
+
     </div>
 
   </main>
+
 
   <script
     type="module"
