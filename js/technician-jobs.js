@@ -107,12 +107,21 @@ onAuthStateChanged(
         snapshot.data();
 
 
+      /*
+       * Only active technicians
+       * can access this page.
+       */
+
       if (
         profile.role !== "technician" ||
         profile.active !== true
       ) {
 
         await signOut(auth);
+
+        alert(
+          "Technician access required."
+        );
 
         window.location.href =
           "../index.html";
@@ -130,7 +139,14 @@ onAuthStateChanged(
 
       await loadJobs();
 
-    } catch (error) {
+    }
+
+    catch (error) {
+
+      console.error(
+        "Technician authorization error:",
+        error
+      );
 
       showError(
         error.message ||
@@ -159,11 +175,11 @@ async function loadJobs() {
   try {
 
     /*
-      SECURITY:
-
-      Only jobs assigned to the
-      logged-in technician are queried.
-    */
+     * IMPORTANT SECURITY:
+     *
+     * Only jobs where technicianId matches
+     * the currently logged-in Technician UID.
+     */
 
     const jobsQuery =
       query(
@@ -200,16 +216,26 @@ async function loadJobs() {
     );
 
 
+    /*
+     * Newest / recently updated jobs first.
+     */
+
     allJobs.sort(
       (a, b) => {
 
         const aTime =
-          a.createdAt?.seconds ||
-          0;
+          getTime(
+            a.updatedAt ||
+            a.createdAt
+          );
+
 
         const bTime =
-          b.createdAt?.seconds ||
-          0;
+          getTime(
+            b.updatedAt ||
+            b.createdAt
+          );
+
 
         return bTime - aTime;
 
@@ -221,8 +247,15 @@ async function loadJobs() {
 
     renderJobs();
 
+  }
 
-  } catch (error) {
+  catch (error) {
+
+    console.error(
+      "Jobs load error:",
+      error
+    );
+
 
     jobContainer.innerHTML = `
       <div class="empty">
@@ -244,6 +277,7 @@ async function loadJobs() {
 
       </div>
     `;
+
 
     showError(
       error.message ||
@@ -312,7 +346,7 @@ statusFilter.addEventListener(
 
 
 /* =========================================================
-   RENDER
+   RENDER JOBS
 ========================================================= */
 
 function renderJobs() {
@@ -339,6 +373,8 @@ function renderJobs() {
 
           job.requestId,
 
+          job.serviceRequestId,
+
           job.customerName,
 
           job.customerMobile,
@@ -347,11 +383,19 @@ function renderJobs() {
 
           job.customerAddress,
 
+          job.address,
+
           job.deviceBrand,
 
           job.deviceModel,
 
+          job.device,
+
+          job.product,
+
           job.serialNumber,
+
+          job.serial,
 
           job.serviceType,
 
@@ -435,6 +479,11 @@ function renderJobs() {
               button.dataset.openJob;
 
 
+            if (!jobId) {
+              return;
+            }
+
+
             window.location.href =
               `./job-detail.html?jobId=${encodeURIComponent(
                 jobId
@@ -460,7 +509,7 @@ function renderJobCard(
   const status =
     normalizeStatus(
       job.status ||
-      "NEW"
+      "ASSIGNED"
     );
 
 
@@ -471,6 +520,12 @@ function renderJobCard(
   const customerMobile =
     job.customerMobile ||
     job.mobile ||
+    "";
+
+
+  const customerAddress =
+    job.customerAddress ||
+    job.address ||
     "";
 
 
@@ -505,9 +560,7 @@ function renderJobCard(
           )}"
         >
           ${escapeHtml(
-            formatStatus(
-              status
-            )
+            formatStatus(status)
           )}
         </span>
 
@@ -540,8 +593,7 @@ function renderJobCard(
 
           <span>
             ${escapeHtml(
-              job.customerAddress ||
-              job.address ||
+              customerAddress ||
               "-"
             )}
           </span>
@@ -664,9 +716,7 @@ function isActiveStatus(
     "REPAIR"
 
   ].includes(
-    normalizeStatus(
-      status
-    )
+    normalizeStatus(status)
   );
 
 }
@@ -694,7 +744,7 @@ function getDeviceText(
 
 
   if (
-    parts.length
+    parts.length > 0
   ) {
 
     return parts.join(" ");
@@ -758,31 +808,97 @@ function getStatusClass(
     case "NEW":
       return "status-new";
 
+
     case "ASSIGNED":
       return "status-assigned";
+
 
     case "IN PROGRESS":
       return "status-progress";
 
+
     case "DIAGNOSIS":
       return "status-diagnosis";
+
 
     case "CUSTOMER APPROVAL":
       return "status-approval";
 
+
     case "REPAIR":
       return "status-repair";
+
 
     case "COMPLETED":
       return "status-completed";
 
+
     case "CANCELLED":
       return "status-cancelled";
+
 
     default:
       return "status-assigned";
 
   }
+
+}
+
+
+/* =========================================================
+   FIRESTORE TIME
+========================================================= */
+
+function getTime(
+  value
+) {
+
+  if (!value) {
+    return 0;
+  }
+
+
+  if (
+    typeof value.toMillis ===
+    "function"
+  ) {
+
+    return value.toMillis();
+
+  }
+
+
+  if (
+    typeof value.toDate ===
+    "function"
+  ) {
+
+    return value
+      .toDate()
+      .getTime();
+
+  }
+
+
+  if (
+    typeof value.seconds ===
+    "number"
+  ) {
+
+    return value.seconds * 1000;
+
+  }
+
+
+  const date =
+    new Date(value);
+
+
+  return Number.isNaN(
+    date.getTime()
+  )
+    ? 0
+    : date.getTime();
 
 }
 
@@ -795,11 +911,20 @@ function showError(
   message
 ) {
 
-  successBox.style.display =
-    "none";
+  if (!errorBox) {
+    return;
+  }
+
+
+  if (successBox) {
+    successBox.style.display =
+      "none";
+  }
+
 
   errorBox.textContent =
     message;
+
 
   errorBox.style.display =
     "block";
@@ -811,11 +936,20 @@ function showSuccess(
   message
 ) {
 
-  errorBox.style.display =
-    "none";
+  if (!successBox) {
+    return;
+  }
+
+
+  if (errorBox) {
+    errorBox.style.display =
+      "none";
+  }
+
 
   successBox.textContent =
     message;
+
 
   successBox.style.display =
     "block";
@@ -831,14 +965,33 @@ logoutBtn.addEventListener(
   "click",
   async () => {
 
+    logoutBtn.disabled =
+      true;
+
+
     try {
 
-      await signOut(auth);
+      await signOut(
+        auth
+      );
+
 
       window.location.href =
         "../index.html";
 
-    } catch (error) {
+    }
+
+    catch (error) {
+
+      console.error(
+        "Logout error:",
+        error
+      );
+
+
+      logoutBtn.disabled =
+        false;
+
 
       showError(
         error.message ||
@@ -852,7 +1005,7 @@ logoutBtn.addEventListener(
 
 
 /* =========================================================
-   ESCAPE
+   HTML ESCAPE
 ========================================================= */
 
 function escapeHtml(
@@ -890,6 +1043,8 @@ function escapeAttribute(
   value
 ) {
 
-  return escapeHtml(value);
+  return escapeHtml(
+    value
+  );
 
 }
