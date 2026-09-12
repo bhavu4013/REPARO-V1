@@ -14,32 +14,38 @@ import { auth, db } from "./firebase.js";
 
 /*
 |--------------------------------------------------------------------------
-| REPARO Mobile + PIN Authentication
+| REPARO COMMON AUTHENTICATION
 |--------------------------------------------------------------------------
 |
-| User enters:
-|   Mobile Number + PIN
+| User Login:
+|   Mobile Number + 6 Digit PIN
 |
-| Firebase internally uses:
-|   mobile-based internal email + PIN
+| Firebase internally:
+|   Mobile-based internal email + PIN
 |
-| The internal email is NEVER shown to the user.
+| User never sees the internal Firebase email.
 |
 |--------------------------------------------------------------------------
 */
 
 
-function normalizeMobile(mobile) {
+/*
+|--------------------------------------------------------------------------
+| Normalize Indian Mobile Number
+|--------------------------------------------------------------------------
+*/
 
-    let value = String(mobile || "")
+export function normalizeMobile(mobile) {
+
+    const value = String(mobile || "")
         .replace(/\D/g, "");
 
-    // Indian 10 digit mobile
+    // 10 digit Indian mobile
     if (value.length === 10) {
         return value;
     }
 
-    // +91XXXXXXXXXX / 91XXXXXXXXXX
+    // 91XXXXXXXXXX
     if (value.length === 12 && value.startsWith("91")) {
         return value.substring(2);
     }
@@ -48,21 +54,29 @@ function normalizeMobile(mobile) {
 }
 
 
-function getInternalAuthEmail(mobile) {
+/*
+|--------------------------------------------------------------------------
+| Internal Firebase Auth Email
+|--------------------------------------------------------------------------
+*/
 
-    const normalized = normalizeMobile(mobile);
+export function getInternalAuthEmail(mobile) {
 
-    if (!normalized) {
+    const normalizedMobile = normalizeMobile(mobile);
+
+    if (!normalizedMobile) {
         throw new Error("INVALID_MOBILE");
     }
 
-    /*
-     * Technical Firebase login identifier.
-     * Customer/Retailer/Technician/Admin never needs to see this.
-     */
-    return `${normalized}@login.reparo.local`;
+    return `${normalizedMobile}@login.reparo.local`;
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| Login
+|--------------------------------------------------------------------------
+*/
 
 export async function login(mobile, pin) {
 
@@ -72,11 +86,13 @@ export async function login(mobile, pin) {
         throw new Error("INVALID_MOBILE");
     }
 
-    if (!/^\d{4,6}$/.test(String(pin))) {
+    // REPARO PIN = exactly 6 digits
+    if (!/^\d{6}$/.test(String(pin))) {
         throw new Error("INVALID_PIN");
     }
 
-    const internalEmail = getInternalAuthEmail(normalizedMobile);
+    const internalEmail =
+        getInternalAuthEmail(normalizedMobile);
 
     return await signInWithEmailAndPassword(
         auth,
@@ -86,7 +102,17 @@ export async function login(mobile, pin) {
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Get User Profile
+|--------------------------------------------------------------------------
+*/
+
 export async function getUserProfile(uid) {
+
+    if (!uid) {
+        throw new Error("INVALID_UID");
+    }
 
     const userRef = doc(db, "users", uid);
 
@@ -96,23 +122,49 @@ export async function getUserProfile(uid) {
         throw new Error("USER_PROFILE_NOT_FOUND");
     }
 
-    return snapshot.data();
+    return {
+        uid,
+        ...snapshot.data()
+    };
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| Watch Authentication
+|--------------------------------------------------------------------------
+*/
 
 export function watchAuth(callback) {
     return onAuthStateChanged(auth, callback);
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Logout
+|--------------------------------------------------------------------------
+*/
+
 export async function logout() {
     await signOut(auth);
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Role → Dashboard
+|--------------------------------------------------------------------------
+*/
+
 export function getRolePage(role) {
 
-    switch (role) {
+    const normalizedRole =
+        String(role || "")
+            .trim()
+            .toLowerCase();
+
+    switch (normalizedRole) {
 
         case "admin":
             return "./admin/dashboard.html";
@@ -134,13 +186,18 @@ export function getRolePage(role) {
 
 /*
 |--------------------------------------------------------------------------
-| Login Page
+| Login Page Logic
 |--------------------------------------------------------------------------
 */
 
-const loginForm = document.getElementById("loginForm");
-const loginBtn = document.getElementById("loginBtn");
-const errorBox = document.getElementById("errorBox");
+const loginForm =
+    document.getElementById("loginForm");
+
+const loginBtn =
+    document.getElementById("loginBtn");
+
+const errorBox =
+    document.getElementById("errorBox");
 
 
 function showError(message) {
@@ -161,6 +218,12 @@ function hideError() {
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Submit Login
+|--------------------------------------------------------------------------
+*/
+
 if (loginForm) {
 
     loginForm.addEventListener("submit", async (event) => {
@@ -169,11 +232,28 @@ if (loginForm) {
 
         hideError();
 
+        const mobileInput =
+            document.getElementById("mobile");
+
+        const pinInput =
+            document.getElementById("pin");
+
         const mobile =
-            document.getElementById("mobile").value.trim();
+            mobileInput
+                ? mobileInput.value.trim()
+                : "";
 
         const pin =
-            document.getElementById("pin").value.trim();
+            pinInput
+                ? pinInput.value.trim()
+                : "";
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Mobile Validation
+        |--------------------------------------------------------------------------
+        */
 
         if (!normalizeMobile(mobile)) {
 
@@ -184,95 +264,221 @@ if (loginForm) {
             return;
         }
 
-        if (!/^\d{4,6}$/.test(pin)) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | PIN Validation
+        |--------------------------------------------------------------------------
+        */
+
+        if (!/^\d{6}$/.test(pin)) {
 
             showError(
-                "PIN must contain 4 to 6 digits."
+                "PIN must be exactly 6 digits."
             );
 
             return;
         }
 
-        loginBtn.disabled = true;
-        loginBtn.textContent = "LOGINNING...";
+
+        /*
+        |--------------------------------------------------------------------------
+        | Login Button
+        |--------------------------------------------------------------------------
+        */
+
+        if (loginBtn) {
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = "LOGGING IN...";
+        }
+
 
         try {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Firebase Login
+            |--------------------------------------------------------------------------
+            */
 
             const credential =
                 await login(mobile, pin);
 
-            const uid = credential.user.uid;
+            const uid =
+                credential.user.uid;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Load REPARO User Profile
+            |--------------------------------------------------------------------------
+            */
 
             const profile =
                 await getUserProfile(uid);
 
-            if (!profile.active) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Account Active Check
+            |--------------------------------------------------------------------------
+            */
+
+            if (profile.active !== true) {
 
                 await logout();
 
                 throw new Error("ACCOUNT_INACTIVE");
             }
 
-            const role = String(profile.role || "")
-                .toLowerCase();
 
-            const page = getRolePage(role);
+            /*
+            |--------------------------------------------------------------------------
+            | Role Check
+            |--------------------------------------------------------------------------
+            */
 
-            window.location.href = page;
+            const role =
+                String(profile.role || "")
+                    .trim()
+                    .toLowerCase();
 
-        } catch (error) {
 
-            console.error("REPARO login error:", error);
+            if (
+                ![
+                    "admin",
+                    "retailer",
+                    "technician",
+                    "customer"
+                ].includes(role)
+            ) {
+
+                await logout();
+
+                throw new Error("INVALID_ROLE");
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Role Dashboard
+            |--------------------------------------------------------------------------
+            */
+
+            const page =
+                getRolePage(role);
+
+            window.location.replace(page);
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "REPARO Login Error:",
+                error
+            );
+
 
             let message =
                 "Login failed. Please check your mobile number and PIN.";
 
+
             switch (error.message) {
 
                 case "INVALID_MOBILE":
+
                     message =
                         "Please enter a valid 10 digit mobile number.";
+
                     break;
+
 
                 case "INVALID_PIN":
+
                     message =
-                        "PIN must contain 4 to 6 digits.";
+                        "PIN must be exactly 6 digits.";
+
                     break;
+
 
                 case "USER_PROFILE_NOT_FOUND":
+
                     message =
-                        "Your account profile is not configured. Please contact REPARO Admin.";
+                        "Your REPARO account profile is not configured. Please contact Admin.";
+
                     break;
+
 
                 case "ACCOUNT_INACTIVE":
+
                     message =
                         "Your account is inactive. Please contact REPARO Admin.";
+
                     break;
+
+
+                case "INVALID_ROLE":
+
+                    message =
+                        "Your account role is not configured correctly. Please contact Admin.";
+
+                    break;
+
 
                 case "auth/invalid-credential":
+
                 case "auth/user-not-found":
+
                 case "auth/wrong-password":
+
                     message =
                         "Invalid mobile number or PIN.";
+
                     break;
+
 
                 case "auth/too-many-requests":
+
                     message =
                         "Too many login attempts. Please try again later.";
+
                     break;
 
+
                 case "auth/network-request-failed":
+
                     message =
                         "Network problem. Please check your internet connection.";
+
+                    break;
+
+
+                case "auth/invalid-api-key":
+
+                    message =
+                        "Firebase configuration error. Please contact Admin.";
+
                     break;
             }
 
+
             showError(message);
 
-        } finally {
-
-            loginBtn.disabled = false;
-            loginBtn.textContent = "LOGIN";
         }
+
+
+        finally {
+
+            if (loginBtn) {
+
+                loginBtn.disabled = false;
+                loginBtn.textContent = "LOGIN";
+            }
+        }
+
     });
+
 }
