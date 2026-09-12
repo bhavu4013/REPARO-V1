@@ -7,11 +7,8 @@ import {
   collection,
   doc,
   getDoc,
-  setDoc,
   addDoc,
-  getDocs,
-  query,
-  where,
+  runTransaction,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
@@ -21,9 +18,9 @@ import {
 } from "./firebase.js";
 
 
-/* =========================================================
-   DOM
-========================================================= */
+// =========================================================
+// DOM
+// =========================================================
 
 const requestForm =
   document.getElementById("requestForm");
@@ -80,147 +77,107 @@ const backBtn =
   document.getElementById("backBtn");
 
 
-/* =========================================================
-   STATE
-========================================================= */
+// =========================================================
+// STATE
+// =========================================================
 
 let currentUser = null;
+
 let retailerProfile = null;
+
 let checkedCustomer = null;
+
 let customerCheckCompleted = false;
 
 
-/* =========================================================
-   AUTH
-========================================================= */
+// =========================================================
+// AUTH
+// =========================================================
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(
+  auth,
+  async (user) => {
 
-  if (!user) {
-
-    window.location.href =
-      "../index.html";
-
-    return;
-
-  }
-
-  try {
-
-    const userRef =
-      doc(db, "users", user.uid);
-
-    const snapshot =
-      await getDoc(userRef);
-
-    if (!snapshot.exists()) {
-
-      await signOut(auth);
+    if (!user) {
 
       window.location.href =
         "../index.html";
 
       return;
-
     }
 
-    const profile =
-      snapshot.data();
-
-    if (
-      profile.role !== "retailer" ||
-      profile.active !== true
-    ) {
-
-      await signOut(auth);
-
-      window.location.href =
-        "../index.html";
-
-      return;
-
-    }
-
-    currentUser = user;
-
-    await loadRetailerProfile();
-
-    /*
-      After authentication and retailer profile,
-      check whether this page was opened from
-      My Customers.
-    */
-    await loadCustomerFromUrl();
-
-  } catch (error) {
-
-    showError(
-      error.message ||
-      "Authorization error."
-    );
-
-  }
-
-});
-
-
-/* =========================================================
-   RETAILER PROFILE
-========================================================= */
-
-async function loadRetailerProfile() {
-
-  try {
-
-    const retailerRef =
-      doc(
-        db,
-        "retailers",
-        currentUser.uid
-      );
-
-    const snapshot =
-      await getDoc(retailerRef);
-
-    if (snapshot.exists()) {
-
-      retailerProfile =
-        snapshot.data();
-
-    } else {
+    try {
 
       const userRef =
         doc(
           db,
           "users",
-          currentUser.uid
+          user.uid
         );
 
-      const userSnapshot =
+      const snapshot =
         await getDoc(userRef);
 
+
+      if (!snapshot.exists()) {
+
+        await signOut(auth);
+
+        window.location.href =
+          "../index.html";
+
+        return;
+      }
+
+
+      const profile =
+        snapshot.data();
+
+
+      if (
+        profile.role !== "retailer" ||
+        profile.active !== true
+      ) {
+
+        await signOut(auth);
+
+        window.location.href =
+          "../index.html";
+
+        return;
+      }
+
+
+      currentUser =
+        user;
+
       retailerProfile =
-        userSnapshot.exists()
-          ? userSnapshot.data()
-          : {};
+        profile;
+
+
+      await loadCustomerFromUrl();
 
     }
+    catch (error) {
 
-  } catch (error) {
+      console.error(
+        "Retailer authorization error:",
+        error
+      );
 
-    showError(
-      error.message ||
-      "Retailer profile could not be loaded."
-    );
+      showError(
+        error.message ||
+        "Authorization error."
+      );
+    }
 
   }
+);
 
-}
 
-
-/* =========================================================
-   LOAD CUSTOMER FROM URL
-========================================================= */
+// =========================================================
+// LOAD CUSTOMER FROM URL
+// =========================================================
 
 async function loadCustomerFromUrl() {
 
@@ -229,8 +186,12 @@ async function loadCustomerFromUrl() {
       window.location.search
     );
 
+
   const urlCustomerId =
-    params.get("customerId");
+    params.get(
+      "customerId"
+    );
+
 
   const urlMobile =
     normalizeMobile(
@@ -239,68 +200,55 @@ async function loadCustomerFromUrl() {
 
 
   /*
-    Nothing passed in URL.
-    Normal New Service Request flow.
-  */
+   * Coming from My Customers:
+   * customerId is the trusted primary reference.
+   */
 
-  if (!urlCustomerId && !urlMobile) {
+  if (urlCustomerId) {
+
+    if (urlMobile) {
+
+      customerMobile.value =
+        urlMobile;
+
+    }
+
+
+    await loadExistingCustomerById(
+      urlCustomerId
+    );
+
     return;
   }
 
 
-  try {
+  /*
+   * Mobile-only URL.
+   */
 
-    /*
-      Preferred method:
-      customerId from My Customers.
-    */
+  if (
+    urlMobile.length === 10
+  ) {
 
-    if (urlCustomerId) {
+    customerMobile.value =
+      urlMobile;
 
-      customerMobile.value =
-        urlMobile;
-
-      await loadExistingCustomerById(
-        urlCustomerId
-      );
-
-      return;
-    }
-
-
-    /*
-      Fallback:
-      mobile was passed.
-    */
-
-    if (urlMobile.length === 10) {
-
-      customerMobile.value =
-        urlMobile;
-
-      await checkCustomer();
-
-    }
-
-  } catch (error) {
-
-    showError(
-      error.message ||
-      "Unable to load selected customer."
-    );
-
+    await checkCustomer();
   }
 
 }
 
 
-/* =========================================================
-   LOAD EXISTING CUSTOMER BY ID
-========================================================= */
+// =========================================================
+// LOAD EXISTING CUSTOMER BY ID
+// =========================================================
 
 async function loadExistingCustomerById(
   selectedCustomerId
 ) {
+
+  clearMessages();
+
 
   const customerRef =
     doc(
@@ -309,8 +257,11 @@ async function loadExistingCustomerById(
       selectedCustomerId
     );
 
+
   const snapshot =
-    await getDoc(customerRef);
+    await getDoc(
+      customerRef
+    );
 
 
   if (!snapshot.exists()) {
@@ -320,8 +271,10 @@ async function loadExistingCustomerById(
       "Customer record was not found."
     );
 
-    return;
+    customerCheckCompleted =
+      false;
 
+    return;
   }
 
 
@@ -333,32 +286,31 @@ async function loadExistingCustomerById(
 
 
   /*
-    Security check:
-    Customer must belong to current retailer.
-  */
+   * IMPORTANT SECURITY CHECK
+   *
+   * Retailer can use only its own
+   * protected customers.
+   */
 
   if (
     customer.originalRetailerId
     !== currentUser.uid
   ) {
 
-    showCustomerStatus(
-      "protected",
-      "⚠️ This customer is not protected under your retailer account."
-    );
-
     customerCheckCompleted =
       false;
 
-    return;
+    checkedCustomer =
+      null;
 
+    showCustomerStatus(
+      "protected",
+      "⚠️ This customer is protected under another retailer account."
+    );
+
+    return;
   }
 
-
-  /*
-    Make sure URL mobile and actual
-    Firestore mobile are consistent.
-  */
 
   const actualMobile =
     normalizeMobile(
@@ -368,21 +320,28 @@ async function loadExistingCustomerById(
     );
 
 
+  /*
+   * If URL supplied mobile, make sure
+   * it matches Firestore customer.
+   */
+
   if (
     customerMobile.value &&
     actualMobile &&
     customerMobile.value !== actualMobile
   ) {
 
+    customerCheckCompleted =
+      false;
+
+    checkedCustomer =
+      null;
+
     showError(
       "Customer mobile verification failed."
     );
 
-    customerCheckCompleted =
-      false;
-
     return;
-
   }
 
 
@@ -406,13 +365,12 @@ async function loadExistingCustomerById(
     "existing",
     "✓ Protected customer selected. You can create a new service request."
   );
-
 }
 
 
-/* =========================================================
-   CHECK CUSTOMER
-========================================================= */
+// =========================================================
+// CHECK CUSTOMER
+// =========================================================
 
 checkCustomerBtn.addEventListener(
   "click",
@@ -447,19 +405,22 @@ async function checkCustomer() {
 
   clearMessages();
 
+
   const mobile =
     normalizeMobile(
       customerMobile.value
     );
 
-  if (mobile.length !== 10) {
+
+  if (
+    mobile.length !== 10
+  ) {
 
     showError(
       "Please enter a valid 10 digit mobile number."
     );
 
     return;
-
   }
 
 
@@ -473,8 +434,10 @@ async function checkCustomer() {
   try {
 
     /*
-      First check customer_index.
-    */
+     * PRIMARY CUSTOMER LOOKUP
+     *
+     * customer_index/{mobile}
+     */
 
     const indexRef =
       doc(
@@ -483,176 +446,84 @@ async function checkCustomer() {
         mobile
       );
 
+
     const indexSnapshot =
-      await getDoc(indexRef);
+      await getDoc(
+        indexRef
+      );
 
 
-    if (indexSnapshot.exists()) {
+    /*
+     * ==================================================
+     * EXISTING INDEX
+     * ==================================================
+     */
+
+    if (
+      indexSnapshot.exists()
+    ) {
 
       const indexData =
         indexSnapshot.data();
+
 
       const existingCustomerId =
         indexData.customerId;
 
 
-      if (existingCustomerId) {
+      if (!existingCustomerId) {
 
-        try {
-
-          const customerRef =
-            doc(
-              db,
-              "customers",
-              existingCustomerId
-            );
-
-          const customerSnapshot =
-            await getDoc(customerRef);
-
-
-          if (customerSnapshot.exists()) {
-
-            const customer =
-              {
-                id: customerSnapshot.id,
-                ...customerSnapshot.data()
-              };
-
-
-            /*
-              Same retailer:
-              reuse customer.
-            */
-
-            if (
-              customer.originalRetailerId
-              === currentUser.uid
-            ) {
-
-              checkedCustomer =
-                customer;
-
-              customerCheckCompleted =
-                true;
-
-              fillExistingCustomer(
-                customer
-              );
-
-              showCustomerStatus(
-                "existing",
-                "✓ Existing protected customer found. You can create a new service request."
-              );
-
-              return;
-
-            }
-
-          }
-
-        } catch (readError) {
-
-          /*
-            Customer belongs elsewhere or is
-            not readable under current rules.
-          */
-
-        }
-
+        throw new Error(
+          "Customer index is incomplete. Please contact Admin."
+        );
       }
 
 
       /*
-        Existing protected customer,
-        but not accessible to this retailer.
-      */
+       * Read actual customer document.
+       *
+       * If this retailer owns it, Firestore rules
+       * allow the read.
+       */
 
-      checkedCustomer =
-        null;
+      try {
 
-      customerCheckCompleted =
-        false;
+        await loadExistingCustomerById(
+          existingCustomerId
+        );
 
-      customerId.value =
-        "";
+      }
+      catch (readError) {
 
-      showCustomerStatus(
-        "protected",
-        "⚠️ This customer is already registered in REPARO and is protected. Please contact Admin for verification or transfer."
-      );
-
-      return;
-
-    }
-
-
-    /*
-      Legacy customer check.
-    */
-
-    const customersQuery =
-      query(
-        collection(db, "customers"),
-        where("mobile", "==", mobile)
-      );
-
-    const customersSnapshot =
-      await getDocs(
-        customersQuery
-      );
-
-
-    if (!customersSnapshot.empty) {
-
-      const customerDoc =
-        customersSnapshot.docs[0];
-
-      const customer =
-        {
-          id: customerDoc.id,
-          ...customerDoc.data()
-        };
-
-
-      if (
-        customer.originalRetailerId
-        === currentUser.uid
-      ) {
+        /*
+         * Do NOT expose another retailer's identity.
+         */
 
         checkedCustomer =
-          customer;
+          null;
 
         customerCheckCompleted =
-          true;
+          false;
 
-        fillExistingCustomer(
-          customer
-        );
+        customerId.value =
+          "";
 
         showCustomerStatus(
-          "existing",
-          "✓ Existing protected customer found."
+          "protected",
+          "⚠️ This mobile number is already registered and protected. Please contact REPARO Admin if ownership needs to be reviewed."
         );
-
-        return;
-
       }
 
 
-      showCustomerStatus(
-        "protected",
-        "⚠️ This customer is already protected. Please contact Admin before creating another customer record."
-      );
-
       return;
-
     }
 
 
     /*
-      Completely new customer.
-    */
+     * ==================================================
+     * NEW CUSTOMER
+     * ==================================================
+     */
 
     checkedCustomer =
       null;
@@ -666,20 +537,28 @@ async function checkCustomer() {
     customerIdBox.style.display =
       "none";
 
+
     showCustomerStatus(
       "new",
-      "✓ New customer. After creation, this customer will be protected under your retailer account."
+      "✓ New customer. This customer will be protected under your retailer account when the request is created."
     );
 
+  }
+  catch (error) {
 
-  } catch (error) {
+    console.error(
+      "Customer check error:",
+      error
+    );
+
 
     showError(
       error.message ||
       "Customer check failed."
     );
 
-  } finally {
+  }
+  finally {
 
     checkCustomerBtn.disabled =
       false;
@@ -688,21 +567,24 @@ async function checkCustomer() {
       "Check";
 
   }
-
 }
 
 
-/* =========================================================
-   FILL EXISTING CUSTOMER
-========================================================= */
+// =========================================================
+// FILL EXISTING CUSTOMER
+// =========================================================
 
-function fillExistingCustomer(customer) {
+function fillExistingCustomer(
+  customer
+) {
 
   customerId.value =
     customer.id;
 
+
   customerIdBox.textContent =
     `Customer ID: ${customer.id}`;
+
 
   customerIdBox.style.display =
     "block";
@@ -713,9 +595,16 @@ function fillExistingCustomer(customer) {
     customer.customerName ||
     "";
 
+
   customerAddress.value =
     customer.address ||
     "";
+
+
+  /*
+   * Device details are prefilled when
+   * available from customer protection record.
+   */
 
   deviceBrand.value =
     customer.deviceBrand ||
@@ -732,13 +621,12 @@ function fillExistingCustomer(customer) {
   serialNumber.value =
     customer.serialNumber ||
     "";
-
 }
 
 
-/* =========================================================
-   CUSTOMER STATUS UI
-========================================================= */
+// =========================================================
+// CUSTOMER STATUS
+// =========================================================
 
 function showCustomerStatus(
   type,
@@ -749,54 +637,58 @@ function showCustomerStatus(
     "customer-status";
 
 
-  if (type === "new") {
+  if (
+    type === "new"
+  ) {
 
     customerStatus.classList.add(
       "status-new"
     );
-
   }
 
 
-  if (type === "existing") {
+  if (
+    type === "existing"
+  ) {
 
     customerStatus.classList.add(
       "status-existing"
     );
-
   }
 
 
-  if (type === "protected") {
+  if (
+    type === "protected"
+  ) {
 
     customerStatus.classList.add(
       "status-protected"
     );
-
   }
 
 
-  if (type === "error") {
+  if (
+    type === "error"
+  ) {
 
     customerStatus.classList.add(
       "status-error"
     );
-
   }
 
 
   customerStatus.textContent =
     message;
 
+
   customerStatus.style.display =
     "block";
-
 }
 
 
-/* =========================================================
-   SUBMIT SERVICE REQUEST
-========================================================= */
+// =========================================================
+// CREATE SERVICE REQUEST
+// =========================================================
 
 requestForm.addEventListener(
   "submit",
@@ -812,50 +704,64 @@ requestForm.addEventListener(
         customerMobile.value
       );
 
+
     const name =
       customerName.value.trim();
+
 
     const address =
       customerAddress.value.trim();
 
+
     const brand =
       deviceBrand.value.trim();
+
 
     const model =
       deviceModel.value.trim();
 
+
     const size =
       screenSize.value.trim();
+
 
     const serial =
       serialNumber.value.trim();
 
+
     const type =
       serviceType.value;
+
 
     const issue =
       problem.value.trim();
 
 
-    if (mobile.length !== 10) {
+    /*
+     * BASIC VALIDATION
+     */
+
+    if (
+      mobile.length !== 10
+    ) {
 
       showError(
         "Please enter a valid 10 digit mobile number."
       );
 
       return;
-
     }
 
 
-    if (!customerCheckCompleted) {
+    if (
+      !customerCheckCompleted
+    ) {
 
       showError(
         "Please check the customer mobile number first."
       );
 
       return;
-
     }
 
 
@@ -866,7 +772,6 @@ requestForm.addEventListener(
       );
 
       return;
-
     }
 
 
@@ -877,7 +782,6 @@ requestForm.addEventListener(
       );
 
       return;
-
     }
 
 
@@ -888,7 +792,6 @@ requestForm.addEventListener(
       );
 
       return;
-
     }
 
 
@@ -899,7 +802,6 @@ requestForm.addEventListener(
       );
 
       return;
-
     }
 
 
@@ -916,41 +818,47 @@ requestForm.addEventListener(
         customerId.value.trim();
 
 
-      /* ===================================================
-         EXISTING CUSTOMER
-      =================================================== */
+      /*
+       * =================================================
+       * EXISTING PROTECTED CUSTOMER
+       * =================================================
+       */
 
-      if (finalCustomerId) {
+      if (
+        finalCustomerId
+      ) {
 
-        const existingCustomerRef =
+        const customerRef =
           doc(
             db,
             "customers",
             finalCustomerId
           );
 
-        const existingSnapshot =
+
+        const customerSnapshot =
           await getDoc(
-            existingCustomerRef
+            customerRef
           );
 
 
-        if (!existingSnapshot.exists()) {
+        if (
+          !customerSnapshot.exists()
+        ) {
 
           throw new Error(
-            "Existing customer record could not be found."
+            "Customer record could not be found."
           );
-
         }
 
 
         const existingData =
-          existingSnapshot.data();
+          customerSnapshot.data();
 
 
         /*
-          Final ownership validation.
-        */
+         * FINAL OWNERSHIP CHECK
+         */
 
         if (
           existingData.originalRetailerId
@@ -960,152 +868,70 @@ requestForm.addEventListener(
           throw new Error(
             "This customer is protected and cannot be used by this retailer."
           );
+        }
 
+
+        /*
+         * Final mobile consistency check.
+         */
+
+        const storedMobile =
+          normalizeMobile(
+            existingData.mobile ||
+            existingData.customerMobile ||
+            ""
+          );
+
+
+        if (
+          storedMobile &&
+          storedMobile !== mobile
+        ) {
+
+          throw new Error(
+            "Customer mobile number does not match the protected customer record."
+          );
         }
 
       }
 
 
-      /* ===================================================
-         NEW CUSTOMER
-      =================================================== */
+      /*
+       * =================================================
+       * NEW CUSTOMER
+       * =================================================
+       *
+       * Customer + customer_index are created
+       * atomically.
+       */
 
       else {
 
-        /*
-          Re-check duplicate index immediately
-          before creating customer.
-        */
-
-        const indexRef =
-          doc(
-            db,
-            "customer_index",
-            mobile
+        const result =
+          await createProtectedCustomer(
+            {
+              mobile,
+              name,
+              address,
+              brand,
+              model,
+              size,
+              serial
+            }
           );
 
-        const indexSnapshot =
-          await getDoc(indexRef);
-
-
-        if (indexSnapshot.exists()) {
-
-          throw new Error(
-            "This mobile number has already been registered. Please check the customer again."
-          );
-
-        }
-
-
-        /*
-          Create new customer document.
-        */
-
-        const newCustomerRef =
-          doc(
-            collection(
-              db,
-              "customers"
-            )
-          );
 
         finalCustomerId =
-          newCustomerRef.id;
-
-
-        const retailerName =
-          retailerProfile?.businessName ||
-          retailerProfile?.shopName ||
-          retailerProfile?.name ||
-          "";
-
-
-        const customerData = {
-
-          name,
-
-          customerName:
-            name,
-
-          mobile,
-
-          customerMobile:
-            mobile,
-
-          address,
-
-          deviceBrand:
-            brand,
-
-          deviceModel:
-            model,
-
-          screenSize:
-            size,
-
-          serialNumber:
-            serial,
-
-          originalRetailerId:
-            currentUser.uid,
-
-          originalRetailerName:
-            retailerName,
-
-          protected:
-            true,
-
-          createdBy:
-            currentUser.uid,
-
-          createdAt:
-            serverTimestamp(),
-
-          updatedAt:
-            serverTimestamp()
-
-        };
-
-
-        await setDoc(
-          newCustomerRef,
-          customerData
-        );
-
-
-        /*
-          Create mobile index.
-
-          Original retailer is NOT stored here.
-        */
-
-        await setDoc(
-          indexRef,
-          {
-
-            mobile,
-
-            customerId:
-              finalCustomerId,
-
-            protected:
-              true,
-
-            createdAt:
-              serverTimestamp(),
-
-            updatedAt:
-              serverTimestamp()
-
-          }
-        );
+          result.customerId;
 
       }
 
 
-      /* ===================================================
-         CREATE SERVICE REQUEST
-      =================================================== */
+      /*
+       * =================================================
+       * CREATE SERVICE REQUEST
+       * =================================================
+       */
 
       const requestRef =
         await addDoc(
@@ -1114,6 +940,9 @@ requestForm.addEventListener(
             "service_requests"
           ),
           {
+
+            requestId:
+              null,
 
             customerId:
               finalCustomerId,
@@ -1163,12 +992,30 @@ requestForm.addEventListener(
         );
 
 
+      /*
+       * We cannot know Firestore auto-ID
+       * before addDoc.
+       *
+       * Store the actual Request ID in the
+       * same document as a second small update
+       * only if desired in future.
+       *
+       * Current document ID itself is the
+       * authoritative Request ID.
+       */
+
+
       showSuccess(
         `Service Request created successfully. Request ID: ${requestRef.id}`
       );
 
 
+      /*
+       * Reset form.
+       */
+
       requestForm.reset();
+
 
       customerId.value =
         "";
@@ -1186,38 +1033,231 @@ requestForm.addEventListener(
         "none";
 
 
-      setTimeout(() => {
+      /*
+       * Return to dashboard after short delay.
+       */
 
-        window.location.href =
-          "dashboard.html";
+      setTimeout(
+        () => {
 
-      }, 1800);
+          window.location.href =
+            "dashboard.html";
 
-
-    } catch (error) {
-
-      showError(
-        error.message ||
-        "Service Request creation failed."
+        },
+        1800
       );
 
-    } finally {
+    }
+    catch (error) {
+
+      console.error(
+        "Service Request creation error:",
+        error
+      );
+
+
+      let message =
+        error.message ||
+        "Service Request creation failed.";
+
+
+      if (
+        error?.code ===
+        "permission-denied"
+      ) {
+
+        message =
+          "Permission denied. Please check customer ownership or login again.";
+      }
+
+
+      showError(
+        message
+      );
+
+    }
+    finally {
 
       submitBtn.disabled =
         false;
 
       submitBtn.textContent =
         "Create Service Request";
-
     }
 
   }
 );
 
 
-/* =========================================================
-   BACK
-========================================================= */
+// =========================================================
+// ATOMIC CUSTOMER CREATION
+// =========================================================
+
+async function createProtectedCustomer(
+  data
+) {
+
+  const mobile =
+    normalizeMobile(
+      data.mobile
+    );
+
+
+  if (
+    mobile.length !== 10
+  ) {
+
+    throw new Error(
+      "Invalid customer mobile number."
+    );
+  }
+
+
+  const customerRef =
+    doc(
+      collection(
+        db,
+        "customers"
+      )
+    );
+
+
+  const indexRef =
+    doc(
+      db,
+      "customer_index",
+      mobile
+    );
+
+
+  /*
+   * Transaction guarantees:
+   *
+   * 1. Mobile index must not already exist.
+   * 2. Customer document is created.
+   * 3. Index is created.
+   *
+   * If any operation fails, Firestore rolls
+   * the transaction back.
+   */
+
+  await runTransaction(
+    db,
+    async (transaction) => {
+
+      const indexSnapshot =
+        await transaction.get(
+          indexRef
+        );
+
+
+      if (
+        indexSnapshot.exists()
+      ) {
+
+        throw new Error(
+          "This mobile number has already been registered. Please check the customer again."
+        );
+      }
+
+
+      const retailerName =
+        retailerProfile?.shopName ||
+        retailerProfile?.businessName ||
+        retailerProfile?.name ||
+        "";
+
+
+      const customerData = {
+
+        name:
+          data.name,
+
+        customerName:
+          data.name,
+
+        mobile,
+
+        customerMobile:
+          mobile,
+
+        address:
+          data.address || "",
+
+        deviceBrand:
+          data.brand || "",
+
+        deviceModel:
+          data.model || "",
+
+        screenSize:
+          data.size || "",
+
+        serialNumber:
+          data.serial || "",
+
+        originalRetailerId:
+          currentUser.uid,
+
+        originalRetailerName:
+          retailerName,
+
+        protected:
+          true,
+
+        createdBy:
+          currentUser.uid,
+
+        createdAt:
+          serverTimestamp(),
+
+        updatedAt:
+          serverTimestamp()
+
+      };
+
+
+      transaction.set(
+        customerRef,
+        customerData
+      );
+
+
+      transaction.set(
+        indexRef,
+        {
+
+          mobile,
+
+          customerId:
+            customerRef.id,
+
+          protected:
+            true,
+
+          createdAt:
+            serverTimestamp(),
+
+          updatedAt:
+            serverTimestamp()
+
+        }
+      );
+
+    }
+  );
+
+
+  return {
+    customerId:
+      customerRef.id
+  };
+}
+
+
+// =========================================================
+// BACK BUTTON
+// =========================================================
 
 backBtn.addEventListener(
   "click",
@@ -1229,52 +1269,63 @@ backBtn.addEventListener(
 );
 
 
-/* =========================================================
-   NAVIGATION
-========================================================= */
+// =========================================================
+// BOTTOM NAVIGATION
+// =========================================================
 
 document
   .querySelectorAll(
     ".bottom-nav [data-page]"
   )
-  .forEach(button => {
+  .forEach(
+    button => {
 
-    button.addEventListener(
-      "click",
-      () => {
+      button.addEventListener(
+        "click",
+        () => {
 
-        const page =
-          button.dataset.page;
+          const page =
+            button.dataset.page;
 
-        if (page) {
 
-          window.location.href =
-            page;
+          if (page) {
+
+            window.location.href =
+              page;
+
+          }
 
         }
+      );
 
-      }
+    }
+  );
+
+
+// =========================================================
+// MOBILE NORMALIZATION
+// =========================================================
+
+function normalizeMobile(
+  value
+) {
+
+  return String(
+    value || ""
+  )
+    .replace(
+      /\D/g,
+      ""
+    )
+    .slice(
+      -10
     );
-
-  });
-
-
-/* =========================================================
-   MOBILE NORMALIZATION
-========================================================= */
-
-function normalizeMobile(value) {
-
-  return String(value || "")
-    .replace(/\D/g, "")
-    .slice(-10);
-
 }
 
 
-/* =========================================================
-   MESSAGES
-========================================================= */
+// =========================================================
+// MESSAGES
+// =========================================================
 
 function clearMessages() {
 
@@ -1284,10 +1335,17 @@ function clearMessages() {
   successBox.style.display =
     "none";
 
+  errorBox.textContent =
+    "";
+
+  successBox.textContent =
+    "";
 }
 
 
-function showError(message) {
+function showError(
+  message
+) {
 
   successBox.style.display =
     "none";
@@ -1301,7 +1359,9 @@ function showError(message) {
 }
 
 
-function showSuccess(message) {
+function showSuccess(
+  message
+) {
 
   errorBox.style.display =
     "none";
