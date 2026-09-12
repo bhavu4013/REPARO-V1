@@ -1,350 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REPARO Login</title>
 
-<meta charset="UTF-8">
+    <link rel="stylesheet" href="./css/reparo.css">
 
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1.0"
->
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+        }
 
-<title>REPARO V1</title>
+        .login-page {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
 
-<link
-  rel="stylesheet"
-  href="./css/reparo.css"
->
+        .login-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 28px 22px;
+            box-shadow: 0 10px 35px rgba(15, 23, 42, 0.10);
+        }
 
+        .logo {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 7px;
+        }
+
+        .field input {
+            width: 100%;
+            box-sizing: border-box;
+            height: 50px;
+            border: 1px solid #cbd5e1;
+            border-radius: 13px;
+            padding: 0 14px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .field input:focus {
+            border-color: #e11d48;
+        }
+
+        .login-btn {
+            width: 100%;
+            height: 52px;
+            border: 0;
+            border-radius: 14px;
+            background: #e11d48;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+
+        .login-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .error-box {
+            display: none;
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 12px;
+            background: #fff1f2;
+            color: #be123c;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .login-info {
+            text-align: center;
+            margin-top: 18px;
+            color: #64748b;
+            font-size: 12px;
+        }
+    </style>
 </head>
-
 
 <body>
 
+<div class="login-page">
 
-<!-- =========================
-     LOGIN
-========================= -->
+    <div class="login-card">
 
-<section
-  id="loginPage"
-  class="login-page"
-  style="
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-  "
->
+        <div class="logo">REPARO</div>
 
-  <div
-    class="card"
-    style="
-      width:100%;
-      max-width:420px;
-      padding:30px 24px;
-    "
-  >
+        <div class="subtitle">
+            Service Management Portal
+        </div>
 
-    <div
-      class="brand-icon"
-      style="
-        width:64px;
-        height:64px;
-        border-radius:20px;
-        font-size:25px;
-        margin-bottom:18px;
-        background:
-          linear-gradient(
-            135deg,
-            var(--reparo-yellow),
-            var(--reparo-pink)
-          );
-      "
-    >
-      R
+        <form id="loginForm">
+
+            <div class="field">
+                <label for="mobile">Mobile Number</label>
+
+                <input
+                    id="mobile"
+                    type="tel"
+                    inputmode="numeric"
+                    autocomplete="tel"
+                    maxlength="10"
+                    placeholder="Enter mobile number"
+                    required
+                >
+            </div>
+
+            <div class="field">
+                <label for="pin">PIN</label>
+
+                <input
+                    id="pin"
+                    type="password"
+                    inputmode="numeric"
+                    autocomplete="current-password"
+                    maxlength="6"
+                    placeholder="Enter PIN"
+                    required
+                >
+            </div>
+
+            <button
+                id="loginBtn"
+                class="login-btn"
+                type="submit">
+                LOGIN
+            </button>
+
+        </form>
+
+        <div id="errorBox" class="error-box"></div>
+
+        <div class="login-info">
+            Admin • Retailer • Technician • Customer
+        </div>
+
     </div>
 
-
-    <h1 style="margin:0 0 8px">
-      REPARO V1
-    </h1>
-
-    <p
-      style="
-        color:var(--reparo-muted);
-        margin-bottom:25px;
-      "
-    >
-      Repair. Service. Grow.
-    </p>
-
-
-    <div
-      id="loginError"
-      class="hidden"
-      style="
-        background:#FEF2F2;
-        color:#DC2626;
-        padding:11px;
-        border-radius:12px;
-        margin-bottom:14px;
-        font-size:14px;
-      "
-    ></div>
-
-
-    <input
-      id="email"
-      class="input"
-      type="email"
-      placeholder="Email"
-      style="margin-bottom:13px"
-    >
-
-
-    <input
-      id="password"
-      class="input"
-      type="password"
-      placeholder="Password"
-      style="margin-bottom:13px"
-    >
-
-
-    <button
-      id="loginBtn"
-      class="btn btn-primary"
-      style="width:100%"
-    >
-      Login
-    </button>
-
-  </div>
-
-</section>
-
-
-<!-- =========================
-     LOADING
-========================= -->
-
-<div
-  id="loading"
-  class="hidden"
-  style="
-    position:fixed;
-    inset:0;
-    background:rgba(255,255,255,.9);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index:100;
-    font-weight:800;
-  "
->
-  REPARO V1 Loading...
 </div>
 
-
-<script type="module">
-
-import {
-  login,
-  getUserProfile,
-  getRolePage
-} from "./js/auth.js";
-
-
-const loginPage =
-  document.getElementById("loginPage");
-
-const loginBtn =
-  document.getElementById("loginBtn");
-
-const emailInput =
-  document.getElementById("email");
-
-const passwordInput =
-  document.getElementById("password");
-
-const loginError =
-  document.getElementById("loginError");
-
-const loading =
-  document.getElementById("loading");
-
-
-loginBtn.addEventListener(
-  "click",
-  handleLogin
-);
-
-
-[emailInput,passwordInput].forEach(
-  input => {
-
-    input.addEventListener(
-      "keydown",
-      event => {
-
-        if(event.key === "Enter") {
-          handleLogin();
-        }
-
-      }
-    );
-
-  }
-);
-
-
-async function handleLogin() {
-
-  const email =
-    emailInput.value.trim();
-
-  const password =
-    passwordInput.value;
-
-
-  loginError.classList.add(
-    "hidden"
-  );
-
-
-  if(!email || !password) {
-
-    showError(
-      "Email અને Password બંને નાખો."
-    );
-
-    return;
-  }
-
-
-  try {
-
-    loading.classList.remove(
-      "hidden"
-    );
-
-    loginBtn.disabled = true;
-
-    loginBtn.textContent =
-      "Logging in...";
-
-
-    const result =
-      await login(
-        email,
-        password
-      );
-
-
-    const profile =
-      await getUserProfile(
-        result.user.uid
-      );
-
-
-    if(profile.active !== true) {
-
-      throw new Error(
-        "ACCOUNT_INACTIVE"
-      );
-
-    }
-
-
-    const page =
-      getRolePage(
-        profile.role
-      );
-
-
-    window.location.href =
-      page;
-
-
-  } catch(error) {
-
-    console.error(error);
-
-
-    let message =
-      "Login failed.";
-
-
-    if(
-      error.message ===
-      "ACCOUNT_INACTIVE"
-    ) {
-
-      message =
-        "તમારું REPARO account inactive છે.";
-
-    }
-    else if(
-      error.message ===
-      "USER_PROFILE_NOT_FOUND"
-    ) {
-
-      message =
-        "Firestoreમાં user profile મળ્યું નથી.";
-
-    }
-    else if(
-      error.code ===
-      "auth/invalid-credential"
-    ) {
-
-      message =
-        "Email અથવા Password ખોટો છે.";
-
-    }
-    else {
-
-      message =
-        "Login error: " +
-        (error.code ||
-         error.message);
-
-    }
-
-
-    showError(message);
-
-  } finally {
-
-    loading.classList.add(
-      "hidden"
-    );
-
-    loginBtn.disabled = false;
-
-    loginBtn.textContent =
-      "Login";
-
-  }
-
-}
-
-
-function showError(message) {
-
-  loginError.textContent =
-    message;
-
-  loginError.classList.remove(
-    "hidden"
-  );
-
-}
-
-</script>
+<script type="module" src="./js/auth.js"></script>
 
 </body>
 </html>
