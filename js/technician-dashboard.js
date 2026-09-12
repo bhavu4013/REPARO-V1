@@ -18,64 +18,54 @@ import {
 } from "./firebase.js";
 
 
+/* =========================================================
+   ELEMENTS
+========================================================= */
+
 const technicianName =
-  document.getElementById(
-    "technicianName"
-  );
+  document.getElementById("technicianName");
 
 const totalJobs =
-  document.getElementById(
-    "totalJobs"
-  );
+  document.getElementById("totalJobs");
 
 const activeJobs =
-  document.getElementById(
-    "activeJobs"
-  );
+  document.getElementById("activeJobs");
 
 const completedJobs =
-  document.getElementById(
-    "completedJobs"
-  );
+  document.getElementById("completedJobs");
 
 const approvalJobs =
-  document.getElementById(
-    "approvalJobs"
-  );
+  document.getElementById("approvalJobs");
 
 const jobsContainer =
-  document.getElementById(
-    "jobsContainer"
-  );
+  document.getElementById("jobsContainer");
 
 const logoutBtn =
-  document.getElementById(
-    "logoutBtn"
-  );
+  document.getElementById("logoutBtn");
 
 const homeNav =
-  document.getElementById(
-    "homeNav"
-  );
+  document.getElementById("homeNav");
 
 const jobsNav =
-  document.getElementById(
-    "jobsNav"
-  );
+  document.getElementById("jobsNav");
 
 const earningsNav =
-  document.getElementById(
-    "earningsNav"
-  );
+  document.getElementById("earningsNav");
 
+
+/* =========================================================
+   VARIABLES
+========================================================= */
 
 let currentUser = null;
+
 let technicianProfile = null;
+
 let jobs = [];
 
 
 /* =========================================================
-   AUTH
+   AUTHENTICATION + TECHNICIAN SECURITY CHECK
 ========================================================= */
 
 onAuthStateChanged(
@@ -103,9 +93,7 @@ onAuthStateChanged(
         );
 
 
-      if (
-        !profileSnapshot.exists()
-      ) {
+      if (!profileSnapshot.exists()) {
 
         await signOut(auth);
 
@@ -120,14 +108,23 @@ onAuthStateChanged(
         profileSnapshot.data();
 
 
+      /*
+       * Technician account must be:
+       *
+       * role = technician
+       * active = true
+       */
+
       if (
-        profile.role !==
-          "technician" ||
-        profile.active !==
-          true
+        profile.role !== "technician" ||
+        profile.active !== true
       ) {
 
         await signOut(auth);
+
+        alert(
+          "Technician account is inactive or unauthorized."
+        );
 
         window.location.href =
           "../index.html";
@@ -150,7 +147,15 @@ onAuthStateChanged(
 
       await loadJobs();
 
-    } catch (error) {
+    }
+
+    catch (error) {
+
+      console.error(
+        "Technician dashboard error:",
+        error
+      );
+
 
       jobsContainer.innerHTML = `
 
@@ -160,10 +165,6 @@ onAuthStateChanged(
 
       `;
 
-      console.error(
-        error
-      );
-
     }
 
   }
@@ -171,10 +172,19 @@ onAuthStateChanged(
 
 
 /* =========================================================
-   LOAD JOBS
+   LOAD ONLY ASSIGNED TECHNICIAN JOBS
 ========================================================= */
 
 async function loadJobs() {
+
+  jobsContainer.innerHTML = `
+
+    <div class="loading">
+      Loading jobs...
+    </div>
+
+  `;
+
 
   const jobsQuery =
     query(
@@ -232,7 +242,7 @@ async function loadJobs() {
 
 
 /* =========================================================
-   STATS
+   DASHBOARD STATS
 ========================================================= */
 
 function updateStats() {
@@ -264,11 +274,10 @@ function updateStats() {
             job.status
           );
 
+
         return (
-          status !==
-            "COMPLETED" &&
-          status !==
-            "CANCELLED"
+          status !== "COMPLETED" &&
+          status !== "CANCELLED"
         );
 
       }
@@ -291,7 +300,7 @@ function updateStats() {
 
 
 /* =========================================================
-   RENDER
+   RECENT JOBS
 ========================================================= */
 
 function renderJobs() {
@@ -323,17 +332,13 @@ function renderJobs() {
     recentJobs
       .map(
         job =>
-          renderJob(
-            job
-          )
+          renderJob(job)
       )
       .join("");
 
 
   document
-    .querySelectorAll(
-      "[data-job]"
-    )
+    .querySelectorAll("[data-job]")
     .forEach(
       button => {
 
@@ -341,13 +346,18 @@ function renderJobs() {
           "click",
           () => {
 
-            const id =
+            const jobId =
               button.dataset.job;
+
+
+            if (!jobId) {
+              return;
+            }
 
 
             window.location.href =
               `./job-detail.html?jobId=${encodeURIComponent(
-                id
+                jobId
               )}`;
 
           }
@@ -363,15 +373,18 @@ function renderJobs() {
    JOB CARD
 ========================================================= */
 
-function renderJob(
-  job
-) {
+function renderJob(job) {
 
   const status =
     normalizeStatus(
       job.status ||
       "ASSIGNED"
     );
+
+
+  const jobId =
+    job.jobId ||
+    job.id;
 
 
   return `
@@ -383,17 +396,12 @@ function renderJob(
         <div>
 
           <div class="job-id">
-            ${escapeHtml(
-              job.jobId ||
-              job.id
-            )}
+            ${escapeHtml(jobId)}
           </div>
 
           <div class="job-device">
             ${escapeHtml(
-              getDeviceText(
-                job
-              )
+              getDeviceText(job)
             )}
           </div>
 
@@ -408,14 +416,10 @@ function renderJob(
 
 
         <span
-          class="status ${getStatusClass(
-            status
-          )}"
+          class="status ${getStatusClass(status)}"
         >
           ${escapeHtml(
-            formatStatus(
-              status
-            )
+            formatStatus(status)
           )}
         </span>
 
@@ -425,9 +429,7 @@ function renderJob(
       <button
         class="open-btn"
         type="button"
-        data-job="${escapeAttribute(
-          job.id
-        )}"
+        data-job="${escapeAttribute(job.id)}"
       >
         Open Job
       </button>
@@ -440,12 +442,10 @@ function renderJob(
 
 
 /* =========================================================
-   DEVICE
+   DEVICE DISPLAY
 ========================================================= */
 
-function getDeviceText(
-  job
-) {
+function getDeviceText(job) {
 
   const parts = [
 
@@ -460,13 +460,9 @@ function getDeviceText(
   ].filter(Boolean);
 
 
-  if (
-    parts.length
-  ) {
+  if (parts.length > 0) {
 
-    return parts.join(
-      " "
-    );
+    return parts.join(" ");
 
   }
 
@@ -481,12 +477,10 @@ function getDeviceText(
 
 
 /* =========================================================
-   STATUS
+   STATUS HELPERS
 ========================================================= */
 
-function normalizeStatus(
-  status
-) {
+function normalizeStatus(status) {
 
   return String(
     status ||
@@ -498,9 +492,7 @@ function normalizeStatus(
 }
 
 
-function formatStatus(
-  status
-) {
+function formatStatus(status) {
 
   return String(
     status ||
@@ -516,27 +508,27 @@ function formatStatus(
 }
 
 
-function getStatusClass(
-  status
-) {
+function getStatusClass(status) {
 
   switch (
-    normalizeStatus(
-      status
-    )
+    normalizeStatus(status)
   ) {
 
     case "DIAGNOSIS":
       return "status-diagnosis";
 
+
     case "CUSTOMER APPROVAL":
       return "status-approval";
+
 
     case "REPAIR":
       return "status-repair";
 
+
     case "COMPLETED":
       return "status-completed";
+
 
     default:
       return "";
@@ -547,12 +539,10 @@ function getStatusClass(
 
 
 /* =========================================================
-   TIME
+   FIRESTORE TIMESTAMP
 ========================================================= */
 
-function getTime(
-  value
-) {
+function getTime(value) {
 
   if (!value) {
     return 0;
@@ -574,13 +564,16 @@ function getTime(
     "function"
   ) {
 
-    return value.toDate().getTime();
+    return value
+      .toDate()
+      .getTime();
 
   }
 
 
   if (
-    value.seconds
+    typeof value.seconds ===
+    "number"
   ) {
 
     return value.seconds * 1000;
@@ -646,20 +639,32 @@ logoutBtn.addEventListener(
   "click",
   async () => {
 
+    logoutBtn.disabled = true;
+
+    logoutBtn.textContent =
+      "Logging out...";
+
+
     try {
 
-      await signOut(
-        auth
-      );
+      await signOut(auth);
 
       window.location.href =
         "../index.html";
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
       console.error(
+        "Logout error:",
         error
       );
+
+      logoutBtn.disabled = false;
+
+      logoutBtn.textContent =
+        "Logout";
 
     }
 
@@ -668,12 +673,10 @@ logoutBtn.addEventListener(
 
 
 /* =========================================================
-   ESCAPE
+   HTML ESCAPE
 ========================================================= */
 
-function escapeHtml(
-  value
-) {
+function escapeHtml(value) {
 
   return String(
     value ?? ""
@@ -702,12 +705,8 @@ function escapeHtml(
 }
 
 
-function escapeAttribute(
-  value
-) {
+function escapeAttribute(value) {
 
-  return escapeHtml(
-    value
-  );
+  return escapeHtml(value);
 
 }
