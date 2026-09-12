@@ -350,10 +350,6 @@
       line-height: 1;
     }
 
-    /* =========================
-       MODAL
-    ========================= */
-
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -430,6 +426,11 @@
       background: #fff;
     }
 
+    .field input:disabled {
+      background: #f1f3f6;
+      color: #6b7280;
+    }
+
     .small-note {
       color: var(--muted);
       font-size: 12px;
@@ -482,335 +483,275 @@
 
 <body>
 
-  <header class="topbar">
-    <div class="brand-row">
+<header class="topbar">
+  <div class="brand-row">
 
-      <div class="brand">
-        <div class="brand-logo">R</div>
-        <span>REPARO</span>
-      </div>
-
-      <button
-        id="logoutBtn"
-        class="logout"
-        type="button"
-      >
-        Logout
-      </button>
-
-    </div>
-  </header>
-
-
-  <main>
-
-    <div class="heading-row">
-
-      <div>
-        <h1>Retailers</h1>
-
-        <p class="subtitle">
-          Manage REPARO service partners
-        </p>
-      </div>
-
-      <button
-        id="addRetailerBtn"
-        class="add-btn"
-        type="button"
-      >
-        + Add Retailer
-      </button>
-
+    <div class="brand">
+      <div class="brand-logo">R</div>
+      <span>REPARO</span>
     </div>
 
+    <button id="logoutBtn" class="logout" type="button">
+      Logout
+    </button>
 
-    <div
-      id="errorBox"
-      class="error"
-    ></div>
+  </div>
+</header>
 
 
-    <div
-      id="successBox"
-      class="success"
-    ></div>
+<main>
 
+  <div class="heading-row">
 
-    <section class="stats">
+    <div>
+      <h1>Retailers</h1>
 
-      <div class="stat">
-        <div class="stat-label">Total</div>
-        <div
-          id="totalCount"
-          class="stat-value"
-        >0</div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-label">Active</div>
-        <div
-          id="activeCount"
-          class="stat-value"
-        >0</div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-label">Inactive</div>
-        <div
-          id="inactiveCount"
-          class="stat-value"
-        >0</div>
-      </div>
-
-    </section>
-
-
-    <section class="search-card">
-
-      <input
-        id="searchInput"
-        type="search"
-        placeholder="Search retailer, shop or mobile..."
-      >
-
-    </section>
-
-
-    <section id="retailerContainer">
-
-      <div class="loading">
-        Loading retailers...
-      </div>
-
-    </section>
-
-  </main>
-
-
-  <nav class="bottom-nav">
-
-    <a
-      class="nav-item"
-      href="./dashboard.html"
-    >
-      <span class="nav-icon">⌂</span>
-      <span>Home</span>
-    </a>
-
-
-    <a
-      class="nav-item active"
-      href="./retailers.html"
-    >
-      <span class="nav-icon">▣</span>
-      <span>Retailers</span>
-    </a>
-
-
-    <a
-      class="nav-item"
-      href="./technicians.html"
-    >
-      <span class="nav-icon">⚙</span>
-      <span>Technicians</span>
-    </a>
-
-
-    <a
-      class="nav-item"
-      href="./customers.html"
-    >
-      <span class="nav-icon">●</span>
-      <span>Customers</span>
-    </a>
-
-  </nav>
-
-
-  <!-- =========================
-       ADD / EDIT MODAL
-  ========================= -->
-
-  <div
-    id="modalBackdrop"
-    class="modal-backdrop"
-  >
-
-    <div class="modal">
-
-      <div class="modal-title">
-
-        <h2 id="modalTitle">
-          Add Retailer
-        </h2>
-
-        <button
-          id="closeModalBtn"
-          class="close"
-          type="button"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <form id="retailerForm">
-
-        <input
-          type="hidden"
-          id="editUid"
-        >
-
-
-        <div class="form-grid">
-
-
-          <div class="field">
-
-            <label for="name">
-              Retailer Name *
-            </label>
-
-            <input
-              id="name"
-              type="text"
-              required
-              autocomplete="name"
-              placeholder="Enter retailer name"
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="shopName">
-              Shop Name *
-            </label>
-
-            <input
-              id="shopName"
-              type="text"
-              required
-              placeholder="Enter shop name"
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="mobile">
-              Mobile *
-            </label>
-
-            <input
-              id="mobile"
-              type="tel"
-              required
-              inputmode="numeric"
-              maxlength="10"
-              placeholder="10 digit mobile number"
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="email">
-              Email *
-            </label>
-
-            <input
-              id="email"
-              type="email"
-              required
-              autocomplete="email"
-              placeholder="retailer@example.com"
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="password">
-              Password *
-            </label>
-
-            <input
-              id="password"
-              type="password"
-              minlength="6"
-              autocomplete="new-password"
-              placeholder="Minimum 6 characters"
-            >
-
-            <div class="small-note">
-              New retailer માટે password જરૂરી છે.
-              Edit વખતે blank રાખી શકો છો.
-            </div>
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="address">
-              Address
-            </label>
-
-            <input
-              id="address"
-              type="text"
-              placeholder="Shop / area / city"
-            >
-
-          </div>
-
-
-        </div>
-
-
-        <div class="modal-actions">
-
-          <button
-            id="cancelBtn"
-            type="button"
-            class="modal-btn cancel"
-          >
-            Cancel
-          </button>
-
-
-          <button
-            id="saveBtn"
-            type="submit"
-            class="modal-btn save"
-          >
-            Create Retailer
-          </button>
-
-        </div>
-
-      </form>
-
+      <p class="subtitle">
+        Manage REPARO service partners
+      </p>
     </div>
+
+    <button
+      id="addRetailerBtn"
+      class="add-btn"
+      type="button">
+      + Add Retailer
+    </button>
 
   </div>
 
 
-  <!-- IMPORTANT:
-       JavaScript is a SEPARATE FILE.
-  -->
+  <div id="errorBox" class="error"></div>
 
-  <script
-    type="module"
-    src="../js/retailers.js"
-  ></script>
+  <div id="successBox" class="success"></div>
+
+
+  <section class="stats">
+
+    <div class="stat">
+      <div class="stat-label">Total</div>
+      <div id="totalCount" class="stat-value">0</div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-label">Active</div>
+      <div id="activeCount" class="stat-value">0</div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-label">Inactive</div>
+      <div id="inactiveCount" class="stat-value">0</div>
+    </div>
+
+  </section>
+
+
+  <section class="search-card">
+
+    <input
+      id="searchInput"
+      type="search"
+      placeholder="Search retailer, shop or mobile..."
+    >
+
+  </section>
+
+
+  <section id="retailerContainer">
+
+    <div class="loading">
+      Loading retailers...
+    </div>
+
+  </section>
+
+</main>
+
+
+<nav class="bottom-nav">
+
+  <a class="nav-item" href="./dashboard.html">
+    <span class="nav-icon">⌂</span>
+    <span>Home</span>
+  </a>
+
+  <a class="nav-item active" href="./retailers.html">
+    <span class="nav-icon">▣</span>
+    <span>Retailers</span>
+  </a>
+
+  <a class="nav-item" href="./technicians.html">
+    <span class="nav-icon">⚙</span>
+    <span>Technicians</span>
+  </a>
+
+  <a class="nav-item" href="./customers.html">
+    <span class="nav-icon">●</span>
+    <span>Customers</span>
+  </a>
+
+</nav>
+
+
+<!-- ADD / EDIT MODAL -->
+
+<div id="modalBackdrop" class="modal-backdrop">
+
+  <div class="modal">
+
+    <div class="modal-title">
+
+      <h2 id="modalTitle">
+        Add Retailer
+      </h2>
+
+      <button
+        id="closeModalBtn"
+        class="close"
+        type="button">
+        ×
+      </button>
+
+    </div>
+
+
+    <form id="retailerForm">
+
+      <input type="hidden" id="editUid">
+
+
+      <div class="form-grid">
+
+
+        <div class="field">
+
+          <label for="name">
+            Retailer Name *
+          </label>
+
+          <input
+            id="name"
+            type="text"
+            required
+            autocomplete="name"
+            placeholder="Enter retailer name"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label for="shopName">
+            Shop Name *
+          </label>
+
+          <input
+            id="shopName"
+            type="text"
+            required
+            placeholder="Enter shop name"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label for="mobile">
+            Mobile Number *
+          </label>
+
+          <input
+            id="mobile"
+            type="tel"
+            required
+            inputmode="numeric"
+            maxlength="10"
+            minlength="10"
+            pattern="[0-9]{10}"
+            placeholder="10 digit mobile number"
+          >
+
+          <div class="small-note">
+            આ mobile numberથી retailer login કરશે.
+          </div>
+
+        </div>
+
+
+        <div class="field">
+
+          <label for="pin">
+            6 Digit PIN *
+          </label>
+
+          <input
+            id="pin"
+            type="password"
+            required
+            inputmode="numeric"
+            maxlength="6"
+            minlength="6"
+            pattern="[0-9]{6}"
+            autocomplete="new-password"
+            placeholder="Enter 6 digit PIN"
+          >
+
+          <div class="small-note">
+            Retailer આ PINથી login કરશે. PIN exactly 6 digits હોવો જોઈએ.
+          </div>
+
+        </div>
+
+
+        <div class="field">
+
+          <label for="address">
+            Address
+          </label>
+
+          <input
+            id="address"
+            type="text"
+            placeholder="Shop / area / city"
+          >
+
+        </div>
+
+
+      </div>
+
+
+      <div class="modal-actions">
+
+        <button
+          id="cancelBtn"
+          type="button"
+          class="modal-btn cancel">
+          Cancel
+        </button>
+
+        <button
+          id="saveBtn"
+          type="submit"
+          class="modal-btn save">
+          Create Retailer
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<script
+  type="module"
+  src="../js/retailers.js">
+</script>
 
 </body>
 </html>
